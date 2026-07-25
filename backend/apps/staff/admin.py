@@ -4,6 +4,7 @@ from apps.staff.models import (
     AcademicDegree,
     AcademicTitle,
     StaffEmployment,
+    StaffEmploymentAcademicYear,
     StaffMember,
     StaffPosition,
     WorkloadNorm,
@@ -151,6 +152,27 @@ class StaffMemberAdmin(
         StaffEmploymentInline,
     )
 
+class StaffEmploymentAcademicYearInline(
+    admin.TabularInline
+):
+    model = StaffEmploymentAcademicYear
+    extra = 0
+    fields = (
+        "academic_year",
+        "rate",
+        "academic_degree",
+        "academic_title",
+        "is_active",
+        "notes",
+    )
+    autocomplete_fields = (
+        "academic_year",
+        "academic_degree",
+        "academic_title",
+    )
+    ordering = (
+        "-academic_year__start_year",
+    )
 
 @admin.register(StaffEmployment)
 class StaffEmploymentAdmin(
@@ -188,7 +210,62 @@ class StaffEmploymentAdmin(
         "department",
         "position",
     )
+    inlines = (
+        StaffEmploymentAcademicYearInline,
+    )
 
+@admin.register(StaffEmploymentAcademicYear)
+class StaffEmploymentAcademicYearAdmin(
+    ArchiveAdminMixin,
+    admin.ModelAdmin,
+):
+    list_display = (
+        "staff_employment",
+        "academic_year",
+        "rate",
+        "academic_degree",
+        "academic_title",
+        "recommended_hours",
+        "is_active",
+        "is_archived",
+    )
+    list_filter = (
+        "academic_year",
+        "staff_employment__department__faculty",
+        "staff_employment__department",
+        "rate",
+        "academic_degree",
+        "academic_title",
+        "is_active",
+        "is_archived",
+    )
+    search_fields = (
+        "staff_employment__staff_member__personnel_number",
+        "staff_employment__staff_member__last_name",
+        "staff_employment__staff_member__first_name",
+        "staff_employment__department__name_ru",
+    )
+    autocomplete_fields = (
+        "staff_employment",
+        "academic_year",
+        "academic_degree",
+        "academic_title",
+    )
+    ordering = (
+        "-academic_year__start_year",
+        "staff_employment__staff_member__last_name",
+    )
+
+    @admin.display(
+        description="Рекомендуемая норма часов"
+    )
+    def recommended_hours(self, obj):
+        value = obj.get_recommended_annual_hours()
+
+        if value is None:
+            return "Не установлена"
+
+        return value
 
 @admin.register(WorkloadNorm)
 class WorkloadNormAdmin(

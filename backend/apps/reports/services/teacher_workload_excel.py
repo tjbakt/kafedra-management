@@ -15,7 +15,10 @@ from apps.reports.models import ExcelReportTemplate
 from apps.reports.services.base_excel_report import (
     BaseExcelReportService,
 )
-from apps.staff.models import StaffEmployment
+from apps.staff.models import (
+    StaffEmployment,
+    StaffEmploymentAcademicYear,
+)
 from apps.workload.models import WorkloadDistribution
 
 ZERO_HOURS = Decimal("0.00")
@@ -86,9 +89,33 @@ class TeacherWorkloadExcelService(
                     is_active=True,
                 )
             )
-        except ObjectDoesNotExist as exc:
+        except StaffEmployment.DoesNotExist as exc:
             raise ReportDataError(
                 "Активное назначение преподавателя не найдено."
+            ) from exc
+
+        try:
+            academic_year_record = (
+                StaffEmploymentAcademicYear.objects
+                .select_related(
+                    "academic_year",
+                    "academic_degree",
+                    "academic_title",
+                )
+                .get(
+                    staff_employment=employment,
+                    academic_year=academic_year,
+                    is_archived=False,
+                    is_active=True,
+                )
+            )
+        except StaffEmploymentAcademicYear.DoesNotExist as exc:
+            raise ReportDataError(
+                (
+                    "Для преподавателя не заполнены кадровые данные "
+                    f"на учебный год {academic_year}: ставка, "
+                    "учёная степень и учёное звание."
+                )
             ) from exc
 
         university_id = (
@@ -109,7 +136,19 @@ class TeacherWorkloadExcelService(
             {
                 "{FIO}": employment.staff_member.full_name,
                 "{year}": str(academic_year),
-                "{st}": cls.format_rate(employment.rate),
+                "{st}": cls.format_rate(
+                    academic_year_record.rate
+                ),
+                "{degree}": (
+                    str(academic_year_record.academic_degree)
+                    if academic_year_record.academic_degree_id
+                    else "-"
+                ),
+                "{title}": (
+                    str(academic_year_record.academic_title)
+                    if academic_year_record.academic_title_id
+                    else "-"
+                ),
             },
         )
 

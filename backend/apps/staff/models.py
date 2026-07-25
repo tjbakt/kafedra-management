@@ -492,33 +492,241 @@ class StaffEmployment(BaseModel):
             f"{self.position}, {self.rate} ставки"
         )
 
+    def get_academic_year_record(self, academic_year):
+        """
+        Возвращает кадровое состояние назначения
+        для указанного учебного года.
+        """
+
+        return (
+            self.academic_year_records
+            .filter(
+                academic_year=academic_year,
+                is_active=True,
+            )
+            .select_related(
+                "academic_year",
+                "academic_degree",
+                "academic_title",
+            )
+            .first()
+        )
+
     def get_workload_norm(self, academic_year):
         """
-        Возвращает точную норму для назначения.
+        Возвращает норму нагрузки согласно кадровому
+        состоянию выбранного учебного года.
+        """
 
-        Результат может быть None, если подходящая норма
-        в справочнике не установлена.
+        academic_year_record = self.get_academic_year_record(
+            academic_year
+        )
+
+        if academic_year_record is None:
+            return None
+
+        return academic_year_record.get_workload_norm()
+
+    def get_recommended_annual_hours(self, academic_year):
+        academic_year_record = self.get_academic_year_record(
+            academic_year
+        )
+
+        if academic_year_record is None:
+            return None
+
+        return (
+            academic_year_record
+            .get_recommended_annual_hours()
+        )
+
+class StaffEmploymentAcademicYear(BaseModel):
+    """
+    Кадровое состояние назначения преподавателя
+    в конкретном учебном году.
+
+    Фиксирует исторические значения:
+    - размер ставки;
+    - учёную степень;
+    - учёное звание.
+
+    Изменение текущей карточки преподавателя или назначения
+    не должно изменять отчёты за прошлые учебные годы.
+    """
+
+    staff_employment = models.ForeignKey(
+        StaffEmployment,
+        verbose_name=_("Трудовое назначение"),
+        related_name="academic_year_records",
+        on_delete=models.PROTECT,
+    )
+    academic_year = models.ForeignKey(
+        AcademicYear,
+        verbose_name=_("Учебный год"),
+        related_name="staff_employment_records",
+        on_delete=models.PROTECT,
+    )
+    rate = models.DecimalField(
+        _("Размер ставки"),
+        max_digits=4,
+        decimal_places=2,
+        validators=[
+            MinValueValidator(Decimal("0.01")),
+            MaxValueValidator(Decimal("3.00")),
+        ],
+    )
+    academic_degree = models.ForeignKey(
+        AcademicDegree,
+        verbose_name=_("Учёная степень"),
+        related_name="staff_academic_year_records",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+    )
+    academic_title = models.ForeignKey(
+        AcademicTitle,
+        verbose_name=_("Учёное звание"),
+        related_name="staff_academic_year_records",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+    )
+    is_active = models.BooleanField(
+        _("Активно"),
+        default=True,
+        db_index=True,
+    )
+    notes = models.TextField(
+        _("Примечание"),
+        blank=True,
+    )
+
+    class Meta:
+        verbose_name = _(
+            "Кадровые данные преподавателя за учебный год"
+        )
+        verbose_name_plural = _(
+            "Кадровые данные преподавателей за учебные годы"
+        )
+        ordering = (
+            "-academic_year__start_year",
+            "staff_employment__staff_member__last_name",
+            "staff_employment__staff_member__first_name",
+        )
+        constraints = [
+            models.UniqueConstraint(
+                fields=(
+                    "staff_employment",
+                    "academic_year",
+                ),
+                name=(
+                    "unique_staff_employment_academic_year"
+                ),
+            ),
+        ]
+
+    @property
+    def has_academic_degree(self) -> bool:
+        return self.academic_degree_id is not None
+
+    @property
+    def has_academic_title(self) -> bool:
+        return self.academic_title_id is not None
+
+    def clean(self):
+        super().clean()
+
+        if not self.staff_employment_id:
+            return
+
+        employment = self.staff_employment
+
+        if employment.is_archived:
+            raise ValidationError(
+                {
+                    "staff_employment": _(
+                        "Нельзя выбрать архивное назначение."
+                    )
+                }
+            )
+
+        year_start = self.academic_year.start_year
+        year_end = self.academic_year.end_year
+
+        if employment.start_date.year > year_end:
+            raise ValidationError(
+                {
+                    "academic_year": _(
+                        "Назначение начинается после окончания "
+                        "выбранного учебного года."
+                    )
+                }
+            )
+
+        if (
+            employment.end_date
+            and employment.end_date.year < year_start
+        ):
+            raise ValidationError(
+                {
+                    "academic_year": _(
+                        "Назначение завершено до начала "
+                        "выбранного учебного года."
+                    )
+                }
+            )
+
+        if (
+            self.academic_degree_id
+            and not self.academic_degree.is_active
+        ):
+            raise ValidationError(
+                {
+                    "academic_degree": _(
+                        "Нельзя выбрать неактивную учёную степень."
+                    )
+                }
+            )
+
+        if (
+            self.academic_title_id
+            and not self.academic_title.is_active
+        ):
+            raise ValidationError(
+                {
+                    "academic_title": _(
+                        "Нельзя выбрать неактивное учёное звание."
+                    )
+                }
+            )
+
+    def get_workload_norm(self):
+        """
+        Возвращает норму нагрузки для зафиксированного
+        кадрового состояния учебного года.
         """
 
         return WorkloadNorm.objects.filter(
-            academic_year=academic_year,
+            academic_year=self.academic_year,
             rate=self.rate,
-            has_academic_degree=(
-                self.staff_member.has_academic_degree
-            ),
-            has_academic_title=(
-                self.staff_member.has_academic_title
-            ),
+            has_academic_degree=self.has_academic_degree,
+            has_academic_title=self.has_academic_title,
             is_active=True,
         ).first()
 
-    def get_recommended_annual_hours(self, academic_year):
-        norm = self.get_workload_norm(academic_year)
+    def get_recommended_annual_hours(self):
+        norm = self.get_workload_norm()
 
         if norm is None:
             return None
 
         return norm.annual_hours
+
+    def __str__(self) -> str:
+        return (
+            f"{self.staff_employment.staff_member} — "
+            f"{self.academic_year}, {self.rate} ставки"
+        )
 
 class WorkloadNorm(BaseModel):
     """

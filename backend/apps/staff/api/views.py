@@ -9,6 +9,7 @@ from apps.common.api.viewsets import BaseArchiveModelViewSet
 from apps.staff.api.filters import (
     AcademicDegreeFilter,
     AcademicTitleFilter,
+    StaffEmploymentAcademicYearFilter,
     StaffEmploymentFilter,
     StaffMemberFilter,
     StaffPositionFilter,
@@ -17,6 +18,7 @@ from apps.staff.api.filters import (
 from apps.staff.api.serializers import (
     AcademicDegreeSerializer,
     AcademicTitleSerializer,
+    StaffEmploymentAcademicYearSerializer,
     StaffEmploymentSerializer,
     StaffMemberSerializer,
     StaffPositionSerializer,
@@ -26,6 +28,7 @@ from apps.staff.models import (
     AcademicDegree,
     AcademicTitle,
     StaffEmployment,
+    StaffEmploymentAcademicYear,
     StaffMember,
     StaffPosition,
     WorkloadNorm,
@@ -230,76 +233,189 @@ class StaffEmploymentViewSet(BaseArchiveModelViewSet):
     def recommended_workload(self, request, pk=None):
         employment = self.get_object()
 
-        academic_year_id = request.query_params.get(
+        academic_year = request.query_params.get(
             "academic_year"
         )
 
-        if not academic_year_id:
-            return Response(
-                {
-                    "detail": (
-                        "Необходимо указать параметр "
-                        "academic_year."
-                    )
-                },
-                status=status.HTTP_400_BAD_REQUEST,
+        academic_year_record = (
+            employment.get_academic_year_record(
+                academic_year
             )
-
-        academic_year = get_object_or_404(
-            AcademicYear.objects,
-            pk=academic_year_id,
         )
 
-        norm = employment.get_workload_norm(
-            academic_year=academic_year
-        )
-
-        if norm is None:
+        if academic_year_record is None:
             return Response(
                 {
                     "employment": employment.id,
                     "academic_year": academic_year.id,
                     "academic_year_name": academic_year.name,
-                    "rate": employment.rate,
-                    "has_academic_degree": (
-                        employment.staff_member
-                        .has_academic_degree
-                    ),
-                    "has_academic_title": (
-                        employment.staff_member
-                        .has_academic_title
-                    ),
+                    "rate": None,
+                    "academic_degree": None,
+                    "academic_title": None,
+                    "has_academic_degree": None,
+                    "has_academic_title": None,
                     "annual_hours": None,
                     "norm_found": False,
+                    "academic_year_record_found": False,
                     "message": (
-                        "Подходящая норма нагрузки "
-                        "не установлена."
+                        "Для назначения не заполнены кадровые "
+                        "данные на выбранный учебный год."
                     ),
                 },
                 status=status.HTTP_200_OK,
             )
 
+        norm = academic_year_record.get_workload_norm()
+
+        response_data = {
+            "employment": employment.id,
+            "academic_year": academic_year.id,
+            "academic_year_name": academic_year.name,
+            "academic_year_record": (
+                academic_year_record.id
+            ),
+            "academic_year_record_found": True,
+            "rate": academic_year_record.rate,
+            "academic_degree": (
+                academic_year_record.academic_degree_id
+            ),
+            "academic_degree_name": (
+                str(academic_year_record.academic_degree)
+                if academic_year_record.academic_degree_id
+                else None
+            ),
+            "academic_title": (
+                academic_year_record.academic_title_id
+            ),
+            "academic_title_name": (
+                str(academic_year_record.academic_title)
+                if academic_year_record.academic_title_id
+                else None
+            ),
+            "has_academic_degree": (
+                academic_year_record.has_academic_degree
+            ),
+            "has_academic_title": (
+                academic_year_record.has_academic_title
+            ),
+            "annual_hours": (
+                norm.annual_hours
+                if norm is not None
+                else None
+            ),
+            "norm_found": norm is not None,
+        }
+
+        if norm is not None:
+            response_data["norm_id"] = norm.id
+        else:
+            response_data["message"] = (
+                "Подходящая норма нагрузки не установлена."
+            )
+
         return Response(
-            {
-                "employment": employment.id,
-                "academic_year": academic_year.id,
-                "academic_year_name": academic_year.name,
-                "rate": employment.rate,
-                "has_academic_degree": (
-                    employment.staff_member
-                    .has_academic_degree
-                ),
-                "has_academic_title": (
-                    employment.staff_member
-                    .has_academic_title
-                ),
-                "annual_hours": norm.annual_hours,
-                "norm_found": True,
-                "norm_id": norm.id,
-            },
+            response_data,
             status=status.HTTP_200_OK,
         )
 
+class StaffEmploymentAcademicYearViewSet(
+    BaseArchiveModelViewSet
+):
+    model = StaffEmploymentAcademicYear
+    serializer_class = (
+        StaffEmploymentAcademicYearSerializer
+    )
+    permission_classes = [IsAuthenticated]
+    filterset_class = (
+        StaffEmploymentAcademicYearFilter
+    )
+    search_fields = (
+        "staff_employment__staff_member__personnel_number",
+        "staff_employment__staff_member__last_name",
+        "staff_employment__staff_member__first_name",
+        "staff_employment__staff_member__middle_name",
+        "staff_employment__department__name_ru",
+        "staff_employment__department__name_uz",
+        "staff_employment__position__name_ru",
+        "academic_degree__name_ru",
+        "academic_title__name_ru",
+    )
+    ordering_fields = (
+        "academic_year__start_year",
+        "rate",
+        "staff_employment__staff_member__last_name",
+        "created_at",
+    )
+    ordering = (
+        "-academic_year__start_year",
+        "staff_employment__staff_member__last_name",
+        "staff_employment__staff_member__first_name",
+    )
+
+    def get_queryset(self):
+        queryset = (
+            StaffEmploymentAcademicYear.objects
+            .select_related(
+                "academic_year",
+                "academic_degree",
+                "academic_title",
+                "staff_employment",
+                "staff_employment__staff_member",
+                "staff_employment__department",
+                "staff_employment__department__faculty",
+                (
+                    "staff_employment__department__faculty__"
+                    "university"
+                ),
+                "staff_employment__position",
+            )
+        )
+
+        user = self.request.user
+
+        if user.is_superuser:
+            return queryset
+
+        if AccessService.has_global_role(
+            user,
+            SystemRole.Code.SYSTEM_ADMIN,
+            SystemRole.Code.HR_OFFICER,
+            SystemRole.Code.ACADEMIC_OFFICE,
+        ):
+            return queryset
+
+        department_ids = (
+            AccessService.accessible_department_ids(
+                user,
+                role_codes=(
+                    SystemRole.Code.DEPARTMENT_HEAD,
+                ),
+            )
+        )
+        own_staff_ids = (
+            AccessService.accessible_staff_member_ids(
+                user
+            )
+        )
+
+        if (
+            department_ids is None
+            or own_staff_ids is None
+        ):
+            return queryset
+
+        return queryset.filter(
+            Q(
+                staff_employment__department_id__in=(
+                    department_ids
+                )
+            )
+            | Q(
+                staff_employment__staff_member_id__in=(
+                    own_staff_ids
+                )
+            )
+        ).distinct()
 
 class WorkloadNormViewSet(BaseArchiveModelViewSet):
     model = WorkloadNorm

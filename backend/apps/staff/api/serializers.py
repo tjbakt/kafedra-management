@@ -6,6 +6,7 @@ from apps.staff.models import (
     AcademicDegree,
     AcademicTitle,
     StaffEmployment,
+    StaffEmploymentAcademicYear,
     StaffMember,
     StaffPosition,
     WorkloadNorm,
@@ -465,6 +466,218 @@ class StaffEmploymentSerializer(AuditFieldsSerializer):
                         "is_primary": (
                             "У сотрудника уже есть активное "
                             "основное назначение."
+                        )
+                    }
+                )
+
+        return attrs
+
+class StaffEmploymentAcademicYearSerializer(
+    AuditFieldsSerializer
+):
+    staff_member = serializers.IntegerField(
+        source="staff_employment.staff_member_id",
+        read_only=True,
+    )
+    staff_member_name = serializers.CharField(
+        source="staff_employment.staff_member.full_name",
+        read_only=True,
+    )
+    department = serializers.IntegerField(
+        source="staff_employment.department_id",
+        read_only=True,
+    )
+    department_name = serializers.CharField(
+        source="staff_employment.department.name_ru",
+        read_only=True,
+    )
+    position_name = serializers.CharField(
+        source="staff_employment.position.name_ru",
+        read_only=True,
+    )
+    academic_year_name = serializers.CharField(
+        source="academic_year.name",
+        read_only=True,
+    )
+    academic_degree_name = serializers.CharField(
+        source="academic_degree.name_ru",
+        read_only=True,
+        allow_null=True,
+    )
+    academic_title_name = serializers.CharField(
+        source="academic_title.name_ru",
+        read_only=True,
+        allow_null=True,
+    )
+    has_academic_degree = serializers.BooleanField(
+        read_only=True,
+    )
+    has_academic_title = serializers.BooleanField(
+        read_only=True,
+    )
+    recommended_annual_hours = (
+        serializers.SerializerMethodField()
+    )
+
+    class Meta:
+        model = StaffEmploymentAcademicYear
+        fields = (
+            "id",
+            "staff_employment",
+            "staff_member",
+            "staff_member_name",
+            "department",
+            "department_name",
+            "position_name",
+            "academic_year",
+            "academic_year_name",
+            "rate",
+            "academic_degree",
+            "academic_degree_name",
+            "academic_title",
+            "academic_title_name",
+            "has_academic_degree",
+            "has_academic_title",
+            "recommended_annual_hours",
+            "is_active",
+            "notes",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "created_by_name",
+            "updated_by",
+            "updated_by_name",
+            "is_archived",
+            "archived_at",
+            "archived_by",
+            "archived_by_name",
+        )
+        read_only_fields = (
+            "id",
+            "staff_member",
+            "department",
+            "has_academic_degree",
+            "has_academic_title",
+            "recommended_annual_hours",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+            "is_archived",
+            "archived_at",
+            "archived_by",
+        )
+
+    def get_recommended_annual_hours(self, obj):
+        return obj.get_recommended_annual_hours()
+
+    def validate(self, attrs):
+        instance = getattr(self, "instance", None)
+
+        employment = attrs.get(
+            "staff_employment",
+            getattr(
+                instance,
+                "staff_employment",
+                None,
+            ),
+        )
+        academic_year = attrs.get(
+            "academic_year",
+            getattr(
+                instance,
+                "academic_year",
+                None,
+            ),
+        )
+        academic_degree = attrs.get(
+            "academic_degree",
+            getattr(
+                instance,
+                "academic_degree",
+                None,
+            ),
+        )
+        academic_title = attrs.get(
+            "academic_title",
+            getattr(
+                instance,
+                "academic_title",
+                None,
+            ),
+        )
+
+        if employment is not None:
+            if employment.is_archived:
+                raise serializers.ValidationError(
+                    {
+                        "staff_employment": (
+                            "Назначение находится в архиве."
+                        )
+                    }
+                )
+
+            if not employment.is_active:
+                raise serializers.ValidationError(
+                    {
+                        "staff_employment": (
+                            "Назначение неактивно."
+                        )
+                    }
+                )
+
+        if (
+            academic_degree is not None
+            and (
+                academic_degree.is_archived
+                or not academic_degree.is_active
+            )
+        ):
+            raise serializers.ValidationError(
+                {
+                    "academic_degree": (
+                        "Выбранная учёная степень недоступна."
+                    )
+                }
+            )
+
+        if (
+            academic_title is not None
+            and (
+                academic_title.is_archived
+                or not academic_title.is_active
+            )
+        ):
+            raise serializers.ValidationError(
+                {
+                    "academic_title": (
+                        "Выбранное учёное звание недоступно."
+                    )
+                }
+            )
+
+        if employment and academic_year:
+            duplicate_queryset = (
+                StaffEmploymentAcademicYear.objects
+                .filter(
+                    staff_employment=employment,
+                    academic_year=academic_year,
+                )
+            )
+
+            if instance is not None:
+                duplicate_queryset = (
+                    duplicate_queryset.exclude(
+                        pk=instance.pk
+                    )
+                )
+
+            if duplicate_queryset.exists():
+                raise serializers.ValidationError(
+                    {
+                        "academic_year": (
+                            "Для этого назначения уже имеются "
+                            "данные на выбранный учебный год."
                         )
                     }
                 )

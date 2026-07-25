@@ -3,6 +3,7 @@ from rest_framework.routers import DefaultRouter
 from apps.staff.api.views import (
     AcademicDegreeViewSet,
     AcademicTitleViewSet,
+    StaffEmploymentAcademicYearViewSet,
     StaffEmploymentViewSet,
     StaffMemberViewSet,
     StaffPositionViewSet,
@@ -36,6 +37,11 @@ router.register(
     "employments",
     StaffEmploymentViewSet,
     basename="staff-employment",
+)
+router.register(
+    "employment-academic-years",
+    StaffEmploymentAcademicYearViewSet,
+    basename="staff-employment-academic-year",
 )
 router.register(
     "workload-norms",

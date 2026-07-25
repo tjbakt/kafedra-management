@@ -5,6 +5,7 @@ from apps.staff.models import (
     AcademicDegree,
     AcademicTitle,
     StaffEmployment,
+    StaffEmploymentAcademicYear,
     StaffMember,
     StaffPosition,
     WorkloadNorm,
@@ -154,6 +155,87 @@ class StaffEmploymentFilter(filters.FilterSet):
             "is_active",
         )
 
+class StaffEmploymentAcademicYearFilter(
+    filters.FilterSet
+):
+    academic_year = filters.NumberFilter(
+        field_name="academic_year_id",
+    )
+    staff_employment = filters.NumberFilter(
+        field_name="staff_employment_id",
+    )
+    staff_member = filters.NumberFilter(
+        field_name="staff_employment__staff_member_id",
+    )
+    university = filters.NumberFilter(
+        field_name=(
+            "staff_employment__department__faculty__"
+            "university_id"
+        ),
+    )
+    faculty = filters.NumberFilter(
+        field_name=(
+            "staff_employment__department__faculty_id"
+        ),
+    )
+    department = filters.NumberFilter(
+        field_name="staff_employment__department_id",
+    )
+    position = filters.NumberFilter(
+        field_name="staff_employment__position_id",
+    )
+    rate = filters.NumberFilter()
+    academic_degree = filters.NumberFilter(
+        field_name="academic_degree_id",
+    )
+    academic_title = filters.NumberFilter(
+        field_name="academic_title_id",
+    )
+    has_academic_degree = filters.BooleanFilter(
+        method="filter_has_academic_degree",
+    )
+    has_academic_title = filters.BooleanFilter(
+        method="filter_has_academic_title",
+    )
+    is_active = filters.BooleanFilter()
+
+    def filter_has_academic_degree(
+        self,
+        queryset,
+        name,
+        value,
+    ):
+        return queryset.filter(
+            academic_degree__isnull=not value
+        )
+
+    def filter_has_academic_title(
+        self,
+        queryset,
+        name,
+        value,
+    ):
+        return queryset.filter(
+            academic_title__isnull=not value
+        )
+
+    class Meta:
+        model = StaffEmploymentAcademicYear
+        fields = (
+            "academic_year",
+            "staff_employment",
+            "staff_member",
+            "university",
+            "faculty",
+            "department",
+            "position",
+            "rate",
+            "academic_degree",
+            "academic_title",
+            "has_academic_degree",
+            "has_academic_title",
+            "is_active",
+        )
 
 class WorkloadNormFilter(filters.FilterSet):
     academic_year = filters.NumberFilter(
