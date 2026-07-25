@@ -1,0 +1,30 @@
+#### Вход
+#POST http://127.0.0.1:8000/api/v1/auth/login/
+#Content-Type: application/json
+#Accept-Language: ru
+#
+#{
+#  "username": "admin",
+#  "password": "14fevral1991"
+#}
+
+@baseUrl = http://127.0.0.1:8000/api/v1
+@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzg0NjI3NDAxLCJpYXQiOjE3ODQ2MjY1MDEsImp0aSI6ImI4MzViMzliYmM5NjQyNGQ4YjAyYzJiNzk3ZTk0ZGJlIiwidXNlcl9pZCI6IjEiLCJ1c2VybmFtZSI6ImFkbWluIiwiZnVsbF9uYW1lIjoiXHUwNDE4XHUwNDMyXHUwNDMwXHUwNDNkXHUwNDNlXHUwNDMyIFx1MDQxOFx1MDQzMlx1MDQzMFx1MDQzZCBcdTA0MThcdTA0MzJcdTA0MzBcdTA0M2RcdTA0M2VcdTA0MzJcdTA0MzhcdTA0NDciLCJsYW5ndWFnZSI6InJ1IiwiZ3JvdXBzIjpbXX0.pErj8c_51h6Yw_hCDVw1sycbJFKJkLW693f3G0DDM_c
+
+### Создание университета
+POST {{baseUrl}}/organizations/universities/
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+Accept-Language: ru
+
+{
+  "code": "TUIT",
+  "name_ru": "Ташкентский университет информационных технологий",
+  "name_uz": "Toshkent axborot texnologiyalari universiteti",
+  "short_name_ru": "ТУИТ",
+  "short_name_uz": "TATU",
+  "address_ru": "г. Ташкент",
+  "address_uz": "Toshkent shahri",
+  "is_active": true,
+  "sort_order": 1
+}
