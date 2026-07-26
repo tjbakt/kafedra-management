@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from django.db import models, transaction
 
+from datetime import date
+
 from apps.staff.models import (
     StaffEmployment,
     StaffEmploymentAcademicYear,
@@ -208,3 +210,71 @@ class AcademicYearStaffService:
             ),
             academic_year_records__is_archived=False,
         )
+
+    @staticmethod
+    def get_year_start_date(academic_year):
+        return date(
+            academic_year.start_year,
+            9,
+            1,
+        )
+
+    @staticmethod
+    def get_year_end_date(academic_year):
+        return date(
+            academic_year.end_year,
+            8,
+            31,
+        )
+
+    @classmethod
+    def resolve_academic_degree(
+            cls,
+            *,
+            staff_member,
+            academic_year,
+    ):
+        degree = staff_member.academic_degree
+
+        if degree is None:
+            return None
+
+        awarded_date = (
+            staff_member.degree_awarded_date
+        )
+
+        if awarded_date is None:
+            return degree
+
+        if awarded_date > cls.get_year_end_date(
+                academic_year
+        ):
+            return None
+
+        return degree
+
+    @classmethod
+    def resolve_academic_title(
+            cls,
+            *,
+            staff_member,
+            academic_year,
+    ):
+        title = staff_member.academic_title
+
+        if title is None:
+            return None
+
+        awarded_date = (
+            staff_member.title_awarded_date
+        )
+
+        if awarded_date is None:
+            return title
+
+        if awarded_date > cls.get_year_end_date(
+                academic_year
+        ):
+            return None
+
+        return title

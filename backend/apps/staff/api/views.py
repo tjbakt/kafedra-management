@@ -1,7 +1,7 @@
-from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 
 from apps.academics.models import AcademicYear
@@ -329,6 +329,7 @@ class StaffEmploymentAcademicYearViewSet(
     filterset_class = (
         StaffEmploymentAcademicYearFilter
     )
+
     search_fields = (
         "staff_employment__staff_member__personnel_number",
         "staff_employment__staff_member__last_name",
@@ -340,21 +341,29 @@ class StaffEmploymentAcademicYearViewSet(
         "academic_degree__name_ru",
         "academic_title__name_ru",
     )
+
     ordering_fields = (
         "academic_year__start_year",
         "rate",
         "staff_employment__staff_member__last_name",
         "created_at",
     )
+
     ordering = (
         "-academic_year__start_year",
         "staff_employment__staff_member__last_name",
         "staff_employment__staff_member__first_name",
     )
 
-    def get_queryset(self):
-        queryset = (
-            StaffEmploymentAcademicYear.objects
+    @staticmethod
+    def base_queryset():
+        """
+        Общая структура запроса для активных
+        и архивных записей.
+        """
+
+        return (
+            StaffEmploymentAcademicYear.all_objects
             .select_related(
                 "academic_year",
                 "academic_degree",
@@ -364,13 +373,28 @@ class StaffEmploymentAcademicYearViewSet(
                 "staff_employment__department",
                 "staff_employment__department__faculty",
                 (
-                    "staff_employment__department__faculty__"
-                    "university"
+                    "staff_employment__department__"
+                    "faculty__university"
                 ),
                 "staff_employment__position",
             )
         )
 
+    def get_queryset(self):
+        queryset = self.base_queryset().filter(
+            is_archived=False
+        )
+
+        return self.scope_queryset(queryset)
+
+    def get_archived_queryset(self):
+        queryset = self.base_queryset().filter(
+            is_archived=True
+        )
+
+        return self.scope_queryset(queryset)
+
+    def scope_queryset(self, queryset):
         user = self.request.user
 
         if user.is_superuser:
@@ -392,30 +416,136 @@ class StaffEmploymentAcademicYearViewSet(
                 ),
             )
         )
+
         own_staff_ids = (
             AccessService.accessible_staff_member_ids(
                 user
             )
         )
 
-        if (
-            department_ids is None
-            or own_staff_ids is None
-        ):
-            return queryset
+        filters = Q()
 
-        return queryset.filter(
-            Q(
+        if department_ids:
+            filters |= Q(
                 staff_employment__department_id__in=(
                     department_ids
                 )
             )
-            | Q(
+
+        if own_staff_ids:
+            filters |= Q(
                 staff_employment__staff_member_id__in=(
                     own_staff_ids
                 )
             )
-        ).distinct()
+
+        if not filters:
+            return queryset.none()
+
+        return queryset.filter(filters).distinct()
+
+    def can_manage_department(
+        self,
+        *,
+        user,
+        department_id,
+    ) -> bool:
+        return (
+            user.is_superuser
+            or AccessService.has_global_role(
+                user,
+                SystemRole.Code.SYSTEM_ADMIN,
+                SystemRole.Code.HR_OFFICER,
+            )
+            or AccessService.can_manage_department(
+                user,
+                department_id,
+            )
+        )
+
+    def perform_create(self, serializer):
+        employment = serializer.validated_data[
+            "staff_employment"
+        ]
+
+        if not self.can_manage_department(
+            user=self.request.user,
+            department_id=employment.department_id,
+        ):
+            raise PermissionDenied(
+                (
+                    "Нет прав на создание кадровых "
+                    "данных этой кафедры."
+                )
+            )
+
+        super().perform_create(serializer)
+
+    def perform_update(self, serializer):
+        instance = self.get_object()
+
+        new_employment = serializer.validated_data.get(
+            "staff_employment",
+            instance.staff_employment,
+        )
+
+        # Проверяем и исходную, и новую кафедру.
+        department_ids = {
+            instance.staff_employment.department_id,
+            new_employment.department_id,
+        }
+
+        if not all(
+            self.can_manage_department(
+                user=self.request.user,
+                department_id=department_id,
+            )
+            for department_id in department_ids
+        ):
+            raise PermissionDenied(
+                (
+                    "Нет прав на изменение кадровых "
+                    "данных этой кафедры."
+                )
+            )
+
+        super().perform_update(serializer)
+
+    def perform_destroy(self, instance):
+        if not self.can_manage_department(
+            user=self.request.user,
+            department_id=(
+                instance.staff_employment.department_id
+            ),
+        ):
+            raise PermissionDenied(
+                (
+                    "Нет прав на архивирование кадровых "
+                    "данных этой кафедры."
+                )
+            )
+
+        super().perform_destroy(instance)
+
+    def check_restore_permission(
+        self,
+        request,
+        instance,
+    ):
+        if not self.can_manage_department(
+            user=request.user,
+            department_id=(
+                instance
+                .staff_employment
+                .department_id
+            ),
+        ):
+            raise PermissionDenied(
+                (
+                    "Нет прав на восстановление кадровых "
+                    "данных этой кафедры."
+                )
+            )
 
 class WorkloadNormViewSet(BaseArchiveModelViewSet):
     model = WorkloadNorm

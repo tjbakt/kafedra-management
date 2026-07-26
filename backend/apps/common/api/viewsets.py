@@ -13,10 +13,49 @@ class BaseArchiveModelViewSet(
     AuditedArchiveModelMixin,
     ModelViewSet,
 ):
+    """
+    Базовый ViewSet для моделей с мягким удалением.
+
+    Дочерний ViewSet должен определить:
+    - model;
+    - get_queryset();
+    - при необходимости scope_queryset();
+    - permission_classes.
+    """
+
     model = None
 
+    def scope_queryset(self, queryset):
+        """
+        Ограничивает queryset согласно области доступа
+        текущего пользователя.
+
+        По умолчанию ничего не ограничивает.
+        Чувствительные ViewSet должны переопределить метод.
+        """
+
+        return queryset
+
     def get_archived_queryset(self):
-        return self.model.all_objects.archived()
+        """
+        Получает архивные записи и применяет к ним
+        ту же область доступа, что и к активным данным.
+        """
+
+        if self.model is None:
+            raise AssertionError(
+                (
+                    f"{self.__class__.__name__} должен "
+                    "определить атрибут model."
+                )
+            )
+
+        queryset = (
+            self.model.all_objects
+            .filter(is_archived=True)
+        )
+
+        return self.scope_queryset(queryset)
 
     @action(
         detail=False,
@@ -51,13 +90,19 @@ class BaseArchiveModelViewSet(
         url_path="restore",
     )
     def restore(self, request, pk=None):
+        queryset = self.get_archived_queryset()
+
         instance = get_object_or_404(
-            self.model.all_objects,
+            queryset,
             pk=pk,
-            is_archived=True,
         )
 
         self.check_object_permissions(
+            request,
+            instance,
+        )
+
+        self.check_restore_permission(
             request,
             instance,
         )
@@ -68,8 +113,23 @@ class BaseArchiveModelViewSet(
 
         return Response(
             {
-                "detail": "Запись восстановлена из архива.",
+                "detail": (
+                    "Запись восстановлена из архива."
+                ),
                 "data": serializer.data,
             },
             status=status.HTTP_200_OK,
         )
+
+    def check_restore_permission(
+        self,
+        request,
+        instance,
+    ):
+        """
+        Дополнительная точка проверки восстановления.
+
+        Дочерний ViewSet может выбросить PermissionDenied.
+        """
+
+        return None
