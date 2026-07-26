@@ -40,7 +40,7 @@ def create_academic_year(
     **kwargs,
 ):
     defaults = {
-        "name": f"{start_year}/{end_year}",
+        # "name": f"{start_year}/{end_year}",
         "start_year": start_year,
         "end_year": end_year,
         "is_active": True,

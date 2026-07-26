@@ -15,6 +15,7 @@ from apps.staff.tests.factories import (
 )
 
 
+
 class StaffEmploymentAcademicYearApiTests(
     APITestCase
 ):
@@ -44,6 +45,8 @@ class StaffEmploymentAcademicYearApiTests(
         self.client.force_authenticate(
             user=self.user
         )
+
+        self.department_id = self.employment.department_id
 
     @patch(
         "apps.staff.api.views."
@@ -131,7 +134,10 @@ class StaffEmploymentAcademicYearApiTests(
         self,
         mock_global_role,
         mock_department_access,
+        mock_department_ids,
+        mock_staff_ids,
     ):
+        mock_department_ids.return_value = [self.employment.department_id]
         record = (
             StaffEmploymentAcademicYear
             .objects
@@ -166,7 +172,7 @@ class StaffEmploymentAcademicYearApiTests(
     @patch(
         "apps.staff.api.views."
         "AccessService.accessible_department_ids",
-        return_value=[],
+        # return_value=[dept_id],
     )
     @patch(
         "apps.staff.api.views."
@@ -220,7 +226,11 @@ class StaffEmploymentAcademicYearApiTests(
             self,
             mock_global_role,
             mock_department_access,
+            mock_department_ids,
+            mock_staff_ids,
     ):
+        mock_department_ids.return_value = [self.employment.department_id]
+
         record = (
             StaffEmploymentAcademicYear.objects.create(
                 staff_employment=self.employment,
@@ -247,6 +257,13 @@ class StaffEmploymentAcademicYearApiTests(
         self.assertTrue(record.is_archived)
 
     @patch(
+        "apps.staff.api.views.AccessService.accessible_staff_member_ids",
+        return_value=[],
+    )
+    @patch(
+        "apps.staff.api.views.AccessService.accessible_department_ids",
+    )
+    @patch(
         "apps.staff.api.views."
         "AccessService.can_manage_department",
         return_value=True,
@@ -260,7 +277,11 @@ class StaffEmploymentAcademicYearApiTests(
             self,
             mock_global_role,
             mock_department_access,
+            mock_department_ids,
+            mock_staff_ids,
     ):
+        mock_department_ids.return_value = [self.employment.department_id]
+
         record = (
             StaffEmploymentAcademicYear.objects.create(
                 staff_employment=self.employment,
@@ -285,3 +306,222 @@ class StaffEmploymentAcademicYearApiTests(
         record.refresh_from_db()
 
         self.assertFalse(record.is_archived)
+
+    @patch(
+        "apps.staff.api.views."
+        "AccessService.can_manage_department",
+        return_value=True,
+    )
+    @patch(
+        "apps.staff.api.views."
+        "AccessService.has_global_role",
+        return_value=False,
+    )
+    def test_department_manager_can_create_missing_records(
+            self,
+            mock_global_role,
+            mock_manage_department,
+    ):
+        url = reverse(
+            (
+                "staff-employment-academic-year-"
+                "create-missing"
+            )
+        )
+
+        response = self.client.post(
+            url,
+            {
+                "academic_year": (
+                    self.academic_year.id
+                ),
+                "department": (
+                    self.employment.department_id
+                ),
+            },
+            format="json",
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+        )
+
+        self.assertEqual(
+            response.data["created"],
+            1,
+        )
+
+        self.assertTrue(
+            StaffEmploymentAcademicYear.objects.filter(
+                staff_employment=self.employment,
+                academic_year=self.academic_year,
+            ).exists()
+        )
+
+    @patch(
+        "apps.staff.api.views."
+        "AccessService.has_global_role",
+        return_value=False,
+    )
+    def test_department_manager_cannot_fill_all_departments(
+            self,
+            mock_global_role,
+    ):
+        url = reverse(
+            (
+                "staff-employment-academic-year-"
+                "create-missing"
+            )
+        )
+
+        response = self.client.post(
+            url,
+            {
+                "academic_year": (
+                    self.academic_year.id
+                ),
+                "department": None,
+            },
+            format="json",
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_403_FORBIDDEN,
+        )
+
+        self.assertFalse(
+            StaffEmploymentAcademicYear
+            .objects
+            .exists()
+        )
+
+    @patch(
+        "apps.staff.api.views."
+        "AccessService.can_manage_department",
+        return_value=True,
+    )
+    @patch(
+        "apps.staff.api.views."
+        "AccessService.has_global_role",
+        return_value=False,
+    )
+    def test_repeated_bulk_request_does_not_duplicate_records(
+            self,
+            mock_global_role,
+            mock_manage_department,
+    ):
+        url = reverse(
+            (
+                "staff-employment-academic-year-"
+                "create-missing"
+            )
+        )
+
+        payload = {
+            "academic_year": self.academic_year.id,
+            "department": (
+                self.employment.department_id
+            ),
+        }
+
+        first_response = self.client.post(
+            url,
+            payload,
+            format="json",
+        )
+        second_response = self.client.post(
+            url,
+            payload,
+            format="json",
+        )
+
+        self.assertEqual(
+            first_response.status_code,
+            status.HTTP_200_OK,
+        )
+        self.assertEqual(
+            second_response.status_code,
+            status.HTTP_200_OK,
+        )
+
+        self.assertEqual(
+            first_response.data["created"],
+            1,
+        )
+        self.assertEqual(
+            second_response.data["created"],
+            0,
+        )
+        self.assertEqual(
+            second_response.data["skipped"],
+            1,
+        )
+
+        self.assertEqual(
+            StaffEmploymentAcademicYear
+            .objects
+            .filter(
+                staff_employment=self.employment,
+                academic_year=self.academic_year,
+            )
+            .count(),
+            1,
+        )
+
+    @patch(
+        "apps.staff.api.views."
+        "AccessService.accessible_department_ids",
+        return_value=[1],
+    )
+    @patch(
+        "apps.staff.api.views."
+        "AccessService.has_global_role",
+        return_value=False,
+    )
+    def test_missing_returns_employment_without_year_record(
+            self,
+            mock_global_role,
+            mock_department_ids,
+    ):
+        department_id = (
+            self.employment.department_id
+        )
+
+        mock_department_ids.return_value = [
+            department_id
+        ]
+
+        url = reverse(
+            (
+                "staff-employment-academic-year-"
+                "missing"
+            )
+        )
+
+        response = self.client.get(
+            url,
+            {
+                "academic_year": (
+                    self.academic_year.id
+                ),
+                "department": department_id,
+            },
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+        )
+
+        results = response.data.get(
+            "results",
+            response.data,
+        )
+
+        self.assertEqual(len(results), 1)
+        self.assertEqual(
+            results[0]["staff_employment"],
+            self.employment.id,
+        )

@@ -148,7 +148,7 @@ class AcademicYearStaffServiceTests(TestCase):
         past_year = create_academic_year(
             start_year=2023,
             end_year=2024,
-            name="2023/2024",
+            # name="2023/2024",
         )
 
         self.staff_member.degree_awarded_date = date(

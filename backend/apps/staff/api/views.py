@@ -1,10 +1,12 @@
+from django.db.models import Q
+from django.db import transaction
+
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 
-from apps.academics.models import AcademicYear
 from apps.common.api.viewsets import BaseArchiveModelViewSet
 from apps.staff.api.filters import (
     AcademicDegreeFilter,
@@ -23,6 +25,8 @@ from apps.staff.api.serializers import (
     StaffMemberSerializer,
     StaffPositionSerializer,
     WorkloadNormSerializer,
+    AcademicYearStaffRecordsResultSerializer,
+    CreateAcademicYearStaffRecordsSerializer,
 )
 from apps.staff.models import (
     AcademicDegree,
@@ -33,13 +37,14 @@ from apps.staff.models import (
     StaffPosition,
     WorkloadNorm,
 )
+from apps.staff.services.academic_year_staff_service import (
+    AcademicYearStaffService,
+)
 
 from apps.access_control.models import SystemRole
 from apps.access_control.services.access_service import (
     AccessService,
 )
-
-from django.db.models import Q
 
 
 class StaffPositionViewSet(BaseArchiveModelViewSet):
@@ -544,6 +549,274 @@ class StaffEmploymentAcademicYearViewSet(
                 (
                     "Нет прав на восстановление кадровых "
                     "данных этой кафедры."
+                )
+            )
+
+    def check_bulk_create_permission(
+            self,
+            *,
+            user,
+            department,
+    ):
+        if user.is_superuser:
+            return
+
+        if AccessService.has_global_role(
+                user,
+                SystemRole.Code.SYSTEM_ADMIN,
+                SystemRole.Code.HR_OFFICER,
+        ):
+            return
+
+        if department is None:
+            raise PermissionDenied(
+                (
+                    "Массовое заполнение всех кафедр "
+                    "доступно только кадровой службе "
+                    "или системному администратору."
+                )
+            )
+
+        if not AccessService.can_manage_department(
+                user,
+                department.id,
+        ):
+            raise PermissionDenied(
+                (
+                    "Нет прав на массовое заполнение "
+                    "данных выбранной кафедры."
+                )
+            )
+
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="create-missing",
+    )
+    def create_missing(self, request):
+        input_serializer = (
+            CreateAcademicYearStaffRecordsSerializer(
+                data=request.data,
+                context=self.get_serializer_context(),
+            )
+        )
+        input_serializer.is_valid(
+            raise_exception=True
+        )
+
+        academic_year = (
+            input_serializer.validated_data[
+                "academic_year"
+            ]
+        )
+        department = (
+            input_serializer.validated_data.get(
+                "department"
+            )
+        )
+
+        self.check_bulk_create_permission(
+            user=request.user,
+            department=department,
+        )
+
+        result = (
+            AcademicYearStaffService
+            .create_missing_records(
+                academic_year=academic_year,
+                department=department,
+                created_by=request.user,
+            )
+        )
+
+        missing_count = (
+            AcademicYearStaffService
+            .get_missing_employments(
+                academic_year=academic_year,
+                department=department,
+            )
+            .count()
+        )
+
+        response_data = {
+            "academic_year": academic_year.id,
+            "academic_year_name": str(
+                academic_year
+            ),
+            "department": (
+                department.id
+                if department is not None
+                else None
+            ),
+            "department_name": (
+                str(department)
+                if department is not None
+                else None
+            ),
+            "total_employments": result[
+                "total_employments"
+            ],
+            "created": result["created"],
+            "restored": result["restored"],
+            "skipped": result["skipped"],
+            "missing": missing_count,
+        }
+
+        output_serializer = (
+            AcademicYearStaffRecordsResultSerializer(
+                response_data
+            )
+        )
+
+        return Response(
+            output_serializer.data,
+            status=status.HTTP_200_OK,
+        )
+
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="missing",
+    )
+    def missing(self, request):
+        input_serializer = (
+            MissingAcademicYearStaffRecordsSerializer(
+                data=request.query_params,
+                context=self.get_serializer_context(),
+            )
+        )
+        input_serializer.is_valid(
+            raise_exception=True
+        )
+
+        academic_year = (
+            input_serializer.validated_data[
+                "academic_year"
+            ]
+        )
+        department = (
+            input_serializer.validated_data.get(
+                "department"
+            )
+        )
+
+        self.check_missing_list_permission(
+            user=request.user,
+            department=department,
+        )
+
+        queryset = (
+            AcademicYearStaffService
+            .get_missing_employments(
+                academic_year=academic_year,
+                department=department,
+            )
+        )
+
+        page = self.paginate_queryset(queryset)
+
+        if page is not None:
+            data = [
+                self.serialize_missing_employment(
+                    employment
+                )
+                for employment in page
+            ]
+            return self.get_paginated_response(data)
+
+        return Response(
+            [
+                self.serialize_missing_employment(
+                    employment
+                )
+                for employment in queryset
+            ]
+        )
+
+    @staticmethod
+    def serialize_missing_employment(
+            employment,
+    ):
+        staff_member = employment.staff_member
+
+        return {
+            "staff_employment": employment.id,
+            "staff_member": staff_member.id,
+            "staff_member_name": (
+                staff_member.full_name
+            ),
+            "personnel_number": (
+                staff_member.personnel_number
+            ),
+            "department": employment.department_id,
+            "department_name": str(
+                employment.department
+            ),
+            "position": employment.position_id,
+            "position_name": str(
+                employment.position
+            ),
+            "current_rate": employment.rate,
+            "current_academic_degree": (
+                staff_member.academic_degree_id
+            ),
+            "current_academic_degree_name": (
+                str(staff_member.academic_degree)
+                if staff_member.academic_degree_id
+                else None
+            ),
+            "current_academic_title": (
+                staff_member.academic_title_id
+            ),
+            "current_academic_title_name": (
+                str(staff_member.academic_title)
+                if staff_member.academic_title_id
+                else None
+            ),
+        }
+
+    def check_missing_list_permission(
+            self,
+            *,
+            user,
+            department,
+    ):
+        if user.is_superuser:
+            return
+
+        if AccessService.has_global_role(
+                user,
+                SystemRole.Code.SYSTEM_ADMIN,
+                SystemRole.Code.HR_OFFICER,
+                SystemRole.Code.ACADEMIC_OFFICE,
+        ):
+            return
+
+        if department is None:
+            raise PermissionDenied(
+                (
+                    "Для просмотра всех кафедр "
+                    "недостаточно прав."
+                )
+            )
+
+        department_ids = (
+            AccessService.accessible_department_ids(
+                user,
+                role_codes=(
+                    SystemRole.Code.DEPARTMENT_HEAD,
+                ),
+            )
+        )
+
+        if (
+                not department_ids
+                or department.id not in department_ids
+        ):
+            raise PermissionDenied(
+                (
+                    "Нет прав на просмотр данных "
+                    "выбранной кафедры."
                 )
             )
 

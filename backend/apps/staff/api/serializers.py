@@ -11,6 +11,8 @@ from apps.staff.models import (
     StaffPosition,
     WorkloadNorm,
 )
+from apps.academics.models import AcademicYear
+from apps.organizations.models import Department
 
 
 class LocalizedStaffNameMixin:
@@ -727,3 +729,99 @@ class WorkloadNormSerializer(AuditFieldsSerializer):
 class RecommendedWorkloadSerializer(serializers.Serializer):
     academic_year = serializers.IntegerField()
     employment = serializers.IntegerField()
+
+class CreateAcademicYearStaffRecordsSerializer(
+    serializers.Serializer
+):
+    academic_year = serializers.PrimaryKeyRelatedField(
+        queryset=AcademicYear.objects.filter(
+            is_active=True,
+            is_archived=False,
+        ),
+    )
+    department = serializers.PrimaryKeyRelatedField(
+        queryset=Department.objects.filter(
+            is_active=True,
+            is_archived=False,
+        ),
+        required=False,
+        allow_null=True,
+    )
+
+    def validate(self, attrs):
+        academic_year = attrs["academic_year"]
+        department = attrs.get("department")
+
+        if academic_year.is_archived:
+            raise serializers.ValidationError(
+                {
+                    "academic_year": (
+                        "Учебный год находится в архиве."
+                    )
+                }
+            )
+
+        if not academic_year.is_active:
+            raise serializers.ValidationError(
+                {
+                    "academic_year": (
+                        "Учебный год неактивен."
+                    )
+                }
+            )
+
+        if department is not None:
+            if department.is_archived:
+                raise serializers.ValidationError(
+                    {
+                        "department": (
+                            "Кафедра находится в архиве."
+                        )
+                    }
+                )
+
+            if not department.is_active:
+                raise serializers.ValidationError(
+                    {
+                        "department": (
+                            "Кафедра неактивна."
+                        )
+                    }
+                )
+
+        return attrs
+
+class AcademicYearStaffRecordsResultSerializer(
+    serializers.Serializer
+):
+    academic_year = serializers.IntegerField()
+    academic_year_name = serializers.CharField()
+
+    department = serializers.IntegerField(
+        allow_null=True,
+    )
+    department_name = serializers.CharField(
+        allow_null=True,
+    )
+
+    total_employments = serializers.IntegerField()
+    created = serializers.IntegerField()
+    restored = serializers.IntegerField()
+    skipped = serializers.IntegerField()
+    missing = serializers.IntegerField()
+
+class MissingAcademicYearStaffRecordsSerializer(
+    serializers.Serializer
+):
+    academic_year = serializers.PrimaryKeyRelatedField(
+        queryset=AcademicYear.objects.filter(
+            is_archived=False,
+        ),
+    )
+    department = serializers.PrimaryKeyRelatedField(
+        queryset=Department.objects.filter(
+            is_archived=False,
+        ),
+        required=False,
+        allow_null=True,
+    )
