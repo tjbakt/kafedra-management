@@ -1,8 +1,6 @@
-from decimal import Decimal
-
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
-from django.db.models import Q, Sum
+from django.db.models import Q
 
 from rest_framework import status
 from rest_framework.decorators import action
@@ -12,14 +10,14 @@ from rest_framework.response import Response
 
 from apps.academics.models import AcademicYear
 from apps.common.api.viewsets import BaseArchiveModelViewSet
-from apps.staff.models import StaffEmployment
-from apps.teaching.models import PlannedWorkload
+
 from apps.workload.api.filters import (
     WorkloadDistributionFilter,
 )
 from apps.workload.api.serializers import (
     WorkloadDistributionSerializer,
     TeacherWorkloadSummarySerializer,
+    DepartmentWorkloadSummarySerializer,
 )
 from apps.workload.models import WorkloadDistribution
 from apps.workload.services.distribution_service import (
@@ -27,6 +25,9 @@ from apps.workload.services.distribution_service import (
 )
 from apps.workload.services.teacher_workload_service import (
     TeacherWorkloadService,
+)
+from apps.workload.services.department_workload_service import (
+    DepartmentWorkloadService,
 )
 
 from apps.access_control.models import SystemRole
@@ -386,90 +387,54 @@ class WorkloadDistributionViewSet(
         url_path="department-summary",
     )
     def department_summary(self, request):
-        queryset = self.filter_queryset(
-            self.get_queryset()
-        )
-
-        distributed_total = (
-                queryset.aggregate(
-                    total=Sum("allocated_hours")
-                )["total"]
-                or Decimal("0.00")
-        )
-
-        planned_queryset = PlannedWorkload.objects.all()
-
-        academic_year = request.query_params.get(
+        academic_year_id = request.query_params.get(
             "academic_year"
         )
-        academic_semester = request.query_params.get(
+        academic_semester_id = request.query_params.get(
             "academic_semester"
         )
-        department = request.query_params.get(
-            "teaching_department"
+        department_id = request.query_params.get(
+            "department"
         )
 
-        if academic_year:
-            planned_queryset = planned_queryset.filter(
-                academic_year_id=academic_year
+        if not academic_year_id:
+            return Response(
+                {
+                    "academic_year": (
+                        "Необходимо указать учебный год."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
-        if academic_semester:
-            planned_queryset = planned_queryset.filter(
-                academic_semester_id=academic_semester
+        try:
+            academic_year = AcademicYear.objects.get(
+                pk=academic_year_id,
+            )
+        except AcademicYear.DoesNotExist:
+            return Response(
+                {
+                    "academic_year": (
+                        "Указанный учебный год не найден."
+                    )
+                },
+                status=status.HTTP_404_NOT_FOUND,
             )
 
-        if department:
-            planned_queryset = planned_queryset.filter(
-                teaching_department_id=department
-            )
-
-        planned_total = (
-                planned_queryset.aggregate(
-                    total=Sum("total_hours")
-                )["total"]
-                or Decimal("0.00")
+        result = DepartmentWorkloadService.get_summary(
+            academic_year=academic_year,
+            academic_semester_id=academic_semester_id,
+            department_id=department_id,
         )
 
-        remaining_total = (
-                planned_total - distributed_total
-        )
-
-        by_teacher = (
-            queryset
-            .values(
-                "staff_employment__staff_member_id",
-                "staff_employment__staff_member__"
-                "personnel_number",
-                "staff_employment__staff_member__last_name",
-                "staff_employment__staff_member__first_name",
-                "staff_employment__staff_member__middle_name",
-            )
-            .annotate(
-                distributed_hours=Sum("allocated_hours")
-            )
-            .order_by(
-                "staff_employment__staff_member__last_name",
-                "staff_employment__staff_member__first_name",
-            )
+        serializer = DepartmentWorkloadSummarySerializer(
+            result,
+            many=True,
         )
 
         return Response(
-            {
-                "planned_hours": planned_total,
-                "distributed_hours": distributed_total,
-                "remaining_hours": remaining_total,
-                "distribution_percent": (
-                    (
-                            distributed_total
-                            / planned_total
-                            * Decimal("100.00")
-                    ).quantize(Decimal("0.01"))
-                    if planned_total
-                    else Decimal("0.00")
-                ),
-                "by_teacher": list(by_teacher),
-            }
+            serializer.data,
+            status=status.HTTP_200_OK,
         )
 
     def get_permissions(self):

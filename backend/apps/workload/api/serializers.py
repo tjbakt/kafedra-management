@@ -246,3 +246,46 @@ class TeacherWorkloadSummarySerializer(
         )
     )
     norm_found = serializers.BooleanField()
+
+class DepartmentWorkloadSummarySerializer(
+    serializers.Serializer
+):
+    department = serializers.IntegerField()
+    department_name = serializers.CharField()
+
+    academic_year = serializers.IntegerField()
+    academic_year_name = serializers.CharField()
+
+    planned_positions = serializers.IntegerField()
+
+    planned_hours = serializers.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+    )
+    draft_hours = serializers.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+    )
+    approved_hours = serializers.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+    )
+    distributed_hours = serializers.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+    )
+    remaining_hours = serializers.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+    )
+    distribution_percent = serializers.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+    )
+    distribution_status = serializers.ChoiceField(
+        choices=(
+            "incomplete",
+            "complete",
+            "exceeded",
+        )
+    )
