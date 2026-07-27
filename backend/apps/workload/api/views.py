@@ -162,6 +162,11 @@ class WorkloadDistributionViewSet(
                 WorkloadDistributionService
                 .update_distribution(
                     distribution=self.get_object(),
+                    staff_employment=(
+                        serializer.validated_data.get(
+                            "staff_employment"
+                        )
+                    ),
                     allocated_hours=(
                         serializer.validated_data.get(
                             "allocated_hours",

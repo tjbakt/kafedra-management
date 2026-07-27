@@ -8,7 +8,7 @@ from django.utils.translation import gettext_lazy as _
 from django.conf import settings
 
 from apps.common.models import BaseModel
-from apps.staff.models import StaffEmployment
+from apps.staff.models import ( StaffEmployment, StaffEmploymentAcademicYear,)
 from apps.teaching.models import PlannedWorkload
 
 
@@ -166,6 +166,27 @@ class WorkloadDistribution(BaseModel):
                     "staff_employment": _(
                         "Трудовое назначение преподавателя должно "
                         "относиться к кафедре плановой нагрузки."
+                    )
+                }
+            )
+
+        year_record_exists = (
+            StaffEmploymentAcademicYear.objects.filter(
+                staff_employment=self.staff_employment,
+                academic_year=(
+                    self.planned_workload.academic_year
+                ),
+                is_archived=False,
+                is_active=True,
+            ).exists()
+        )
+
+        if not year_record_exists:
+            raise ValidationError(
+                {
+                    "staff_employment": _(
+                        "Для преподавателя отсутствуют активные "
+                        "кадровые данные на выбранный учебный год."
                     )
                 }
             )

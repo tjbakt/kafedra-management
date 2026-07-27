@@ -1,10 +1,6 @@
-from decimal import Decimal
-
-from django.db.models import Sum
 from rest_framework import serializers
 
 from apps.common.api.serializers import AuditFieldsSerializer
-from apps.staff.models import WorkloadNorm
 from apps.workload.models import WorkloadDistribution
 
 class WorkloadDistributionSerializer(
@@ -149,56 +145,10 @@ class WorkloadDistributionSerializer(
     def validate(self, attrs):
         instance = self.instance
 
-        planned_workload = attrs.get(
-            "planned_workload",
-            getattr(instance, "planned_workload", None),
-        )
-        staff_employment = attrs.get(
-            "staff_employment",
-            getattr(instance, "staff_employment", None),
-        )
-        allocated_hours = attrs.get(
-            "allocated_hours",
-            getattr(instance, "allocated_hours", None),
-        )
-
-        if planned_workload and staff_employment:
-            if (
-                planned_workload.teaching_department_id
-                != staff_employment.department_id
-            ):
-                raise serializers.ValidationError(
-                    {
-                        "staff_employment": (
-                            "Трудовое назначение преподавателя "
-                            "должно относиться к обеспечивающей кафедре."
-                        )
-                    }
-                )
-
-            if not staff_employment.is_active:
-                raise serializers.ValidationError(
-                    {
-                        "staff_employment": (
-                            "Трудовое назначение неактивно."
-                        )
-                    }
-                )
-
-            if not staff_employment.position.is_teaching_position:
-                raise serializers.ValidationError(
-                    {
-                        "staff_employment": (
-                            "Должность сотрудника не участвует "
-                            "в учебной нагрузке."
-                        )
-                    }
-                )
-
         if (
-            instance
-            and instance.status
-            == WorkloadDistribution.Status.APPROVED
+                instance
+                and instance.status
+                == WorkloadDistribution.Status.APPROVED
         ):
             changed_fields = {
                 field
@@ -208,7 +158,7 @@ class WorkloadDistributionSerializer(
                     "allocated_hours",
                 )
                 if field in attrs
-                and attrs[field] != getattr(instance, field)
+                   and attrs[field] != getattr(instance, field)
             }
 
             if changed_fields:
@@ -216,44 +166,23 @@ class WorkloadDistributionSerializer(
                     {
                         "detail": (
                             "Утверждённое распределение нельзя "
-                            "изменять."
+                            "изменять. Сначала отмените утверждение."
                         )
                     }
                 )
 
-        if planned_workload and allocated_hours:
-            other_distributed = (
-                WorkloadDistribution.objects
-                .filter(
-                    planned_workload=planned_workload,
-                    status__in=(
-                        WorkloadDistribution.Status.DRAFT,
-                        WorkloadDistribution.Status.APPROVED,
-                    ),
-                )
-                .exclude(
-                    pk=instance.pk if instance else None
-                )
-                .aggregate(
-                    total=Sum("allocated_hours")
-                )["total"]
-                or Decimal("0.00")
+        if (
+                instance
+                and instance.status
+                == WorkloadDistribution.Status.CANCELLED
+        ):
+            raise serializers.ValidationError(
+                {
+                    "detail": (
+                        "Отменённое распределение нельзя изменять."
+                    )
+                }
             )
-
-            remaining = (
-                planned_workload.total_hours
-                - other_distributed
-            )
-
-            if allocated_hours > remaining:
-                raise serializers.ValidationError(
-                    {
-                        "allocated_hours": (
-                            "Доступный остаток нагрузки: "
-                            f"{remaining} часов."
-                        )
-                    }
-                )
 
         return attrs
 
