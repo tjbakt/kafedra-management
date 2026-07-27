@@ -12,17 +12,21 @@ from rest_framework.response import Response
 
 from apps.academics.models import AcademicYear
 from apps.common.api.viewsets import BaseArchiveModelViewSet
-from apps.staff.models import StaffEmployment, WorkloadNorm
+from apps.staff.models import StaffEmployment
 from apps.teaching.models import PlannedWorkload
 from apps.workload.api.filters import (
     WorkloadDistributionFilter,
 )
 from apps.workload.api.serializers import (
     WorkloadDistributionSerializer,
+    TeacherWorkloadSummarySerializer,
 )
 from apps.workload.models import WorkloadDistribution
 from apps.workload.services.distribution_service import (
     WorkloadDistributionService,
+)
+from apps.workload.services.teacher_workload_service import (
+    TeacherWorkloadService,
 )
 
 from apps.access_control.models import SystemRole
@@ -187,362 +191,286 @@ class WorkloadDistributionViewSet(
 
         serializer.instance = distribution
 
-        @action(
-            detail=True,
-            methods=["post"],
-            url_path="approve",
-        )
-        def approve(self, request, pk=None):
-            distribution = self.get_object()
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="approve",
+    )
+    def approve(self, request, pk=None):
+        distribution = self.get_object()
 
-            try:
-                distribution = (
-                    WorkloadDistributionService
-                    .approve_distribution(
-                        distribution=distribution,
-                        user=request.user,
-                    )
-                )
-            except DjangoValidationError as exc:
-                raise ValidationError(
-                    getattr(exc, "message_dict", exc.messages)
-                ) from exc
-
-            serializer = self.get_serializer(distribution)
-
-            return Response(
-                {
-                    "detail": "Распределение утверждено.",
-                    "data": serializer.data,
-                },
-                status=status.HTTP_200_OK,
-            )
-
-        @action(
-            detail=True,
-            methods=["post"],
-            url_path="cancel",
-        )
-        def cancel(self, request, pk=None):
-            distribution = self.get_object()
-
-            reason = request.data.get(
-                "reason",
-                "",
-            ).strip()
-
-            if not reason:
-                return Response(
-                    {
-                        "reason": (
-                            "Укажите причину отмены распределения."
-                        )
-                    },
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-
+        try:
             distribution = (
                 WorkloadDistributionService
-                .cancel_distribution(
+                .approve_distribution(
                     distribution=distribution,
                     user=request.user,
-                    reason=reason,
                 )
             )
+        except DjangoValidationError as exc:
+            raise ValidationError(
+                getattr(exc, "message_dict", exc.messages)
+            ) from exc
 
-            serializer = self.get_serializer(distribution)
+        serializer = self.get_serializer(distribution)
 
+        return Response(
+            {
+                "detail": "Распределение утверждено.",
+                "data": serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="cancel",
+    )
+    def cancel(self, request, pk=None):
+        distribution = self.get_object()
+
+        reason = request.data.get(
+            "reason",
+            "",
+        ).strip()
+
+        if not reason:
             return Response(
                 {
-                    "detail": "Распределение отменено.",
-                    "data": serializer.data,
+                    "reason": (
+                        "Укажите причину отмены распределения."
+                    )
                 },
-                status=status.HTTP_200_OK,
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
-        @action(
-            detail=False,
-            methods=["post"],
-            url_path="approve-selected",
+        distribution = (
+            WorkloadDistributionService
+            .cancel_distribution(
+                distribution=distribution,
+                user=request.user,
+                reason=reason,
+            )
         )
-        def approve_selected(self, request):
-            ids = request.data.get("ids", [])
 
-            if not isinstance(ids, list) or not ids:
-                return Response(
-                    {
-                        "detail": (
-                            "Необходимо передать непустой список ids."
-                        )
-                    },
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
+        serializer = self.get_serializer(distribution)
 
-            queryset = self.get_queryset().filter(
-                id__in=ids
-            )
+        return Response(
+            {
+                "detail": "Распределение отменено.",
+                "data": serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
 
-            approved_ids = []
-            errors = []
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="approve-selected",
+    )
+    def approve_selected(self, request):
+        ids = request.data.get("ids", [])
 
-            with transaction.atomic():
-                for distribution in queryset:
-                    try:
-                        approved = (
-                            WorkloadDistributionService
-                            .approve_distribution(
-                                distribution=distribution,
-                                user=request.user,
-                            )
-                        )
-                        approved_ids.append(approved.id)
-                    except DjangoValidationError as exc:
-                        errors.append(
-                            {
-                                "id": distribution.id,
-                                "error": (
-                                    getattr(
-                                        exc,
-                                        "message_dict",
-                                        exc.messages,
-                                    )
-                                ),
-                            }
-                        )
-
+        if not isinstance(ids, list) or not ids:
             return Response(
                 {
-                    "approved_count": len(approved_ids),
-                    "approved_ids": approved_ids,
-                    "errors_count": len(errors),
-                    "errors": errors,
+                    "detail": (
+                        "Необходимо передать непустой список ids."
+                    )
                 },
-                status=status.HTTP_200_OK,
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
-        @action(
-            detail=False,
-            methods=["get"],
-            url_path="teacher-summary",
+        queryset = self.get_queryset().filter(
+            id__in=ids
         )
-        def teacher_summary(self, request):
-            academic_year_id = request.query_params.get(
-                "academic_year"
-            )
-            staff_member_id = request.query_params.get(
-                "staff_member"
-            )
 
-            if not academic_year_id:
-                return Response(
-                    {
-                        "detail": (
-                            "Необходимо указать academic_year."
+        approved_ids = []
+        errors = []
+
+        with transaction.atomic():
+            for distribution in queryset:
+                try:
+                    approved = (
+                        WorkloadDistributionService
+                        .approve_distribution(
+                            distribution=distribution,
+                            user=request.user,
                         )
-                    },
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
+                    )
+                    approved_ids.append(approved.id)
+                except DjangoValidationError as exc:
+                    errors.append(
+                        {
+                            "id": distribution.id,
+                            "error": (
+                                getattr(
+                                    exc,
+                                    "message_dict",
+                                    exc.messages,
+                                )
+                            ),
+                        }
+                    )
 
+        return Response(
+            {
+                "approved_count": len(approved_ids),
+                "approved_ids": approved_ids,
+                "errors_count": len(errors),
+                "errors": errors,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="teacher-summary",
+    )
+    def teacher_summary(self, request):
+        academic_year_id = request.query_params.get(
+            "academic_year"
+        )
+        staff_member_id = request.query_params.get(
+            "staff_member"
+        )
+        department_id = request.query_params.get(
+            "department"
+        )
+
+        if not academic_year_id:
+            return Response(
+                {
+                    "detail": (
+                        "Необходимо указать academic_year."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
             academic_year = AcademicYear.objects.get(
                 pk=academic_year_id
             )
-
-            employments = (
-                StaffEmployment.objects
-                .select_related(
-                    "staff_member",
-                    "position",
-                    "department",
-                )
-                .filter(
-                    is_active=True,
-                    position__is_teaching_position=True,
-                )
-            )
-
-            if staff_member_id:
-                employments = employments.filter(
-                    staff_member_id=staff_member_id
-                )
-
-            result = []
-
-            for employment in employments:
-                distributed_hours = (
-                        WorkloadDistribution.objects
-                        .filter(
-                            staff_employment=employment,
-                            planned_workload__academic_year=(
-                                academic_year
-                            ),
-                            status__in=(
-                                WorkloadDistribution.Status.DRAFT,
-                                WorkloadDistribution.Status.APPROVED,
-                            ),
-                        )
-                        .aggregate(
-                            total=Sum("allocated_hours")
-                        )["total"]
-                        or Decimal("0.00")
-                )
-
-                norm = WorkloadNorm.objects.filter(
-                    academic_year=academic_year,
-                    rate=employment.rate,
-                    has_academic_degree=(
-                        employment.staff_member
-                        .has_academic_degree
-                    ),
-                    has_academic_title=(
-                        employment.staff_member
-                        .has_academic_title
-                    ),
-                    is_active=True,
-                ).first()
-
-                recommended_hours = (
-                    norm.annual_hours if norm else None
-                )
-
-                if recommended_hours:
-                    difference_hours = (
-                            distributed_hours
-                            - recommended_hours
-                    )
-                    load_percent = (
-                            distributed_hours
-                            / recommended_hours
-                            * Decimal("100.00")
-                    ).quantize(Decimal("0.01"))
-                else:
-                    difference_hours = None
-                    load_percent = None
-
-                result.append(
-                    {
-                        "staff_employment": employment.id,
-                        "staff_member": (
-                            employment.staff_member_id
-                        ),
-                        "teacher_name": (
-                            employment.staff_member.full_name
-                        ),
-                        "personnel_number": (
-                            employment.staff_member
-                            .personnel_number
-                        ),
-                        "department": employment.department_id,
-                        "department_name": (
-                            employment.department.name_ru
-                        ),
-                        "position": employment.position_id,
-                        "position_name": (
-                            employment.position.name_ru
-                        ),
-                        "academic_year": academic_year.id,
-                        "academic_year_name": academic_year.name,
-                        "employment_rate": employment.rate,
-                        "recommended_hours": recommended_hours,
-                        "distributed_hours": distributed_hours,
-                        "difference_hours": difference_hours,
-                        "load_percent": load_percent,
-                        "norm_found": norm is not None,
-                    }
-                )
-
-            return Response(result)
-
-        @action(
-            detail=False,
-            methods=["get"],
-            url_path="department-summary",
-        )
-        def department_summary(self, request):
-            queryset = self.filter_queryset(
-                self.get_queryset()
-            )
-
-            distributed_total = (
-                    queryset.aggregate(
-                        total=Sum("allocated_hours")
-                    )["total"]
-                    or Decimal("0.00")
-            )
-
-            planned_queryset = PlannedWorkload.objects.all()
-
-            academic_year = request.query_params.get(
-                "academic_year"
-            )
-            academic_semester = request.query_params.get(
-                "academic_semester"
-            )
-            department = request.query_params.get(
-                "teaching_department"
-            )
-
-            if academic_year:
-                planned_queryset = planned_queryset.filter(
-                    academic_year_id=academic_year
-                )
-
-            if academic_semester:
-                planned_queryset = planned_queryset.filter(
-                    academic_semester_id=academic_semester
-                )
-
-            if department:
-                planned_queryset = planned_queryset.filter(
-                    teaching_department_id=department
-                )
-
-            planned_total = (
-                    planned_queryset.aggregate(
-                        total=Sum("total_hours")
-                    )["total"]
-                    or Decimal("0.00")
-            )
-
-            remaining_total = (
-                    planned_total - distributed_total
-            )
-
-            by_teacher = (
-                queryset
-                .values(
-                    "staff_employment__staff_member_id",
-                    "staff_employment__staff_member__"
-                    "personnel_number",
-                    "staff_employment__staff_member__last_name",
-                    "staff_employment__staff_member__first_name",
-                    "staff_employment__staff_member__middle_name",
-                )
-                .annotate(
-                    distributed_hours=Sum("allocated_hours")
-                )
-                .order_by(
-                    "staff_employment__staff_member__last_name",
-                    "staff_employment__staff_member__first_name",
-                )
-            )
-
+        except AcademicYear.DoesNotExist:
             return Response(
                 {
-                    "planned_hours": planned_total,
-                    "distributed_hours": distributed_total,
-                    "remaining_hours": remaining_total,
-                    "distribution_percent": (
-                        (
-                                distributed_total
-                                / planned_total
-                                * Decimal("100.00")
-                        ).quantize(Decimal("0.01"))
-                        if planned_total
-                        else Decimal("0.00")
-                    ),
-                    "by_teacher": list(by_teacher),
-                }
+                    "academic_year": (
+                        "Указанный учебный год не найден."
+                    )
+                },
+                status=status.HTTP_404_NOT_FOUND,
             )
+
+        result = TeacherWorkloadService.get_summary(
+            academic_year=academic_year,
+            staff_member_id=staff_member_id,
+            department_id=department_id,
+        )
+
+        serializer = TeacherWorkloadSummarySerializer(
+            result,
+            many=True,
+        )
+
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK,
+        )
+
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="department-summary",
+    )
+    def department_summary(self, request):
+        queryset = self.filter_queryset(
+            self.get_queryset()
+        )
+
+        distributed_total = (
+                queryset.aggregate(
+                    total=Sum("allocated_hours")
+                )["total"]
+                or Decimal("0.00")
+        )
+
+        planned_queryset = PlannedWorkload.objects.all()
+
+        academic_year = request.query_params.get(
+            "academic_year"
+        )
+        academic_semester = request.query_params.get(
+            "academic_semester"
+        )
+        department = request.query_params.get(
+            "teaching_department"
+        )
+
+        if academic_year:
+            planned_queryset = planned_queryset.filter(
+                academic_year_id=academic_year
+            )
+
+        if academic_semester:
+            planned_queryset = planned_queryset.filter(
+                academic_semester_id=academic_semester
+            )
+
+        if department:
+            planned_queryset = planned_queryset.filter(
+                teaching_department_id=department
+            )
+
+        planned_total = (
+                planned_queryset.aggregate(
+                    total=Sum("total_hours")
+                )["total"]
+                or Decimal("0.00")
+        )
+
+        remaining_total = (
+                planned_total - distributed_total
+        )
+
+        by_teacher = (
+            queryset
+            .values(
+                "staff_employment__staff_member_id",
+                "staff_employment__staff_member__"
+                "personnel_number",
+                "staff_employment__staff_member__last_name",
+                "staff_employment__staff_member__first_name",
+                "staff_employment__staff_member__middle_name",
+            )
+            .annotate(
+                distributed_hours=Sum("allocated_hours")
+            )
+            .order_by(
+                "staff_employment__staff_member__last_name",
+                "staff_employment__staff_member__first_name",
+            )
+        )
+
+        return Response(
+            {
+                "planned_hours": planned_total,
+                "distributed_hours": distributed_total,
+                "remaining_hours": remaining_total,
+                "distribution_percent": (
+                    (
+                            distributed_total
+                            / planned_total
+                            * Decimal("100.00")
+                    ).quantize(Decimal("0.01"))
+                    if planned_total
+                    else Decimal("0.00")
+                ),
+                "by_teacher": list(by_teacher),
+            }
+        )
 
     def get_permissions(self):
         if self.action in (

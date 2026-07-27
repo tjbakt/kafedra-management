@@ -189,15 +189,30 @@ class WorkloadDistributionSerializer(
 class TeacherWorkloadSummarySerializer(
     serializers.Serializer
 ):
+    staff_employment_academic_year = (
+        serializers.IntegerField()
+    )
+    staff_employment = serializers.IntegerField()
     staff_member = serializers.IntegerField()
     teacher_name = serializers.CharField()
     personnel_number = serializers.CharField()
+
+    department = serializers.IntegerField()
+    department_name = serializers.CharField()
+
+    position = serializers.IntegerField()
+    position_name = serializers.CharField()
+
     academic_year = serializers.IntegerField()
     academic_year_name = serializers.CharField()
+
     employment_rate = serializers.DecimalField(
         max_digits=4,
         decimal_places=2,
     )
+    has_academic_degree = serializers.BooleanField()
+    has_academic_title = serializers.BooleanField()
+
     recommended_hours = serializers.DecimalField(
         max_digits=12,
         decimal_places=2,
@@ -206,6 +221,11 @@ class TeacherWorkloadSummarySerializer(
     distributed_hours = serializers.DecimalField(
         max_digits=12,
         decimal_places=2,
+    )
+    remaining_hours = serializers.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        allow_null=True,
     )
     difference_hours = serializers.DecimalField(
         max_digits=12,
@@ -216,5 +236,13 @@ class TeacherWorkloadSummarySerializer(
         max_digits=8,
         decimal_places=2,
         allow_null=True,
+    )
+    load_status = serializers.ChoiceField(
+        choices=(
+            "underloaded",
+            "balanced",
+            "overloaded",
+            "norm_missing",
+        )
     )
     norm_found = serializers.BooleanField()
