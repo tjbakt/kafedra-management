@@ -1,6 +1,7 @@
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from django.db.models import Q
+from django.http import HttpResponse
 
 from rest_framework import status
 from rest_framework.decorators import action
@@ -37,6 +38,10 @@ from apps.access_control.services.access_service import (
 
 from apps.access_control.permissions import (
     CanManageWorkloadDistribution,
+)
+
+from apps.workload.services.department_workload_export_service import (
+    DepartmentWorkloadExportService,
 )
 
 
@@ -436,6 +441,84 @@ class WorkloadDistributionViewSet(
             serializer.data,
             status=status.HTTP_200_OK,
         )
+
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="department-summary/export",
+    )
+    def export_department_summary(self, request):
+        academic_year_id = request.query_params.get(
+            "academic_year"
+        )
+        academic_semester_id = request.query_params.get(
+            "academic_semester"
+        )
+        department_id = request.query_params.get(
+            "department"
+        )
+
+        if not academic_year_id:
+            return Response(
+                {
+                    "academic_year": (
+                        "Необходимо указать учебный год."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            academic_year = AcademicYear.objects.get(
+                pk=academic_year_id,
+            )
+        except (
+                AcademicYear.DoesNotExist,
+                ValueError,
+                TypeError,
+        ):
+            return Response(
+                {
+                    "academic_year": (
+                        "Указан некорректный учебный год."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            file_content, filename = (
+                DepartmentWorkloadExportService.export(
+                    academic_year=academic_year,
+                    academic_semester_id=(
+                        academic_semester_id
+                    ),
+                    department_id=department_id,
+                )
+            )
+        except (ValueError, TypeError):
+            return Response(
+                {
+                    "detail": (
+                        "Некорректные параметры экспорта."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        response = HttpResponse(
+            file_content,
+            content_type=(
+                "application/vnd.openxmlformats-officedocument."
+                "spreadsheetml.sheet"
+            ),
+        )
+        response["Content-Disposition"] = (
+            f'attachment; filename="{filename}"'
+        )
+        response["Content-Length"] = len(file_content)
+
+        return response
 
     def get_permissions(self):
         if self.action in (

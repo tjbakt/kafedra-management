@@ -1,6 +1,10 @@
 from decimal import Decimal
 from unittest.mock import patch
 
+from io import BytesIO
+
+from openpyxl import load_workbook
+
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -119,3 +123,86 @@ class WorkloadSummaryApiTests(APITestCase):
         self.assertIn("planned_hours", row)
         self.assertIn("distributed_hours", row)
         self.assertIn("remaining_hours", row)
+
+    def test_department_summary_export_requires_academic_year(
+            self,
+    ):
+        response = self.client.get(
+            (
+                "/api/workload/distributions/"
+                "department-summary/export/"
+            )
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+        )
+        self.assertIn(
+            "academic_year",
+            response.data,
+        )
+
+    def test_department_summary_export_returns_xlsx(self):
+        response = self.client.get(
+            (
+                "/api/workload/distributions/"
+                "department-summary/export/"
+                f"?academic_year={self.academic_year.id}"
+            )
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+        )
+        self.assertEqual(
+            response["Content-Type"],
+            (
+                "application/vnd.openxmlformats-officedocument."
+                "spreadsheetml.sheet"
+            ),
+        )
+        self.assertIn(
+            "attachment;",
+            response["Content-Disposition"],
+        )
+        self.assertIn(
+            ".xlsx",
+            response["Content-Disposition"],
+        )
+
+        # XLSX-файл является ZIP-архивом и начинается с PK.
+        self.assertTrue(
+            response.content.startswith(b"PK")
+        )
+
+    def test_department_summary_export_contains_headers(self):
+        response = self.client.get(
+            (
+                "/api/workload/distributions/"
+                "department-summary/export/"
+                f"?academic_year={self.academic_year.id}"
+            )
+        )
+
+        workbook = load_workbook(
+            filename=BytesIO(response.content),
+            read_only=True,
+        )
+        worksheet = workbook.active
+
+        self.assertEqual(
+            worksheet["A3"].value,
+            "Кафедра",
+        )
+        self.assertEqual(
+            worksheet["C3"].value,
+            "Плановые часы",
+        )
+        self.assertEqual(
+            worksheet["I3"].value,
+            "Статус",
+        )
+
+        workbook.close()
