@@ -129,7 +129,7 @@ class WorkloadSummaryApiTests(APITestCase):
     ):
         response = self.client.get(
             (
-                "/api/workload/distributions/"
+                "/api/v1/workload/distributions/"
                 "department-summary/export/"
             )
         )
@@ -146,7 +146,7 @@ class WorkloadSummaryApiTests(APITestCase):
     def test_department_summary_export_returns_xlsx(self):
         response = self.client.get(
             (
-                "/api/workload/distributions/"
+                "/api/v1/workload/distributions/"
                 "department-summary/export/"
                 f"?academic_year={self.academic_year.id}"
             )
@@ -180,7 +180,7 @@ class WorkloadSummaryApiTests(APITestCase):
     def test_department_summary_export_contains_headers(self):
         response = self.client.get(
             (
-                "/api/workload/distributions/"
+                "/api/v1/workload/distributions/"
                 "department-summary/export/"
                 f"?academic_year={self.academic_year.id}"
             )
