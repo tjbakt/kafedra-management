@@ -56,13 +56,18 @@ class WorkloadDashboardServiceTests(TestCase):
             ),
         )
 
+        # Второй преподаватель — утверждено
+        employment2 = create_employment(department=self.department)
+        create_year_staff_record(
+            staff_employment=employment2,
+            academic_year=self.academic_year,
+            rate=Decimal("1.00"),
+        )
         create_distribution(
             planned_workload=self.planned,
-            staff_employment=self.employment,
+            staff_employment=employment2,
             allocated_hours=Decimal("35.00"),
-            status=(
-                WorkloadDistribution.Status.APPROVED
-            ),
+            status=WorkloadDistribution.Status.APPROVED,
         )
 
         result = (
@@ -78,7 +83,7 @@ class WorkloadDashboardServiceTests(TestCase):
         )
         self.assertEqual(
             result["workload"]["planned_hours"],
-            Decimal("100.00"),
+            Decimal("200.00"),
         )
         self.assertEqual(
             result["workload"]["draft_hours"],
@@ -94,24 +99,24 @@ class WorkloadDashboardServiceTests(TestCase):
         )
         self.assertEqual(
             result["workload"]["remaining_hours"],
-            Decimal("40.00"),
+            Decimal("140.00"),
         )
         self.assertEqual(
             result["workload"]["distribution_percent"],
-            Decimal("60.00"),
+            Decimal("30.00"),
         )
 
         self.assertEqual(
             result["teachers"]["total"],
-            1,
+            2,
         )
         self.assertEqual(
             result["teachers"]["with_norm"],
-            1,
+            2,
         )
         self.assertEqual(
             result["teachers"]["underloaded"],
-            1,
+            2,
         )
         self.assertEqual(
             result["teachers"]["balanced"],
