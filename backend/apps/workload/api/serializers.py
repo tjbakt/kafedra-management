@@ -365,3 +365,65 @@ class WorkloadDashboardSerializer(
     departments = (
         WorkloadDashboardDepartmentsSerializer()
     )
+
+class CancelSelectedDistributionsSerializer(
+    serializers.Serializer
+):
+    ids = serializers.ListField(
+        child=serializers.IntegerField(
+            min_value=1,
+        ),
+        allow_empty=False,
+        max_length=500,
+    )
+
+    reason = serializers.CharField(
+        max_length=1000,
+        allow_blank=False,
+        trim_whitespace=True,
+    )
+
+    def validate_ids(self, value):
+        """
+        Удаляет повторяющиеся ID, сохраняя их порядок.
+        """
+
+        return list(dict.fromkeys(value))
+
+    def validate_reason(self, value):
+        normalized_value = value.strip()
+
+        if not normalized_value:
+            raise serializers.ValidationError(
+                "Укажите причину массовой отмены."
+            )
+
+        return normalized_value
+
+class BulkDistributionErrorSerializer(
+    serializers.Serializer
+):
+    id = serializers.IntegerField()
+    error = serializers.JSONField()
+
+
+class CancelSelectedDistributionsResultSerializer(
+    serializers.Serializer
+):
+    requested_count = serializers.IntegerField()
+    found_count = serializers.IntegerField()
+
+    cancelled_count = serializers.IntegerField()
+    cancelled_ids = serializers.ListField(
+        child=serializers.IntegerField(),
+    )
+
+    unavailable_count = serializers.IntegerField()
+    unavailable_ids = serializers.ListField(
+        child=serializers.IntegerField(),
+    )
+
+    errors_count = serializers.IntegerField()
+    errors = BulkDistributionErrorSerializer(
+        many=True,
+    )

@@ -697,6 +697,76 @@ class WorkloadDistributionService:
         return distribution
 
     @classmethod
+    def cancel_distributions(
+            cls,
+            *,
+            distributions,
+            user=None,
+            reason="",
+    ) -> dict:
+        """
+        Отменяет набор распределений с частичным успехом.
+
+        Ошибка одной записи не откатывает успешно отменённые
+        записи. Метод возвращает подробный результат обработки.
+        """
+
+        normalized_reason = str(reason or "").strip()
+
+        if not normalized_reason:
+            raise ValidationError(
+                {
+                    "reason": (
+                        "Укажите причину массовой отмены."
+                    )
+                }
+            )
+
+        cancelled_ids = []
+        errors = []
+
+        for distribution in distributions:
+            try:
+                cancelled = cls.cancel_distribution(
+                    distribution=distribution,
+                    user=user,
+                    reason=normalized_reason,
+                )
+            except ValidationError as exc:
+                errors.append(
+                    {
+                        "id": distribution.pk,
+                        "error": cls._validation_error_data(
+                            exc
+                        ),
+                    }
+                )
+            else:
+                cancelled_ids.append(cancelled.pk)
+
+        return {
+            "cancelled_count": len(cancelled_ids),
+            "cancelled_ids": cancelled_ids,
+            "errors_count": len(errors),
+            "errors": errors,
+        }
+
+    @staticmethod
+    def _validation_error_data(exc):
+        """
+        Преобразует django.core.exceptions.ValidationError
+        в JSON-совместимую структуру.
+        """
+
+        if hasattr(exc, "message_dict"):
+            return exc.message_dict
+
+        if hasattr(exc, "messages"):
+            return exc.messages
+
+        return [str(exc)]
+
+    @classmethod
     def update_planned_workload_status(
         cls,
         *,

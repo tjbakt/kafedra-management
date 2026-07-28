@@ -20,6 +20,8 @@ from apps.workload.api.serializers import (
     TeacherWorkloadSummarySerializer,
     DepartmentWorkloadSummarySerializer,
     WorkloadDashboardSerializer,
+    CancelSelectedDistributionsResultSerializer,
+    CancelSelectedDistributionsSerializer,
 )
 from apps.workload.models import WorkloadDistribution
 from apps.workload.services.distribution_service import (
@@ -346,6 +348,84 @@ class WorkloadDistributionViewSet(
 
     @action(
         detail=False,
+        methods=["post"],
+        url_path="cancel-selected",
+    )
+    def cancel_selected(self, request):
+        input_serializer = (
+            CancelSelectedDistributionsSerializer(
+                data=request.data
+            )
+        )
+        input_serializer.is_valid(
+            raise_exception=True
+        )
+
+        requested_ids = input_serializer.validated_data[
+            "ids"
+        ]
+        reason = input_serializer.validated_data[
+            "reason"
+        ]
+
+        distributions = list(
+            self.get_queryset()
+            .filter(pk__in=requested_ids)
+            .order_by("pk")
+        )
+
+        found_ids = {
+            distribution.pk
+            for distribution in distributions
+        }
+
+        unavailable_ids = [
+            distribution_id
+            for distribution_id in requested_ids
+            if distribution_id not in found_ids
+        ]
+
+        service_result = (
+            WorkloadDistributionService
+            .cancel_distributions(
+                distributions=distributions,
+                user=request.user,
+                reason=reason,
+            )
+        )
+
+        result = {
+            "requested_count": len(requested_ids),
+            "found_count": len(distributions),
+            "cancelled_count": service_result[
+                "cancelled_count"
+            ],
+            "cancelled_ids": service_result[
+                "cancelled_ids"
+            ],
+            "unavailable_count": len(
+                unavailable_ids
+            ),
+            "unavailable_ids": unavailable_ids,
+            "errors_count": service_result[
+                "errors_count"
+            ],
+            "errors": service_result["errors"],
+        }
+
+        output_serializer = (
+            CancelSelectedDistributionsResultSerializer(
+                result
+            )
+        )
+
+        return Response(
+            output_serializer.data,
+            status=status.HTTP_200_OK,
+        )
+
+    @action(
+        detail=False,
         methods=["get"],
         url_path="teacher-summary",
     )
@@ -638,6 +718,7 @@ class WorkloadDistributionViewSet(
                 "approve",
                 "cancel",
                 "approve_selected",
+                "cancel_selected",
         ):
             permission_classes = [
                 IsAuthenticated,
