@@ -462,25 +462,34 @@ class WorkloadDistributionViewSet(
             )
 
         access_scope = self.get_workload_access_scope()
-        response = HttpResponse(
-            file_content, filename=(
-                TeacherWorkloadExportService.export(
-                    academic_year=academic_year,
-                    staff_member_id=staff_member_id,
-                    department_id=department_id,
-                    allowed_department_ids=(
-                        access_scope.department_ids
-                    ),
-                    allowed_staff_member_ids=(
-                        access_scope.staff_member_ids
-                    ),
-                )
+
+        file_content, filename = (
+            TeacherWorkloadExportService.export(
+                academic_year=academic_year,
+                staff_member_id=staff_member_id,
+                department_id=department_id,
+                allowed_department_ids=(
+                    access_scope.department_ids
+                ),
+                allowed_staff_member_ids=(
+                    access_scope.staff_member_ids
+                ),
             )
+        )
+
+        response = HttpResponse(
+            file_content,
+            content_type=(
+                "application/vnd.openxmlformats-officedocument."
+                "spreadsheetml.sheet"
+            ),
         )
         response["Content-Disposition"] = (
             f'attachment; filename="{filename}"'
         )
-        response["Content-Length"] = len(file_content)
+        response["Content-Length"] = str(
+            len(file_content)
+        )
 
         return response
 
@@ -621,24 +630,32 @@ class WorkloadDistributionViewSet(
             department_id=department_id,
         )
 
-        response = HttpResponse(
-            file_content, filename=(
-                DepartmentWorkloadExportService.export(
-                    academic_year=academic_year,
-                    academic_semester_id=(
-                        academic_semester_id
-                    ),
-                    department_id=department_id,
-                    allowed_department_ids=(
-                        access_scope.department_ids
-                    ),
-                )
+        access_scope = self.get_workload_access_scope()
+
+        file_content, filename = (
+            DepartmentWorkloadExportService.export(
+                academic_year=academic_year,
+                academic_semester_id=academic_semester_id,
+                department_id=department_id,
+                allowed_department_ids=(
+                    access_scope.department_ids
+                ),
             )
+        )
+
+        response = HttpResponse(
+            file_content,
+            content_type=(
+                "application/vnd.openxmlformats-officedocument."
+                "spreadsheetml.sheet"
+            ),
         )
         response["Content-Disposition"] = (
             f'attachment; filename="{filename}"'
         )
-        response["Content-Length"] = len(file_content)
+        response["Content-Length"] = str(
+            len(file_content)
+        )
 
         return response
 
