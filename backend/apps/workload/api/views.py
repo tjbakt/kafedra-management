@@ -53,6 +53,10 @@ from apps.workload.services.workload_access_scope import (
 from apps.workload.services.workload_dashboard_service import (
     WorkloadDashboardService,
 )
+from apps.workload.services.workload_dashboard_export_service import (
+    WorkloadDashboardExportService,
+)
+
 
 
 class WorkloadDistributionViewSet(
@@ -447,24 +451,6 @@ class WorkloadDistributionViewSet(
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        try:
-            file_content, filename = (
-                TeacherWorkloadExportService.export(
-                    academic_year=academic_year,
-                    staff_member_id=staff_member_id,
-                    department_id=department_id,
-                )
-            )
-        except (ValueError, TypeError):
-            return Response(
-                {
-                    "detail": (
-                        "Некорректные параметры экспорта."
-                    )
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
         access_scope = self.get_workload_access_scope()
 
         file_content, filename = (
@@ -602,26 +588,6 @@ class WorkloadDistributionViewSet(
                 {
                     "academic_year": (
                         "Указан некорректный учебный год."
-                    )
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        try:
-            file_content, filename = (
-                DepartmentWorkloadExportService.export(
-                    academic_year=academic_year,
-                    academic_semester_id=(
-                        academic_semester_id
-                    ),
-                    department_id=department_id,
-                )
-            )
-        except (ValueError, TypeError):
-            return Response(
-                {
-                    "detail": (
-                        "Некорректные параметры экспорта."
                     )
                 },
                 status=status.HTTP_400_BAD_REQUEST,
@@ -775,3 +741,79 @@ class WorkloadDistributionViewSet(
             serializer.data,
             status=status.HTTP_200_OK,
         )
+
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="dashboard/export",
+    )
+    def export_dashboard(self, request):
+        academic_year_id = request.query_params.get(
+            "academic_year"
+        )
+        department_id = request.query_params.get(
+            "department"
+        )
+
+        if not academic_year_id:
+            return Response(
+                {
+                    "academic_year": (
+                        "Необходимо указать учебный год."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            academic_year = AcademicYear.objects.get(
+                pk=academic_year_id,
+            )
+        except (
+                AcademicYear.DoesNotExist,
+                TypeError,
+                ValueError,
+        ):
+            return Response(
+                {
+                    "academic_year": (
+                        "Указан некорректный учебный год."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        access_scope = self.get_workload_access_scope()
+
+        self.validate_department_access(
+            access_scope=access_scope,
+            department_id=department_id,
+        )
+
+        file_content, filename = (
+            WorkloadDashboardExportService.export(
+                academic_year=academic_year,
+                department_id=department_id,
+                allowed_department_ids=(
+                    access_scope.department_ids
+                ),
+                allowed_staff_member_ids=(
+                    access_scope.staff_member_ids
+                ),
+            )
+        )
+
+        response = HttpResponse(
+            content=file_content,
+            content_type=(
+                WorkloadDashboardExportService.CONTENT_TYPE
+            ),
+        )
+        response["Content-Disposition"] = (
+            f'attachment; filename="{filename}"'
+        )
+        response["Content-Length"] = str(
+            len(file_content)
+        )
+
+        return response
