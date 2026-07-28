@@ -6,6 +6,7 @@ from io import BytesIO
 from openpyxl import load_workbook
 
 from django.urls import reverse
+from django.contrib.auth import get_user_model
 from rest_framework import status
 from rest_framework.test import APITestCase
 
@@ -27,8 +28,16 @@ from apps.workload.services.workload_access_scope import (
 
 class WorkloadSummaryApiTests(APITestCase):
     def setUp(self):
-        self.user = create_user(username="api-user")
-        self.client.force_authenticate(user=self.user)
+        User = get_user_model()
+        self.user = User.objects.create_superuser(
+            username="summary-admin",
+            email="summary-admin@example.com",
+            password="test-password-123",
+        )
+
+        self.client.force_authenticate(
+            user=self.user
+        )
 
         self.academic_year = create_academic_year()
         self.planned = create_planned_workload(
@@ -53,6 +62,22 @@ class WorkloadSummaryApiTests(APITestCase):
         )
         self.teacher_export_url = reverse(
             "workload-distribution-export-teacher-summary"
+        )
+
+        self.teacher_summary_url = reverse(
+            "workload-distribution-teacher-summary"
+        )
+
+        self.department_summary_url = reverse(
+            "workload-distribution-department-summary"
+        )
+
+        self.teacher_export_url = reverse(
+            "workload-distribution-export-teacher-summary"
+        )
+
+        self.department_export_url = reverse(
+            "workload-distribution-export-department-summary"
         )
 
     def test_teacher_summary_requires_academic_year(self):
