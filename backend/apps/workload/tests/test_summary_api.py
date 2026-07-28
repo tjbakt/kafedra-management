@@ -80,6 +80,10 @@ class WorkloadSummaryApiTests(APITestCase):
             "workload-distribution-export-department-summary"
         )
 
+        self.dashboard_url = reverse(
+            "workload-distribution-dashboard"
+        )
+
     def test_teacher_summary_requires_academic_year(self):
         response = self.client.get(self.teacher_url)
         self.assertEqual(
@@ -431,6 +435,117 @@ class WorkloadSummaryApiTests(APITestCase):
 
         response = self.client.get(
             self.department_export_url,
+            {
+                "academic_year": self.academic_year.id,
+                "department": 999999,
+            },
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_403_FORBIDDEN,
+        )
+
+    def test_dashboard_requires_academic_year(self):
+        response = self.client.get(
+            self.dashboard_url
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+        )
+        self.assertIn(
+            "academic_year",
+            response.data,
+        )
+
+    def test_dashboard_ok(self):
+        create_workload_norm(
+            academic_year=self.academic_year,
+            rate=Decimal("1.00"),
+            annual_hours=Decimal("600.00"),
+        )
+
+        create_distribution(
+            planned_workload=self.planned,
+            staff_employment=self.employment,
+            allocated_hours=Decimal("40.00"),
+            status=WorkloadDistribution.Status.DRAFT,
+        )
+
+        response = self.client.get(
+            self.dashboard_url,
+            {
+                "academic_year": self.academic_year.id,
+                "department": self.department.id,
+            },
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+        )
+
+        self.assertEqual(
+            response.data["academic_year"],
+            self.academic_year.id,
+        )
+        self.assertEqual(
+            response.data["department"],
+            self.department.id,
+        )
+
+        self.assertEqual(
+            response.data["workload"][
+                "planned_positions"
+            ],
+            1,
+        )
+        self.assertEqual(
+            response.data["workload"][
+                "planned_hours"
+            ],
+            "100.00",
+        )
+        self.assertEqual(
+            response.data["workload"][
+                "distributed_hours"
+            ],
+            "40.00",
+        )
+        self.assertEqual(
+            response.data["workload"][
+                "remaining_hours"
+            ],
+            "60.00",
+        )
+        self.assertEqual(
+            response.data["teachers"]["total"],
+            1,
+        )
+        self.assertEqual(
+            response.data["teachers"]["underloaded"],
+            1,
+        )
+
+    @patch(
+        "apps.workload.api.views."
+        "WorkloadAccessScope.for_user"
+    )
+    def test_dashboard_rejects_foreign_department(
+            self,
+            scope_mock,
+    ):
+        scope_mock.return_value = WorkloadAccessScope(
+            department_ids={
+                self.department.id,
+            },
+            staff_member_ids=set(),
+        )
+
+        response = self.client.get(
+            self.dashboard_url,
             {
                 "academic_year": self.academic_year.id,
                 "department": 999999,

@@ -19,6 +19,7 @@ from apps.workload.api.serializers import (
     WorkloadDistributionSerializer,
     TeacherWorkloadSummarySerializer,
     DepartmentWorkloadSummarySerializer,
+    WorkloadDashboardSerializer,
 )
 from apps.workload.models import WorkloadDistribution
 from apps.workload.services.distribution_service import (
@@ -48,6 +49,9 @@ from apps.workload.services.teacher_workload_export_service import (
 )
 from apps.workload.services.workload_access_scope import (
     WorkloadAccessScope,
+)
+from apps.workload.services.workload_dashboard_service import (
+    WorkloadDashboardService,
 )
 
 
@@ -703,3 +707,71 @@ class WorkloadDistributionViewSet(
             raise PermissionDenied(
                 "У вас нет доступа к указанной кафедре."
             )
+
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="dashboard",
+    )
+    def dashboard(self, request):
+        academic_year_id = request.query_params.get(
+            "academic_year"
+        )
+        department_id = request.query_params.get(
+            "department"
+        )
+
+        if not academic_year_id:
+            return Response(
+                {
+                    "academic_year": (
+                        "Необходимо указать учебный год."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            academic_year = AcademicYear.objects.get(
+                pk=academic_year_id,
+            )
+        except (
+                AcademicYear.DoesNotExist,
+                TypeError,
+                ValueError,
+        ):
+            return Response(
+                {
+                    "academic_year": (
+                        "Указан некорректный учебный год."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        access_scope = self.get_workload_access_scope()
+
+        self.validate_department_access(
+            access_scope=access_scope,
+            department_id=department_id,
+        )
+
+        result = WorkloadDashboardService.get_dashboard(
+            academic_year=academic_year,
+            department_id=department_id,
+            allowed_department_ids=(
+                access_scope.department_ids
+            ),
+            allowed_staff_member_ids=(
+                access_scope.staff_member_ids
+            ),
+        )
+
+        serializer = WorkloadDashboardSerializer(
+            result
+        )
+
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK,
+        )

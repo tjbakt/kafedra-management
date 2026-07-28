@@ -289,3 +289,79 @@ class DepartmentWorkloadSummarySerializer(
             "exceeded",
         )
     )
+
+class WorkloadDashboardTotalsSerializer(
+    serializers.Serializer
+):
+    planned_positions = serializers.IntegerField()
+
+    planned_hours = serializers.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+    )
+    draft_hours = serializers.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+    )
+    approved_hours = serializers.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+    )
+    distributed_hours = serializers.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+    )
+    remaining_hours = serializers.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+    )
+    distribution_percent = serializers.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+    )
+
+
+class WorkloadDashboardTeachersSerializer(
+    serializers.Serializer
+):
+    total = serializers.IntegerField()
+    with_norm = serializers.IntegerField()
+    without_norm = serializers.IntegerField()
+    underloaded = serializers.IntegerField()
+    balanced = serializers.IntegerField()
+    overloaded = serializers.IntegerField()
+
+    recommended_hours = serializers.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+    )
+    distributed_hours = serializers.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+    )
+
+
+class WorkloadDashboardDepartmentsSerializer(
+    serializers.Serializer
+):
+    total = serializers.IntegerField()
+    incomplete = serializers.IntegerField()
+    complete = serializers.IntegerField()
+    exceeded = serializers.IntegerField()
+
+
+class WorkloadDashboardSerializer(
+    serializers.Serializer
+):
+    academic_year = serializers.IntegerField()
+    academic_year_name = serializers.CharField()
+
+    department = serializers.IntegerField(
+        allow_null=True,
+    )
+
+    workload = WorkloadDashboardTotalsSerializer()
+    teachers = WorkloadDashboardTeachersSerializer()
+    departments = (
+        WorkloadDashboardDepartmentsSerializer()
+    )
