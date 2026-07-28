@@ -30,6 +30,7 @@ class DepartmentWorkloadService:
         academic_year,
         academic_semester_id=None,
         department_id=None,
+        allowed_department_ids=None,
     ) -> list[dict]:
         queryset = (
             PlannedWorkload.objects
@@ -47,6 +48,13 @@ class DepartmentWorkloadService:
         if department_id:
             queryset = queryset.filter(
                 teaching_department_id=department_id,
+            )
+
+        if allowed_department_ids is not None:
+            queryset = queryset.filter(
+                teaching_department_id__in=(
+                    allowed_department_ids
+                ),
             )
 
         zero = Value(

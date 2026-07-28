@@ -20,6 +20,10 @@ from apps.workload.tests.factories import (
     create_year_staff_record,
 )
 
+from apps.workload.services.workload_access_scope import (
+    WorkloadAccessScope,
+)
+
 
 class WorkloadSummaryApiTests(APITestCase):
     def setUp(self):
@@ -356,3 +360,59 @@ class WorkloadSummaryApiTests(APITestCase):
         )
 
         workbook.close()
+
+    @patch(
+        "apps.workload.api.views."
+        "WorkloadAccessScope.for_user"
+    )
+    def test_department_summary_rejects_foreign_department(
+            self,
+            scope_mock,
+    ):
+        scope_mock.return_value = WorkloadAccessScope(
+            department_ids={
+                self.department.id,
+            },
+            staff_member_ids=set(),
+        )
+
+        response = self.client.get(
+            self.department_summary_url,
+            {
+                "academic_year": self.academic_year.id,
+                "department": 999999,
+            },
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_403_FORBIDDEN,
+        )
+
+    @patch(
+        "apps.workload.api.views."
+        "WorkloadAccessScope.for_user"
+    )
+    def test_department_export_rejects_foreign_department(
+            self,
+            scope_mock,
+    ):
+        scope_mock.return_value = WorkloadAccessScope(
+            department_ids={
+                self.department.id,
+            },
+            staff_member_ids=set(),
+        )
+
+        response = self.client.get(
+            self.department_export_url,
+            {
+                "academic_year": self.academic_year.id,
+                "department": 999999,
+            },
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_403_FORBIDDEN,
+        )

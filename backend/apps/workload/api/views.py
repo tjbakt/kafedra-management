@@ -5,7 +5,7 @@ from django.http import HttpResponse
 
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
@@ -45,6 +45,9 @@ from apps.workload.services.department_workload_export_service import (
 )
 from apps.workload.services.teacher_workload_export_service import (
     TeacherWorkloadExportService,
+)
+from apps.workload.services.workload_access_scope import (
+    WorkloadAccessScope,
 )
 
 
@@ -373,10 +376,17 @@ class WorkloadDistributionViewSet(
                 status=status.HTTP_404_NOT_FOUND,
             )
 
+        access_scope = self.get_workload_access_scope()
         result = TeacherWorkloadService.get_summary(
             academic_year=academic_year,
             staff_member_id=staff_member_id,
             department_id=department_id,
+            allowed_department_ids=(
+                access_scope.department_ids
+            ),
+            allowed_staff_member_ids=(
+                access_scope.staff_member_ids
+            ),
         )
 
         serializer = TeacherWorkloadSummarySerializer(
@@ -451,12 +461,21 @@ class WorkloadDistributionViewSet(
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        access_scope = self.get_workload_access_scope()
         response = HttpResponse(
-            file_content,
-            content_type=(
-                "application/vnd.openxmlformats-officedocument."
-                "spreadsheetml.sheet"
-            ),
+            file_content, filename=(
+                TeacherWorkloadExportService.export(
+                    academic_year=academic_year,
+                    staff_member_id=staff_member_id,
+                    department_id=department_id,
+                    allowed_department_ids=(
+                        access_scope.department_ids
+                    ),
+                    allowed_staff_member_ids=(
+                        access_scope.staff_member_ids
+                    ),
+                )
+            )
         )
         response["Content-Disposition"] = (
             f'attachment; filename="{filename}"'
@@ -505,10 +524,20 @@ class WorkloadDistributionViewSet(
                 status=status.HTTP_404_NOT_FOUND,
             )
 
+        access_scope = self.get_workload_access_scope()
+
+        self.validate_department_access(
+            access_scope=access_scope,
+            department_id=department_id,
+        )
+
         result = DepartmentWorkloadService.get_summary(
             academic_year=academic_year,
             academic_semester_id=academic_semester_id,
             department_id=department_id,
+            allowed_department_ids=(
+                access_scope.department_ids
+            ),
         )
 
         serializer = DepartmentWorkloadSummarySerializer(
@@ -585,12 +614,26 @@ class WorkloadDistributionViewSet(
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        access_scope = self.get_workload_access_scope()
+
+        self.validate_department_access(
+            access_scope=access_scope,
+            department_id=department_id,
+        )
+
         response = HttpResponse(
-            file_content,
-            content_type=(
-                "application/vnd.openxmlformats-officedocument."
-                "spreadsheetml.sheet"
-            ),
+            file_content, filename=(
+                DepartmentWorkloadExportService.export(
+                    academic_year=academic_year,
+                    academic_semester_id=(
+                        academic_semester_id
+                    ),
+                    department_id=department_id,
+                    allowed_department_ids=(
+                        access_scope.department_ids
+                    ),
+                )
+            )
         )
         response["Content-Disposition"] = (
             f'attachment; filename="{filename}"'
@@ -622,3 +665,24 @@ class WorkloadDistributionViewSet(
             permission()
             for permission in permission_classes
         ]
+
+    def get_workload_access_scope(self):
+        return WorkloadAccessScope.for_user(
+            self.request.user
+        )
+
+    @staticmethod
+    def validate_department_access(
+            *,
+            access_scope,
+            department_id,
+    ):
+        if (
+                department_id
+                and not access_scope.can_access_department(
+            department_id
+        )
+        ):
+            raise PermissionDenied(
+                "У вас нет доступа к указанной кафедре."
+            )

@@ -36,11 +36,13 @@ class DepartmentWorkloadExportService:
         academic_year,
         academic_semester_id=None,
         department_id=None,
+        allowed_department_ids=None,
     ) -> tuple[bytes, str]:
         summary = DepartmentWorkloadService.get_summary(
             academic_year=academic_year,
             academic_semester_id=academic_semester_id,
             department_id=department_id,
+            allowed_department_ids=allowed_department_ids,
         )
 
         workbook = Workbook()

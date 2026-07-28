@@ -105,3 +105,31 @@ class DepartmentWorkloadServiceTests(TestCase):
             department_id=self.department.id,
         )
         self.assertEqual(result, [])
+
+    def test_department_summary_returns_empty_for_empty_scope(
+            self,
+    ):
+        result = DepartmentWorkloadService.get_summary(
+            academic_year=self.academic_year,
+            allowed_department_ids=set(),
+        )
+
+        self.assertEqual(result, [])
+
+    def test_department_summary_respects_allowed_departments(
+            self,
+    ):
+        result = DepartmentWorkloadService.get_summary(
+            academic_year=self.academic_year,
+            allowed_department_ids={
+                self.department.id,
+            },
+        )
+
+        self.assertTrue(
+            all(
+                item["department"]
+                == self.department.id
+                for item in result
+            )
+        )

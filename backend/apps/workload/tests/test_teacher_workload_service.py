@@ -206,3 +206,50 @@ class TeacherWorkloadServiceTests(TestCase):
             result[0]["academic_year"],
             self.academic_year.id,
         )
+
+    def test_summary_respects_allowed_department_ids(self):
+        result = TeacherWorkloadService.get_summary(
+            academic_year=self.academic_year,
+            allowed_department_ids={
+                self.department.id,
+            },
+            allowed_staff_member_ids=set(),
+        )
+
+        self.assertTrue(result)
+
+        self.assertTrue(
+            all(
+                item["department"]
+                == self.department.id
+                for item in result
+            )
+        )
+
+    def test_summary_returns_empty_for_empty_access_scope(self):
+        result = TeacherWorkloadService.get_summary(
+            academic_year=self.academic_year,
+            allowed_department_ids=set(),
+            allowed_staff_member_ids=set(),
+        )
+
+        self.assertEqual(result, [])
+
+    def test_summary_allows_own_staff_member(self):
+        staff_member_id = (
+            self.employment.staff_member_id
+        )
+
+        result = TeacherWorkloadService.get_summary(
+            academic_year=self.academic_year,
+            allowed_department_ids=set(),
+            allowed_staff_member_ids={
+                staff_member_id,
+            },
+        )
+
+        self.assertEqual(len(result), 1)
+        self.assertEqual(
+            result[0]["staff_member"],
+            staff_member_id,
+        )

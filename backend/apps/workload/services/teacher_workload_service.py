@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-from django.db.models import Sum
+from django.db.models import Q, Sum
 
 from apps.staff.models import StaffEmploymentAcademicYear
 from apps.workload.models import WorkloadDistribution
@@ -19,6 +19,8 @@ class TeacherWorkloadService:
         academic_year,
         staff_member_id=None,
         department_id=None,
+        allowed_department_ids=None,
+        allowed_staff_member_ids=None,
     ) -> list[dict]:
         year_records = (
             StaffEmploymentAcademicYear.objects
@@ -53,6 +55,12 @@ class TeacherWorkloadService:
             year_records = year_records.filter(
                 staff_employment__department_id=department_id
             )
+
+        year_records = cls._apply_access_scope(
+            queryset=year_records,
+            allowed_department_ids=allowed_department_ids,
+            allowed_staff_member_ids=allowed_staff_member_ids,
+        )
 
         result = []
 
@@ -150,3 +158,43 @@ class TeacherWorkloadService:
             )
 
         return result
+
+    @classmethod
+    def _apply_access_scope(
+            cls,
+            *,
+            queryset,
+            allowed_department_ids,
+            allowed_staff_member_ids,
+    ):
+        """
+        Применяет объединённую область доступа.
+
+        Заведующий видит преподавателей доступной кафедры.
+        Преподаватель видит собственную запись.
+        При наличии обеих ролей условия объединяются через OR.
+        """
+
+        if (
+                allowed_department_ids is None
+                and allowed_staff_member_ids is None
+        ):
+            return queryset
+
+        access_filter = Q(pk__in=[])
+
+        if allowed_department_ids:
+            access_filter |= Q(
+                staff_employment__department_id__in=(
+                    allowed_department_ids
+                )
+            )
+
+        if allowed_staff_member_ids:
+            access_filter |= Q(
+                staff_employment__staff_member_id__in=(
+                    allowed_staff_member_ids
+                )
+            )
+
+        return queryset.filter(access_filter)

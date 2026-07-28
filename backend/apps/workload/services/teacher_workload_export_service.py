@@ -47,11 +47,15 @@ class TeacherWorkloadExportService:
         academic_year,
         staff_member_id=None,
         department_id=None,
+        allowed_department_ids=None,
+        allowed_staff_member_ids=None,
     ) -> tuple[bytes, str]:
         summary = TeacherWorkloadService.get_summary(
             academic_year=academic_year,
             staff_member_id=staff_member_id,
             department_id=department_id,
+            allowed_department_ids=allowed_department_ids,
+            allowed_staff_member_ids=allowed_staff_member_ids,
         )
 
         workbook = Workbook()
