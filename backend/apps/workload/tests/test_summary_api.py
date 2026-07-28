@@ -47,6 +47,9 @@ class WorkloadSummaryApiTests(APITestCase):
         self.department_url = reverse(
             "workload-distribution-department-summary"
         )
+        self.teacher_export_url = reverse(
+            "workload-distribution-export-teacher-summary"
+        )
 
     def test_teacher_summary_requires_academic_year(self):
         response = self.client.get(self.teacher_url)
@@ -203,6 +206,153 @@ class WorkloadSummaryApiTests(APITestCase):
         self.assertEqual(
             worksheet["I3"].value,
             "Статус",
+        )
+
+        workbook.close()
+
+    def test_teacher_summary_export_requires_academic_year(
+            self,
+    ):
+        response = self.client.get(
+            self.teacher_export_url
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+        )
+        self.assertIn(
+            "academic_year",
+            response.data,
+        )
+
+    def test_teacher_summary_export_returns_xlsx(self):
+        response = self.client.get(
+            self.teacher_export_url,
+            {
+                "academic_year": self.academic_year.id,
+            },
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+        )
+        self.assertEqual(
+            response["Content-Type"],
+            (
+                "application/vnd.openxmlformats-officedocument."
+                "spreadsheetml.sheet"
+            ),
+        )
+        self.assertIn(
+            "attachment;",
+            response["Content-Disposition"],
+        )
+        self.assertIn(
+            ".xlsx",
+            response["Content-Disposition"],
+        )
+        self.assertTrue(
+            response.content.startswith(b"PK")
+        )
+
+    def test_teacher_summary_export_contains_headers(self):
+        response = self.client.get(
+            self.teacher_export_url,
+            {
+                "academic_year": self.academic_year.id,
+            },
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+        )
+
+        workbook = load_workbook(
+            filename=BytesIO(response.content),
+            read_only=True,
+            data_only=True,
+        )
+        worksheet = workbook.active
+
+        self.assertEqual(
+            worksheet["A3"].value,
+            "Табельный номер",
+        )
+        self.assertEqual(
+            worksheet["B3"].value,
+            "Преподаватель",
+        )
+        self.assertEqual(
+            worksheet["H3"].value,
+            "Рекомендуемая норма",
+        )
+        self.assertEqual(
+            worksheet["M3"].value,
+            "Статус",
+        )
+
+        workbook.close()
+
+    def test_teacher_summary_export_contains_teacher_data(self):
+        create_workload_norm(
+            academic_year=self.academic_year,
+            rate=Decimal("1.00"),
+            annual_hours=Decimal("600.00"),
+        )
+
+        create_distribution(
+            planned_workload=self.planned,
+            staff_employment=self.employment,
+            allocated_hours=Decimal("50.00"),
+            status=WorkloadDistribution.Status.DRAFT,
+        )
+
+        response = self.client.get(
+            self.teacher_export_url,
+            {
+                "academic_year": self.academic_year.id,
+                "department": self.department.id,
+            },
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+        )
+
+        workbook = load_workbook(
+            filename=BytesIO(response.content),
+            read_only=True,
+            data_only=True,
+        )
+        worksheet = workbook.active
+
+        self.assertEqual(
+            worksheet["A4"].value,
+            self.employment.staff_member.personnel_number,
+        )
+        self.assertEqual(
+            worksheet["B4"].value,
+            self.employment.staff_member.full_name,
+        )
+        self.assertEqual(
+            worksheet["C4"].value,
+            self.department.name_ru,
+        )
+        self.assertEqual(
+            worksheet["I4"].value,
+            50,
+        )
+        self.assertEqual(
+            worksheet["J4"].value,
+            550,
+        )
+        self.assertEqual(
+            worksheet["M4"].value,
+            "Недогрузка",
         )
 
         workbook.close()

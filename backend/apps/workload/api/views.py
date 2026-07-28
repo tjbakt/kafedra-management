@@ -43,6 +43,9 @@ from apps.access_control.permissions import (
 from apps.workload.services.department_workload_export_service import (
     DepartmentWorkloadExportService,
 )
+from apps.workload.services.teacher_workload_export_service import (
+    TeacherWorkloadExportService,
+)
 
 
 class WorkloadDistributionViewSet(
@@ -385,6 +388,82 @@ class WorkloadDistributionViewSet(
             serializer.data,
             status=status.HTTP_200_OK,
         )
+
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="teacher-summary/export",
+    )
+    def export_teacher_summary(self, request):
+        academic_year_id = request.query_params.get(
+            "academic_year"
+        )
+        staff_member_id = request.query_params.get(
+            "staff_member"
+        )
+        department_id = request.query_params.get(
+            "department"
+        )
+
+        if not academic_year_id:
+            return Response(
+                {
+                    "academic_year": (
+                        "Необходимо указать учебный год."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            academic_year = AcademicYear.objects.get(
+                pk=academic_year_id,
+            )
+        except (
+                AcademicYear.DoesNotExist,
+                ValueError,
+                TypeError,
+        ):
+            return Response(
+                {
+                    "academic_year": (
+                        "Указан некорректный учебный год."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            file_content, filename = (
+                TeacherWorkloadExportService.export(
+                    academic_year=academic_year,
+                    staff_member_id=staff_member_id,
+                    department_id=department_id,
+                )
+            )
+        except (ValueError, TypeError):
+            return Response(
+                {
+                    "detail": (
+                        "Некорректные параметры экспорта."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        response = HttpResponse(
+            file_content,
+            content_type=(
+                "application/vnd.openxmlformats-officedocument."
+                "spreadsheetml.sheet"
+            ),
+        )
+        response["Content-Disposition"] = (
+            f'attachment; filename="{filename}"'
+        )
+        response["Content-Length"] = len(file_content)
+
+        return response
 
     @action(
         detail=False,
