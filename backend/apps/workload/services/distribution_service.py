@@ -15,6 +15,13 @@ from apps.staff.models import StaffEmploymentAcademicYear
 from apps.teaching.models import PlannedWorkload
 from apps.workload.models import WorkloadDistribution
 
+from apps.academics.exceptions import (
+    AcademicYearClosingError,
+)
+from apps.academics.services.academic_year_closing_service import (
+    AcademicYearClosingService,
+)
+
 
 class WorkloadDistributionService:
     """
@@ -28,20 +35,78 @@ class WorkloadDistributionService:
     )
 
     @classmethod
+    def ensure_academic_year_open(
+        cls,
+        *,
+        academic_year,
+    ):
+        """
+        Запрещает изменение распределений закрытого
+        учебного года.
+
+        AcademicYearClosingService использует доменное
+        исключение. WorkloadDistributionService
+        преобразует его в стандартный ValidationError,
+        который уже обрабатывается существующим API.
+        """
+
+        try:
+            AcademicYearClosingService.ensure_open(
+                academic_year=academic_year,
+            )
+        except AcademicYearClosingError as exc:
+            details = exc.details or {}
+
+            raise ValidationError(
+                {
+                    "code": exc.code,
+                    "detail": exc.message,
+                    "academic_year": (
+                        details.get("academic_year")
+                        or academic_year.pk
+                    ),
+                    "academic_year_name": (
+                        details.get(
+                            "academic_year_name"
+                        )
+                        or academic_year.name
+                    ),
+                    "closed_at": (
+                        details.get("closed_at")
+                        or (
+                            academic_year
+                            .closed_at
+                            .isoformat()
+                            if academic_year.closed_at
+                            else None
+                        )
+                    ),
+                }
+            ) from exc
+
+    @classmethod
     def get_available_actions(
         cls,
         *,
         distribution,
     ) -> dict:
-        """
-        Возвращает доступность операций для текущего
-        состояния распределения.
-
-        Метод не проверяет права пользователя. Права
-        контролируются API permission classes.
-        """
 
         status = distribution.status
+
+        academic_year = (
+            distribution
+            .planned_workload
+            .academic_year
+        )
+
+        is_academic_year_closed = (
+            academic_year.is_closed
+        )
+
+        closed_year_reason = (
+            f"Учебный год {academic_year.name} закрыт. "
+            "Изменение распределения запрещено."
+        )
 
         is_draft = (
             status
@@ -56,7 +121,7 @@ class WorkloadDistributionService:
             == WorkloadDistribution.Status.CANCELLED
         )
 
-        return {
+        result = {
             "distribution_id": distribution.pk,
             "status": status,
             "status_label": (
@@ -118,6 +183,12 @@ class WorkloadDistributionService:
                 ),
             },
         }
+        if is_academic_year_closed:
+            for action in result["actions"].values():
+                action["allowed"] = False
+                action["reason"] = closed_year_reason
+
+        return result
 
     @staticmethod
     def _action_availability(
@@ -506,6 +577,11 @@ class WorkloadDistributionService:
             )
             .get(pk=planned_workload.pk)
         )
+        cls.ensure_academic_year_open(
+            academic_year=(
+                planned_workload.academic_year
+            ),
+        )
 
         allocated_hours = cls.normalize_hours(
             allocated_hours
@@ -618,6 +694,13 @@ class WorkloadDistributionService:
                 "staff_employment__position",
             )
             .get(pk=distribution.pk)
+        )
+        cls.ensure_academic_year_open(
+            academic_year=(
+                distribution
+                .planned_workload
+                .academic_year
+            ),
         )
 
         if (
@@ -742,6 +825,13 @@ class WorkloadDistributionService:
                 "staff_employment__position",
             )
             .get(pk=distribution.pk)
+        )
+        cls.ensure_academic_year_open(
+            academic_year=(
+                distribution
+                .planned_workload
+                .academic_year
+            ),
         )
 
         if (
@@ -883,6 +973,13 @@ class WorkloadDistributionService:
                 "approved_by",
             )
             .get(pk=distribution.pk)
+        )
+        cls.ensure_academic_year_open(
+            academic_year=(
+                distribution
+                .planned_workload
+                .academic_year
+            ),
         )
 
         if (
@@ -1058,10 +1155,19 @@ class WorkloadDistributionService:
             .select_for_update()
             .select_related(
                 "planned_workload",
+                "planned_workload__academic_year",
+                "planned_workload__teaching_department",
                 "staff_employment",
                 "staff_employment__staff_member",
             )
             .get(pk=distribution.pk)
+        )
+        cls.ensure_academic_year_open(
+            academic_year=(
+                distribution
+                .planned_workload
+                .academic_year
+            ),
         )
 
         if (
@@ -1178,6 +1284,13 @@ class WorkloadDistributionService:
                 "staff_employment__position",
             )
             .get(pk=distribution.pk)
+        )
+        cls.ensure_academic_year_open(
+            academic_year=(
+                distribution
+                .planned_workload
+                .academic_year
+            ),
         )
 
         if (
@@ -1440,6 +1553,11 @@ class WorkloadDistributionService:
             .get(
                 pk=source_distribution.planned_workload_id
             )
+        )
+        cls.ensure_academic_year_open(
+            academic_year=(
+                planned_workload.academic_year
+            ),
         )
 
         if (
