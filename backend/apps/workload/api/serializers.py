@@ -619,3 +619,42 @@ class ReturnSelectedToDraftResultSerializer(
     errors = BulkDistributionErrorSerializer(
         many=True,
     )
+
+class DistributionActionAvailabilitySerializer(
+    serializers.Serializer
+):
+    allowed = serializers.BooleanField()
+    reason = serializers.CharField(
+        allow_blank=True,
+    )
+
+class DistributionActionsSerializer(
+    serializers.Serializer
+):
+    approve = (
+        DistributionActionAvailabilitySerializer()
+    )
+    return_to_draft = (
+        DistributionActionAvailabilitySerializer()
+    )
+    cancel = (
+        DistributionActionAvailabilitySerializer()
+    )
+    restore = (
+        DistributionActionAvailabilitySerializer()
+    )
+    transfer = (
+        DistributionActionAvailabilitySerializer()
+    )
+    edit = (
+        DistributionActionAvailabilitySerializer()
+    )
+
+class DistributionAvailableActionsSerializer(
+    serializers.Serializer
+):
+    distribution_id = serializers.IntegerField()
+    status = serializers.CharField()
+    status_label = serializers.CharField()
+
+    actions = DistributionActionsSerializer()

@@ -27,6 +27,253 @@ class WorkloadDistributionService:
         WorkloadDistribution.Status.APPROVED,
     )
 
+    @classmethod
+    def get_available_actions(
+        cls,
+        *,
+        distribution,
+    ) -> dict:
+        """
+        Возвращает доступность операций для текущего
+        состояния распределения.
+
+        Метод не проверяет права пользователя. Права
+        контролируются API permission classes.
+        """
+
+        status = distribution.status
+
+        is_draft = (
+            status
+            == WorkloadDistribution.Status.DRAFT
+        )
+        is_approved = (
+            status
+            == WorkloadDistribution.Status.APPROVED
+        )
+        is_cancelled = (
+            status
+            == WorkloadDistribution.Status.CANCELLED
+        )
+
+        return {
+            "distribution_id": distribution.pk,
+            "status": status,
+            "status_label": (
+                distribution.get_status_display()
+            ),
+            "actions": {
+                "approve": cls._action_availability(
+                    allowed=is_draft,
+                    unavailable_reason=(
+                        cls._get_approve_unavailable_reason(
+                            status=status
+                        )
+                    ),
+                ),
+                "return_to_draft": (
+                    cls._action_availability(
+                        allowed=is_approved,
+                        unavailable_reason=(
+                            cls
+                            ._get_return_unavailable_reason(
+                                status=status
+                            )
+                        ),
+                    )
+                ),
+                "cancel": cls._action_availability(
+                    allowed=not is_cancelled,
+                    unavailable_reason=(
+                        "Распределение уже отменено."
+                        if is_cancelled
+                        else ""
+                    ),
+                ),
+                "restore": cls._action_availability(
+                    allowed=is_cancelled,
+                    unavailable_reason=(
+                        cls
+                        ._get_restore_unavailable_reason(
+                            status=status
+                        )
+                    ),
+                ),
+                "transfer": cls._action_availability(
+                    allowed=is_draft,
+                    unavailable_reason=(
+                        cls
+                        ._get_transfer_unavailable_reason(
+                            status=status
+                        )
+                    ),
+                ),
+                "edit": cls._action_availability(
+                    allowed=is_draft,
+                    unavailable_reason=(
+                        cls._get_edit_unavailable_reason(
+                            status=status
+                        )
+                    ),
+                ),
+            },
+        }
+
+    @staticmethod
+    def _action_availability(
+        *,
+        allowed,
+        unavailable_reason="",
+    ) -> dict:
+        return {
+            "allowed": allowed,
+            "reason": (
+                ""
+                if allowed
+                else unavailable_reason
+            ),
+        }
+
+    @staticmethod
+    def _get_approve_unavailable_reason(
+        *,
+        status,
+    ) -> str:
+        if (
+            status
+            == WorkloadDistribution.Status.APPROVED
+        ):
+            return "Распределение уже утверждено."
+
+        if (
+            status
+            == WorkloadDistribution.Status.CANCELLED
+        ):
+            return (
+                "Отменённое распределение нельзя "
+                "утвердить. Сначала восстановите его."
+            )
+
+        return (
+            "Распределение нельзя утвердить "
+            "в текущем статусе."
+        )
+
+    @staticmethod
+    def _get_return_unavailable_reason(
+        *,
+        status,
+    ) -> str:
+        if (
+            status
+            == WorkloadDistribution.Status.DRAFT
+        ):
+            return (
+                "Распределение уже находится "
+                "в статусе черновика."
+            )
+
+        if (
+            status
+            == WorkloadDistribution.Status.CANCELLED
+        ):
+            return (
+                "Отменённое распределение нельзя "
+                "вернуть из утверждения. "
+                "Используйте восстановление."
+            )
+
+        return (
+            "Вернуть в черновик можно только "
+            "утверждённое распределение."
+        )
+
+    @staticmethod
+    def _get_restore_unavailable_reason(
+        *,
+        status,
+    ) -> str:
+        if (
+            status
+            == WorkloadDistribution.Status.DRAFT
+        ):
+            return (
+                "Черновое распределение уже активно "
+                "и не требует восстановления."
+            )
+
+        if (
+            status
+            == WorkloadDistribution.Status.APPROVED
+        ):
+            return (
+                "Утверждённое распределение уже "
+                "активно и не требует восстановления."
+            )
+
+        return (
+            "Восстановить можно только "
+            "отменённое распределение."
+        )
+
+    @staticmethod
+    def _get_transfer_unavailable_reason(
+        *,
+        status,
+    ) -> str:
+        if (
+            status
+            == WorkloadDistribution.Status.APPROVED
+        ):
+            return (
+                "Нельзя переносить часы утверждённого "
+                "распределения. Сначала верните его "
+                "в черновик."
+            )
+
+        if (
+            status
+            == WorkloadDistribution.Status.CANCELLED
+        ):
+            return (
+                "Нельзя переносить часы отменённого "
+                "распределения. Сначала восстановите его."
+            )
+
+        return (
+            "Перенос часов недоступен "
+            "в текущем статусе."
+        )
+
+    @staticmethod
+    def _get_edit_unavailable_reason(
+        *,
+        status,
+    ) -> str:
+        if (
+            status
+            == WorkloadDistribution.Status.APPROVED
+        ):
+            return (
+                "Утверждённое распределение нельзя "
+                "редактировать. Сначала верните его "
+                "в черновик."
+            )
+
+        if (
+            status
+            == WorkloadDistribution.Status.CANCELLED
+        ):
+            return (
+                "Отменённое распределение нельзя "
+                "редактировать. Сначала восстановите его."
+            )
+
+        return (
+            "Редактирование недоступно "
+            "в текущем статусе."
+        )
+
     @staticmethod
     def normalize_hours(value) -> Decimal:
         try:

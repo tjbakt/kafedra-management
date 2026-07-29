@@ -30,6 +30,7 @@ from apps.workload.api.serializers import (
     ReturnDistributionToDraftSerializer,
     ReturnSelectedToDraftResultSerializer,
     ReturnSelectedToDraftSerializer,
+    DistributionAvailableActionsSerializer,
 )
 from apps.workload.models import WorkloadDistribution
 from apps.workload.services.distribution_service import (
@@ -492,6 +493,36 @@ class WorkloadDistributionViewSet(
                 ),
                 "data": output_serializer.data,
             },
+            status=status.HTTP_200_OK,
+        )
+
+    @action(
+        detail=True,
+        methods=["get"],
+        url_path="available-actions",
+    )
+    def available_actions(
+        self,
+        request,
+        pk=None,
+    ):
+        distribution = self.get_object()
+
+        result = (
+            WorkloadDistributionService
+            .get_available_actions(
+                distribution=distribution
+            )
+        )
+
+        serializer = (
+            DistributionAvailableActionsSerializer(
+                result
+            )
+        )
+
+        return Response(
+            serializer.data,
             status=status.HTTP_200_OK,
         )
 
@@ -1085,6 +1116,7 @@ class WorkloadDistributionViewSet(
                 "cancel",
                 "restore",
                 "transfer",
+                "available_actions",
                 "approve_selected",
                 "return_selected_to_draft",
                 "cancel_selected",
