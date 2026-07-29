@@ -5,6 +5,7 @@ from apps.workload.api.views import (
     WorkloadDistributionViewSet,
     AcademicYearWorkloadValidationAPIView,
     AcademicYearWorkloadValidationExportAPIView,
+    AcademicYearClosingReadinessAPIView,
 )
 
 
@@ -26,6 +27,11 @@ urlpatterns = [
         "validation/academic-year/export/",
         AcademicYearWorkloadValidationExportAPIView.as_view(),
         name="workload-academic-year-validation-export",
+    ),
+    path(
+        "closing-readiness/",
+        AcademicYearClosingReadinessAPIView.as_view(),
+        name="workload-academic-year-closing-readiness",
     ),
 ]
 

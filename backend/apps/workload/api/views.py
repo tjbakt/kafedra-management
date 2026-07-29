@@ -34,6 +34,8 @@ from apps.workload.api.serializers import (
     DistributionAvailableActionsSerializer,
     AcademicYearValidationQuerySerializer,
     AcademicYearValidationResultSerializer,
+    AcademicYearClosingReadinessQuerySerializer,
+    AcademicYearClosingReadinessResultSerializer,
 )
 from apps.workload.models import WorkloadDistribution
 
@@ -44,6 +46,7 @@ from apps.access_control.services.access_service import (
 from apps.access_control.permissions import (
     CanManageWorkloadDistribution,
     CanValidateAcademicYearWorkload,
+    CanCheckAcademicYearClosingReadiness,
 )
 
 from apps.workload.services.distribution_service import (
@@ -78,6 +81,9 @@ from apps.workload.services.workload_access_service import (
 )
 from apps.workload.services.academic_year_validation_excel_service import (
     AcademicYearValidationExcelService,
+)
+from apps.workload.services.academic_year_closing_readiness_service import (
+    AcademicYearClosingReadinessService,
 )
 
 from apps.staff.models import StaffEmployment
@@ -1516,3 +1522,76 @@ class AcademicYearWorkloadValidationExportAPIView(
         )
 
         return response
+
+class AcademicYearClosingReadinessAPIView(
+    APIView
+):
+    permission_classes = (
+        IsAuthenticated,
+        CanCheckAcademicYearClosingReadiness,
+    )
+
+    def get(self, request):
+        query_serializer = (
+            AcademicYearClosingReadinessQuerySerializer(
+                data=request.query_params
+            )
+        )
+        query_serializer.is_valid(
+            raise_exception=True
+        )
+
+        academic_year_id = (
+            query_serializer.validated_data[
+                "academic_year"
+            ]
+        )
+        requested_department_id = (
+            query_serializer.validated_data.get(
+                "department"
+            )
+        )
+
+        try:
+            academic_year = AcademicYear.objects.get(
+                pk=academic_year_id,
+                is_archived=False,
+            )
+        except AcademicYear.DoesNotExist as exc:
+            raise ValidationError(
+                {
+                    "academic_year": (
+                        "Указанный учебный год "
+                        "не найден."
+                    )
+                }
+            ) from exc
+
+        department_ids = (
+            WorkloadAccessService
+            .resolve_validation_department_ids(
+                user=request.user,
+                requested_department_id=(
+                    requested_department_id
+                ),
+            )
+        )
+
+        result = (
+            AcademicYearClosingReadinessService
+            .check(
+                academic_year=academic_year,
+                department_ids=department_ids,
+            )
+        )
+
+        output_serializer = (
+            AcademicYearClosingReadinessResultSerializer(
+                result
+            )
+        )
+
+        return Response(
+            output_serializer.data,
+            status=status.HTTP_200_OK,
+        )

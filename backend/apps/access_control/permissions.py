@@ -219,3 +219,19 @@ class CanValidateAcademicYearWorkload(
             SystemRole.Code.ACADEMIC_OFFICE,
             SystemRole.Code.DEPARTMENT_HEAD,
         )
+
+class CanCheckAcademicYearClosingReadiness(
+    BasePermission
+):
+    message = (
+        "У пользователя нет права проверять "
+        "готовность учебного года к закрытию."
+    )
+
+    def has_permission(self, request, view):
+        return AccessService.has_role(
+            request.user,
+            SystemRole.Code.SYSTEM_ADMIN,
+            SystemRole.Code.ACADEMIC_OFFICE,
+            SystemRole.Code.DEPARTMENT_HEAD,
+        )

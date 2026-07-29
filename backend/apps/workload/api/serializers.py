@@ -777,3 +777,68 @@ class AcademicYearValidationResultSerializer(
     issues = AcademicYearValidationIssueSerializer(
         many=True,
     )
+
+class AcademicYearClosingReadinessQuerySerializer(
+    serializers.Serializer
+):
+    academic_year = serializers.IntegerField(
+        min_value=1,
+        required=True,
+    )
+
+    department = serializers.IntegerField(
+        min_value=1,
+        required=False,
+    )
+
+class AcademicYearClosingReadinessSummarySerializer(
+    serializers.Serializer
+):
+    planned_workloads_count = serializers.IntegerField()
+    distributions_count = serializers.IntegerField()
+    year_staff_records_count = serializers.IntegerField()
+
+    blocking_issues_count = serializers.IntegerField()
+    warnings_count = serializers.IntegerField()
+
+    blocking_issues_by_type = serializers.DictField(
+        child=serializers.IntegerField(),
+    )
+    warnings_by_type = serializers.DictField(
+        child=serializers.IntegerField(),
+    )
+
+class AcademicYearClosingReadinessResultSerializer(
+    serializers.Serializer
+):
+    academic_year = serializers.IntegerField()
+    academic_year_name = serializers.CharField()
+
+    department_ids = serializers.ListField(
+        child=serializers.IntegerField(),
+    )
+
+    ready_to_close = serializers.BooleanField()
+
+    status = serializers.ChoiceField(
+        choices=(
+            "ready",
+            "not_ready",
+        )
+    )
+
+    message = serializers.CharField()
+
+    summary = (
+        AcademicYearClosingReadinessSummarySerializer()
+    )
+
+    blocking_issues = (
+        AcademicYearValidationIssueSerializer(
+            many=True,
+        )
+    )
+
+    warnings = AcademicYearValidationIssueSerializer(
+        many=True,
+    )
