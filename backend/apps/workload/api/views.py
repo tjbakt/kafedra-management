@@ -1,7 +1,7 @@
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from django.db.models import Q
-from django.http import HttpResponse
+from django.http import HttpResponse, FileResponse
 
 from rest_framework import status
 from rest_framework.decorators import action
@@ -36,15 +36,6 @@ from apps.workload.api.serializers import (
     AcademicYearValidationResultSerializer,
 )
 from apps.workload.models import WorkloadDistribution
-from apps.workload.services.distribution_service import (
-    WorkloadDistributionService,
-)
-from apps.workload.services.teacher_workload_service import (
-    TeacherWorkloadService,
-)
-from apps.workload.services.department_workload_service import (
-    DepartmentWorkloadService,
-)
 
 from apps.access_control.models import SystemRole
 from apps.access_control.services.access_service import (
@@ -55,6 +46,15 @@ from apps.access_control.permissions import (
     CanValidateAcademicYearWorkload,
 )
 
+from apps.workload.services.distribution_service import (
+    WorkloadDistributionService,
+)
+from apps.workload.services.teacher_workload_service import (
+    TeacherWorkloadService,
+)
+from apps.workload.services.department_workload_service import (
+    DepartmentWorkloadService,
+)
 from apps.workload.services.department_workload_export_service import (
     DepartmentWorkloadExportService,
 )
@@ -73,6 +73,13 @@ from apps.workload.services.workload_dashboard_export_service import (
 from apps.workload.services.academic_year_validation_service import (
     AcademicYearWorkloadValidationService,
 )
+from apps.workload.services.workload_access_service import (
+    WorkloadAccessService,
+)
+from apps.workload.services.academic_year_validation_excel_service import (
+    AcademicYearValidationExcelService,
+)
+
 from apps.staff.models import StaffEmployment
 
 
@@ -1352,8 +1359,9 @@ class AcademicYearWorkloadValidationAPIView(
             )
 
         department_ids = (
-            self._resolve_department_ids(
-                request=request,
+            WorkloadAccessService
+            .resolve_validation_department_ids(
+                user=request.user,
                 requested_department_id=(
                     requested_department_id
                 ),
@@ -1389,59 +1397,122 @@ class AcademicYearWorkloadValidationAPIView(
             status=status.HTTP_200_OK,
         )
 
-    @staticmethod
-    def _resolve_department_ids(
-        *,
-        request,
-        requested_department_id,
-    ):
-        user = request.user
+class AcademicYearWorkloadValidationExportAPIView(
+    APIView
+):
+    permission_classes = (
+        IsAuthenticated,
+        CanValidateAcademicYearWorkload,
+    )
 
-        if AccessService.has_global_role(
-            user,
-            SystemRole.Code.SYSTEM_ADMIN,
-            SystemRole.Code.ACADEMIC_OFFICE,
-        ):
-            if requested_department_id is None:
-                return None
+    def get(self, request):
+        query_serializer = (
+            AcademicYearValidationQuerySerializer(
+                data=request.query_params
+            )
+        )
+        query_serializer.is_valid(
+            raise_exception=True
+        )
 
-            return {
-                requested_department_id,
-            }
+        academic_year_id = (
+            query_serializer.validated_data[
+                "academic_year"
+            ]
+        )
+        requested_department_id = (
+            query_serializer.validated_data.get(
+                "department"
+            )
+        )
 
-        accessible_department_ids = (
-            AccessService.accessible_department_ids(
-                user,
-                role_codes=(
-                    SystemRole.Code.DEPARTMENT_HEAD,
+        try:
+            academic_year = AcademicYear.objects.get(
+                pk=academic_year_id,
+                is_archived=False,
+            )
+        except AcademicYear.DoesNotExist as exc:
+            raise ValidationError(
+                {
+                    "academic_year": (
+                        "Указанный учебный год "
+                        "не найден."
+                    )
+                }
+            ) from exc
+
+        department_ids = (
+            WorkloadAccessService
+            .resolve_validation_department_ids(
+                user=request.user,
+                requested_department_id=(
+                    requested_department_id
                 ),
             )
         )
 
-        if accessible_department_ids is None:
-            if requested_department_id is None:
-                return None
-
-            return {
-                requested_department_id,
-            }
-
-        accessible_department_ids = set(
-            accessible_department_ids
+        validation_result = (
+            AcademicYearWorkloadValidationService
+            .validate(
+                academic_year=academic_year,
+                department_ids=department_ids,
+                severity=(
+                    query_serializer.validated_data.get(
+                        "severity"
+                    )
+                ),
+                issue_type=(
+                    query_serializer.validated_data.get(
+                        "issue_type"
+                    )
+                ),
+            )
         )
 
-        if requested_department_id is not None:
-            if (
-                requested_department_id
-                not in accessible_department_ids
-            ):
-                raise PermissionDenied(
-                    "У пользователя нет доступа "
-                    "к указанной кафедре."
-                )
+        excel_file = (
+            AcademicYearValidationExcelService.build(
+                validation_result=validation_result,
+                generated_by=request.user,
+            )
+        )
 
-            return {
-                requested_department_id,
-            }
+        filename = (
+            AcademicYearValidationExcelService
+            .build_filename(
+                validation_result=validation_result
+            )
+        )
 
-        return accessible_department_ids
+        response = FileResponse(
+            excel_file,
+            content_type=(
+                AcademicYearValidationExcelService
+                .MIME_TYPE
+            ),
+            as_attachment=True,
+            filename=filename,
+        )
+
+        response[
+            "X-Validation-Errors-Count"
+        ] = str(
+            validation_result["summary"][
+                "errors_count"
+            ]
+        )
+        response[
+            "X-Validation-Warnings-Count"
+        ] = str(
+            validation_result["summary"][
+                "warnings_count"
+            ]
+        )
+        response[
+            "X-Validation-Is-Valid"
+        ] = (
+            "true"
+            if validation_result["is_valid"]
+            else "false"
+        )
+
+        return response

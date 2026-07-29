@@ -4,6 +4,7 @@ from rest_framework.routers import DefaultRouter
 from apps.workload.api.views import (
     WorkloadDistributionViewSet,
     AcademicYearWorkloadValidationAPIView,
+    AcademicYearWorkloadValidationExportAPIView,
 )
 
 
@@ -20,6 +21,11 @@ urlpatterns = [
         "validation/academic-year/",
         AcademicYearWorkloadValidationAPIView.as_view(),
         name="workload-academic-year-validation",
+    ),
+    path(
+        "validation/academic-year/export/",
+        AcademicYearWorkloadValidationExportAPIView.as_view(),
+        name="workload-academic-year-validation-export",
     ),
 ]
 
