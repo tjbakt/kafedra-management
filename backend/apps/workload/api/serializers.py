@@ -4,6 +4,11 @@ from rest_framework import serializers
 from apps.common.api.serializers import AuditFieldsSerializer
 from apps.workload.models import WorkloadDistribution
 
+from apps.workload.services.academic_year_validation_service import (
+    AcademicYearWorkloadValidationService,
+)
+
+
 class WorkloadDistributionSerializer(
     AuditFieldsSerializer
 ):
@@ -658,3 +663,117 @@ class DistributionAvailableActionsSerializer(
     status_label = serializers.CharField()
 
     actions = DistributionActionsSerializer()
+
+class AcademicYearValidationQuerySerializer(
+    serializers.Serializer
+):
+    academic_year = serializers.IntegerField(
+        min_value=1,
+        required=True,
+    )
+    department = serializers.IntegerField(
+        min_value=1,
+        required=False,
+    )
+    severity = serializers.ChoiceField(
+        choices=(
+            AcademicYearWorkloadValidationService
+            .Severity.CHOICES
+        ),
+        required=False,
+    )
+    issue_type = serializers.ChoiceField(
+        choices=(
+            AcademicYearWorkloadValidationService
+            .IssueType.CHOICES
+        ),
+        required=False,
+    )
+
+class AcademicYearValidationIssueSerializer(
+    serializers.Serializer
+):
+    severity = serializers.ChoiceField(
+        choices=(
+            AcademicYearWorkloadValidationService
+            .Severity.CHOICES
+        )
+    )
+    issue_type = serializers.ChoiceField(
+        choices=(
+            AcademicYearWorkloadValidationService
+            .IssueType.CHOICES
+        )
+    )
+    message = serializers.CharField()
+
+    department_id = serializers.IntegerField()
+    department_name = serializers.CharField()
+
+    staff_employment_id = serializers.IntegerField(
+        allow_null=True,
+    )
+    staff_member_id = serializers.IntegerField(
+        allow_null=True,
+    )
+    teacher_name = serializers.CharField(
+        allow_null=True,
+    )
+
+    planned_workload_id = serializers.IntegerField(
+        allow_null=True,
+    )
+    distribution_id = serializers.IntegerField(
+        allow_null=True,
+    )
+
+    stream_code = serializers.CharField(
+        allow_null=True,
+        required=False,
+    )
+    discipline_name = serializers.CharField(
+        allow_null=True,
+        required=False,
+    )
+    workload_type_name = serializers.CharField(
+        allow_null=True,
+        required=False,
+    )
+
+    details = serializers.JSONField()
+
+
+class AcademicYearValidationSummarySerializer(
+    serializers.Serializer
+):
+    planned_workloads_count = serializers.IntegerField()
+    distributions_count = serializers.IntegerField()
+    year_staff_records_count = serializers.IntegerField()
+
+    issues_count = serializers.IntegerField()
+    errors_count = serializers.IntegerField()
+    warnings_count = serializers.IntegerField()
+
+    issues_by_type = serializers.DictField(
+        child=serializers.IntegerField(),
+    )
+
+
+class AcademicYearValidationResultSerializer(
+    serializers.Serializer
+):
+    academic_year = serializers.IntegerField()
+    academic_year_name = serializers.CharField()
+
+    department_ids = serializers.ListField(
+        child=serializers.IntegerField(),
+    )
+
+    is_valid = serializers.BooleanField()
+
+    summary = (
+        AcademicYearValidationSummarySerializer()
+    )
+    issues = AcademicYearValidationIssueSerializer(
+        many=True,
+    )

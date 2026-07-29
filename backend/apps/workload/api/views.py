@@ -8,6 +8,7 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from apps.academics.models import AcademicYear
 from apps.common.api.viewsets import BaseArchiveModelViewSet
@@ -31,6 +32,8 @@ from apps.workload.api.serializers import (
     ReturnSelectedToDraftResultSerializer,
     ReturnSelectedToDraftSerializer,
     DistributionAvailableActionsSerializer,
+    AcademicYearValidationQuerySerializer,
+    AcademicYearValidationResultSerializer,
 )
 from apps.workload.models import WorkloadDistribution
 from apps.workload.services.distribution_service import (
@@ -47,9 +50,9 @@ from apps.access_control.models import SystemRole
 from apps.access_control.services.access_service import (
     AccessService,
 )
-
 from apps.access_control.permissions import (
     CanManageWorkloadDistribution,
+    CanValidateAcademicYearWorkload,
 )
 
 from apps.workload.services.department_workload_export_service import (
@@ -67,8 +70,10 @@ from apps.workload.services.workload_dashboard_service import (
 from apps.workload.services.workload_dashboard_export_service import (
     WorkloadDashboardExportService,
 )
+from apps.workload.services.academic_year_validation_service import (
+    AcademicYearWorkloadValidationService,
+)
 from apps.staff.models import StaffEmployment
-
 
 
 class WorkloadDistributionViewSet(
@@ -1300,3 +1305,143 @@ class WorkloadDistributionViewSet(
         )
 
         return response
+
+
+class AcademicYearWorkloadValidationAPIView(
+    APIView
+):
+    permission_classes = (
+        IsAuthenticated,
+        CanValidateAcademicYearWorkload,
+    )
+
+    def get(self, request):
+        query_serializer = (
+            AcademicYearValidationQuerySerializer(
+                data=request.query_params
+            )
+        )
+        query_serializer.is_valid(
+            raise_exception=True
+        )
+
+        academic_year_id = (
+            query_serializer.validated_data[
+                "academic_year"
+            ]
+        )
+        requested_department_id = (
+            query_serializer.validated_data.get(
+                "department"
+            )
+        )
+
+        try:
+            academic_year = AcademicYear.objects.get(
+                pk=academic_year_id,
+                is_archived=False,
+            )
+        except AcademicYear.DoesNotExist:
+            raise ValidationError(
+                {
+                    "academic_year": (
+                        "Указанный учебный год "
+                        "не найден."
+                    )
+                }
+            )
+
+        department_ids = (
+            self._resolve_department_ids(
+                request=request,
+                requested_department_id=(
+                    requested_department_id
+                ),
+            )
+        )
+
+        result = (
+            AcademicYearWorkloadValidationService
+            .validate(
+                academic_year=academic_year,
+                department_ids=department_ids,
+                severity=(
+                    query_serializer.validated_data.get(
+                        "severity"
+                    )
+                ),
+                issue_type=(
+                    query_serializer.validated_data.get(
+                        "issue_type"
+                    )
+                ),
+            )
+        )
+
+        output_serializer = (
+            AcademicYearValidationResultSerializer(
+                result
+            )
+        )
+
+        return Response(
+            output_serializer.data,
+            status=status.HTTP_200_OK,
+        )
+
+    @staticmethod
+    def _resolve_department_ids(
+        *,
+        request,
+        requested_department_id,
+    ):
+        user = request.user
+
+        if AccessService.has_global_role(
+            user,
+            SystemRole.Code.SYSTEM_ADMIN,
+            SystemRole.Code.ACADEMIC_OFFICE,
+        ):
+            if requested_department_id is None:
+                return None
+
+            return {
+                requested_department_id,
+            }
+
+        accessible_department_ids = (
+            AccessService.accessible_department_ids(
+                user,
+                role_codes=(
+                    SystemRole.Code.DEPARTMENT_HEAD,
+                ),
+            )
+        )
+
+        if accessible_department_ids is None:
+            if requested_department_id is None:
+                return None
+
+            return {
+                requested_department_id,
+            }
+
+        accessible_department_ids = set(
+            accessible_department_ids
+        )
+
+        if requested_department_id is not None:
+            if (
+                requested_department_id
+                not in accessible_department_ids
+            ):
+                raise PermissionDenied(
+                    "У пользователя нет доступа "
+                    "к указанной кафедре."
+                )
+
+            return {
+                requested_department_id,
+            }
+
+        return accessible_department_ids

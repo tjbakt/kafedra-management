@@ -203,3 +203,19 @@ class CanViewAuditLog(BasePermission):
             SystemRole.Code.DEAN_OFFICE,
             SystemRole.Code.DEPARTMENT_HEAD,
         )
+
+class CanValidateAcademicYearWorkload(
+    BasePermission
+):
+    message = (
+        "У пользователя нет права выполнять "
+        "проверку учебной нагрузки."
+    )
+
+    def has_permission(self, request, view):
+        return AccessService.has_role(
+            request.user,
+            SystemRole.Code.SYSTEM_ADMIN,
+            SystemRole.Code.ACADEMIC_OFFICE,
+            SystemRole.Code.DEPARTMENT_HEAD,
+        )
