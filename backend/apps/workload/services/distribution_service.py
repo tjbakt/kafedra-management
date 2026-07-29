@@ -697,6 +697,133 @@ class WorkloadDistributionService:
         return distribution
 
     @classmethod
+    @transaction.atomic
+    def restore_distribution(
+            cls,
+            *,
+            distribution,
+            user=None,
+            reason="",
+    ) -> WorkloadDistribution:
+        normalized_reason = str(reason or "").strip()
+
+        if not normalized_reason:
+            raise ValidationError(
+                {
+                    "reason": (
+                        "Укажите причину восстановления "
+                        "распределения."
+                    )
+                }
+            )
+
+        distribution = (
+            WorkloadDistribution.objects
+            .select_for_update()
+            .select_related(
+                "planned_workload",
+                "planned_workload__academic_year",
+                "planned_workload__teaching_department",
+                "staff_employment",
+                "staff_employment__staff_member",
+                "staff_employment__position",
+            )
+            .get(pk=distribution.pk)
+        )
+
+        if (
+                distribution.status
+                != WorkloadDistribution.Status.CANCELLED
+        ):
+            raise ValidationError(
+                {
+                    "detail": (
+                        "Восстановить можно только "
+                        "отменённое распределение."
+                    )
+                }
+            )
+
+        cls.validate_employment(
+            planned_workload=distribution.planned_workload,
+            staff_employment=distribution.staff_employment,
+        )
+
+        cls.validate_available_hours(
+            planned_workload=distribution.planned_workload,
+            allocated_hours=distribution.allocated_hours,
+        )
+
+        old_status = distribution.status
+
+        distribution.status = (
+            WorkloadDistribution.Status.DRAFT
+        )
+        distribution.approved_at = None
+        distribution.approved_by = None
+        distribution.updated_by = user
+
+        distribution.notes = (
+            f"{distribution.notes}\n"
+            f"Причина восстановления: {normalized_reason}"
+        ).strip()
+
+        distribution.full_clean()
+        distribution.save(
+            update_fields=(
+                "status",
+                "approved_at",
+                "approved_by",
+                "notes",
+                "updated_by",
+                "updated_at",
+            )
+        )
+
+        cls.update_planned_workload_status(
+            planned_workload=distribution.planned_workload,
+            user=user,
+        )
+
+        AuditService.log_status_change(
+            instance=distribution,
+            old_status=old_status,
+            new_status=distribution.status,
+            actor=user,
+            action=AuditEvent.Action.RESTORE,
+            action_label=(
+                "Распределение нагрузки восстановлено"
+            ),
+            reason=normalized_reason,
+            metadata={
+                "allocated_hours": (
+                    distribution.allocated_hours
+                ),
+                "restored_as_status": (
+                    WorkloadDistribution.Status.DRAFT
+                ),
+            },
+        )
+
+        cls.notify_teacher(
+            distribution=distribution,
+            title="Учебная нагрузка восстановлена",
+            message=(
+                "Ранее отменённое распределение "
+                f"на {distribution.allocated_hours} часов "
+                "восстановлено в статусе черновика. "
+                f"Причина: {normalized_reason}"
+            ),
+            notification_type=Notification.Type.INFO,
+            metadata={
+                "reason": normalized_reason,
+                "status": WorkloadDistribution.Status.DRAFT,
+            },
+        )
+
+        return distribution
+
+    @classmethod
     def cancel_distributions(
             cls,
             *,
@@ -747,6 +874,57 @@ class WorkloadDistributionService:
         return {
             "cancelled_count": len(cancelled_ids),
             "cancelled_ids": cancelled_ids,
+            "errors_count": len(errors),
+            "errors": errors,
+        }
+
+    @classmethod
+    def restore_distributions(
+            cls,
+            *,
+            distributions,
+            user=None,
+            reason="",
+    ) -> dict:
+        normalized_reason = str(reason or "").strip()
+
+        if not normalized_reason:
+            raise ValidationError(
+                {
+                    "reason": (
+                        "Укажите причину массового "
+                        "восстановления."
+                    )
+                }
+            )
+
+        restored_ids = []
+        errors = []
+
+        for distribution in distributions:
+            try:
+                restored = cls.restore_distribution(
+                    distribution=distribution,
+                    user=user,
+                    reason=normalized_reason,
+                )
+            except ValidationError as exc:
+                errors.append(
+                    {
+                        "id": distribution.pk,
+                        "error": (
+                            cls._validation_error_data(
+                                exc
+                            )
+                        ),
+                    }
+                )
+            else:
+                restored_ids.append(restored.pk)
+
+        return {
+            "restored_count": len(restored_ids),
+            "restored_ids": restored_ids,
             "errors_count": len(errors),
             "errors": errors,
         }

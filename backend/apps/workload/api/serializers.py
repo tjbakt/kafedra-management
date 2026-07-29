@@ -427,3 +427,74 @@ class CancelSelectedDistributionsResultSerializer(
     errors = BulkDistributionErrorSerializer(
         many=True,
     )
+
+class RestoreDistributionSerializer(
+    serializers.Serializer
+):
+    reason = serializers.CharField(
+        max_length=1000,
+        allow_blank=False,
+        trim_whitespace=True,
+    )
+
+    def validate_reason(self, value):
+        normalized_value = value.strip()
+
+        if not normalized_value:
+            raise serializers.ValidationError(
+                "Укажите причину восстановления."
+            )
+
+        return normalized_value
+
+class RestoreSelectedDistributionsSerializer(
+    serializers.Serializer
+):
+    ids = serializers.ListField(
+        child=serializers.IntegerField(
+            min_value=1,
+        ),
+        allow_empty=False,
+        max_length=500,
+    )
+
+    reason = serializers.CharField(
+        max_length=1000,
+        allow_blank=False,
+        trim_whitespace=True,
+    )
+
+    def validate_ids(self, value):
+        return list(dict.fromkeys(value))
+
+    def validate_reason(self, value):
+        normalized_value = value.strip()
+
+        if not normalized_value:
+            raise serializers.ValidationError(
+                "Укажите причину массового "
+                "восстановления."
+            )
+
+        return normalized_value
+
+class RestoreSelectedDistributionsResultSerializer(
+    serializers.Serializer
+):
+    requested_count = serializers.IntegerField()
+    found_count = serializers.IntegerField()
+
+    restored_count = serializers.IntegerField()
+    restored_ids = serializers.ListField(
+        child=serializers.IntegerField(),
+    )
+
+    unavailable_count = serializers.IntegerField()
+    unavailable_ids = serializers.ListField(
+        child=serializers.IntegerField(),
+    )
+
+    errors_count = serializers.IntegerField()
+    errors = BulkDistributionErrorSerializer(
+        many=True,
+    )

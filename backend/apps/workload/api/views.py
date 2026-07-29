@@ -22,6 +22,9 @@ from apps.workload.api.serializers import (
     WorkloadDashboardSerializer,
     CancelSelectedDistributionsResultSerializer,
     CancelSelectedDistributionsSerializer,
+    RestoreDistributionSerializer,
+    RestoreSelectedDistributionsResultSerializer,
+    RestoreSelectedDistributionsSerializer,
 )
 from apps.workload.models import WorkloadDistribution
 from apps.workload.services.distribution_service import (
@@ -287,6 +290,58 @@ class WorkloadDistributionViewSet(
         )
 
     @action(
+        detail=True,
+        methods=["post"],
+        url_path="restore",
+    )
+    def restore(self, request, pk=None):
+        input_serializer = RestoreDistributionSerializer(
+            data=request.data
+        )
+        input_serializer.is_valid(
+            raise_exception=True
+        )
+
+        distribution = self.get_object()
+
+        try:
+            distribution = (
+                WorkloadDistributionService
+                .restore_distribution(
+                    distribution=distribution,
+                    user=request.user,
+                    reason=(
+                        input_serializer.validated_data[
+                            "reason"
+                        ]
+                    ),
+                )
+            )
+        except DjangoValidationError as exc:
+            raise ValidationError(
+                getattr(
+                    exc,
+                    "message_dict",
+                    exc.messages,
+                )
+            ) from exc
+
+        output_serializer = self.get_serializer(
+            distribution
+        )
+
+        return Response(
+            {
+                "detail": (
+                    "Распределение восстановлено "
+                    "в статусе черновика."
+                ),
+                "data": output_serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    @action(
         detail=False,
         methods=["post"],
         url_path="approve-selected",
@@ -415,6 +470,84 @@ class WorkloadDistributionViewSet(
 
         output_serializer = (
             CancelSelectedDistributionsResultSerializer(
+                result
+            )
+        )
+
+        return Response(
+            output_serializer.data,
+            status=status.HTTP_200_OK,
+        )
+
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="restore-selected",
+    )
+    def restore_selected(self, request):
+        input_serializer = (
+            RestoreSelectedDistributionsSerializer(
+                data=request.data
+            )
+        )
+        input_serializer.is_valid(
+            raise_exception=True
+        )
+
+        requested_ids = input_serializer.validated_data[
+            "ids"
+        ]
+        reason = input_serializer.validated_data[
+            "reason"
+        ]
+
+        distributions = list(
+            self.get_queryset()
+            .filter(pk__in=requested_ids)
+            .order_by("pk")
+        )
+
+        found_ids = {
+            distribution.pk
+            for distribution in distributions
+        }
+
+        unavailable_ids = [
+            distribution_id
+            for distribution_id in requested_ids
+            if distribution_id not in found_ids
+        ]
+
+        service_result = (
+            WorkloadDistributionService
+            .restore_distributions(
+                distributions=distributions,
+                user=request.user,
+                reason=reason,
+            )
+        )
+
+        result = {
+            "requested_count": len(requested_ids),
+            "found_count": len(distributions),
+            "restored_count": service_result[
+                "restored_count"
+            ],
+            "restored_ids": service_result[
+                "restored_ids"
+            ],
+            "unavailable_count": len(
+                unavailable_ids
+            ),
+            "unavailable_ids": unavailable_ids,
+            "errors_count": service_result[
+                "errors_count"
+            ],
+            "errors": service_result["errors"],
+        }
+
+        output_serializer = (
+            RestoreSelectedDistributionsResultSerializer(
                 result
             )
         )
@@ -717,8 +850,10 @@ class WorkloadDistributionViewSet(
                 "destroy",
                 "approve",
                 "cancel",
+                "restore",
                 "approve_selected",
                 "cancel_selected",
+                "restore_selected",
         ):
             permission_classes = [
                 IsAuthenticated,
