@@ -1,3 +1,9 @@
+from django.core.exceptions import (
+    ValidationError as DjangoValidationError,
+)
+from rest_framework.exceptions import (
+    ValidationError as DRFValidationError,
+)
 from rest_framework import status
 from rest_framework.response import Response
 
@@ -48,3 +54,28 @@ class AuditedArchiveModelMixin(
     """
     Общий mixin для стандартных CRUD ViewSet.
     """
+
+class DjangoValidationErrorMixin:
+    """
+    Преобразует django ValidationError,
+    возникший в модели, signal или сервисе,
+    в корректный DRF HTTP 400.
+    """
+
+    def handle_exception(self, exc):
+        if isinstance(
+            exc,
+            DjangoValidationError,
+        ):
+            if hasattr(exc, "message_dict"):
+                exc = DRFValidationError(
+                    exc.message_dict
+                )
+            else:
+                exc = DRFValidationError(
+                    {
+                        "detail": exc.messages,
+                    }
+                )
+
+        return super().handle_exception(exc)

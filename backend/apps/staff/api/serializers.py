@@ -1,4 +1,7 @@
 from django.utils.translation import get_language
+from django.core.exceptions import (
+    ValidationError as DjangoValidationError,
+)
 from rest_framework import serializers
 
 from apps.common.api.serializers import AuditFieldsSerializer
@@ -12,6 +15,9 @@ from apps.staff.models import (
     WorkloadNorm,
 )
 from apps.academics.models import AcademicYear
+from apps.academics.services.closed_academic_year_guard import (
+    ClosedAcademicYearMutationGuard,
+)
 from apps.organizations.models import Department
 
 
@@ -751,6 +757,18 @@ class CreateAcademicYearStaffRecordsSerializer(
     def validate(self, attrs):
         academic_year = attrs["academic_year"]
         department = attrs.get("department")
+
+        try:
+            (
+                ClosedAcademicYearMutationGuard
+                .ensure_open(
+                    academic_year=academic_year,
+                )
+            )
+        except DjangoValidationError as exc:
+            raise serializers.ValidationError(
+                exc.message_dict
+            ) from exc
 
         if academic_year.is_archived:
             raise serializers.ValidationError(

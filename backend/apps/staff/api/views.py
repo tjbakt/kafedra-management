@@ -1,5 +1,4 @@
 from django.db.models import Q
-from django.db import transaction
 
 from rest_framework import status
 from rest_framework.decorators import action
@@ -8,6 +7,9 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 
 from apps.common.api.viewsets import BaseArchiveModelViewSet
+from apps.common.api.mixins import (
+    DjangoValidationErrorMixin,
+)
 from apps.staff.api.filters import (
     AcademicDegreeFilter,
     AcademicTitleFilter,
@@ -324,7 +326,8 @@ class StaffEmploymentViewSet(BaseArchiveModelViewSet):
         )
 
 class StaffEmploymentAcademicYearViewSet(
-    BaseArchiveModelViewSet
+    DjangoValidationErrorMixin,
+    BaseArchiveModelViewSet,
 ):
     model = StaffEmploymentAcademicYear
     serializer_class = (
@@ -820,7 +823,10 @@ class StaffEmploymentAcademicYearViewSet(
                 )
             )
 
-class WorkloadNormViewSet(BaseArchiveModelViewSet):
+class WorkloadNormViewSet(
+    DjangoValidationErrorMixin,
+    BaseArchiveModelViewSet,
+):
     model = WorkloadNorm
     serializer_class = WorkloadNormSerializer
     permission_classes = [IsAuthenticated]

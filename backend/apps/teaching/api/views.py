@@ -1,11 +1,17 @@
 from django.db import transaction
 from django.db.models import Sum
+from django.core.exceptions import (
+    ValidationError as DjangoValidationError,
+)
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from apps.common.api.viewsets import BaseArchiveModelViewSet
+from apps.common.api.mixins import (
+    DjangoValidationErrorMixin,
+)
 from apps.teaching.api.filters import (
     GroupCurriculumAssignmentFilter,
     GroupSemesterFilter,
@@ -30,6 +36,10 @@ from apps.teaching.models import (
 from apps.teaching.services.workload_calculator import (
     TeachingStreamWorkloadCalculator,
 )
+from apps.academics.services.closed_academic_year_guard import (
+    ClosedAcademicYearMutationGuard,
+)
+
 
 class GroupCurriculumAssignmentViewSet(
     BaseArchiveModelViewSet
@@ -100,7 +110,8 @@ class GroupSemesterViewSet(BaseArchiveModelViewSet):
         )
 
 class TeachingStreamGroupViewSet(
-    BaseArchiveModelViewSet
+    DjangoValidationErrorMixin,
+    BaseArchiveModelViewSet,
 ):
     model = TeachingStreamGroup
     serializer_class = TeachingStreamGroupSerializer
@@ -125,7 +136,10 @@ class TeachingStreamGroupViewSet(
             "group_semester__group_curriculum__student_group",
         )
 
-class TeachingStreamViewSet(BaseArchiveModelViewSet):
+class TeachingStreamViewSet(
+    DjangoValidationErrorMixin,
+    BaseArchiveModelViewSet,
+):
     model = TeachingStream
     serializer_class = TeachingStreamSerializer
     permission_classes = [IsAuthenticated]
@@ -180,6 +194,9 @@ class TeachingStreamViewSet(BaseArchiveModelViewSet):
     )
     def calculate(self, request, pk=None):
         stream = self.get_object()
+        ClosedAcademicYearMutationGuard.ensure_open(
+            academic_year=stream.academic_year,
+        )
 
         try:
             calculator = TeachingStreamWorkloadCalculator(
@@ -226,12 +243,44 @@ class TeachingStreamViewSet(BaseArchiveModelViewSet):
         with transaction.atomic():
             for stream in queryset:
                 try:
+                    (
+                        ClosedAcademicYearMutationGuard
+                        .ensure_open(
+                            academic_year=(
+                                stream.academic_year
+                            ),
+                        )
+                    )
+
                     workload = (
                         TeachingStreamWorkloadCalculator(
                             stream
-                        ).calculate(user=request.user)
+                        ).calculate(
+                            teaching_stream=stream,
+                            user=request.user,
+                        )
                     )
-                    calculated.append(workload.id)
+
+                    calculated.append(
+                        workload.id
+                    )
+
+                except DjangoValidationError as exc:
+                    errors.append(
+                        {
+                            "stream": stream.id,
+                            "code": stream.code,
+                            "error": (
+                                exc.message_dict
+                                if hasattr(
+                                    exc,
+                                    "message_dict",
+                                )
+                                else exc.messages
+                            ),
+                        }
+                    )
+
                 except ValueError as exc:
                     errors.append(
                         {
@@ -252,7 +301,8 @@ class TeachingStreamViewSet(BaseArchiveModelViewSet):
         )
 
 class PlannedWorkloadViewSet(
-    BaseArchiveModelViewSet
+    DjangoValidationErrorMixin,
+    BaseArchiveModelViewSet,
 ):
     model = PlannedWorkload
     serializer_class = PlannedWorkloadSerializer
