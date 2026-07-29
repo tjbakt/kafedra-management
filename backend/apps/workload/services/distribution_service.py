@@ -929,6 +929,401 @@ class WorkloadDistributionService:
             "errors": errors,
         }
 
+    @classmethod
+    @transaction.atomic
+    def transfer_distribution_hours(
+            cls,
+            *,
+            source_distribution,
+            target_staff_employment,
+            transfer_hours,
+            user=None,
+            reason="",
+    ) -> dict:
+        """
+        Переносит часы чернового распределения
+        другому преподавателю.
+
+        Если у целевого преподавателя уже есть активный
+        черновик для той же плановой нагрузки, часы
+        добавляются к нему.
+
+        При полном переносе исходное распределение
+        переводится в статус CANCELLED.
+        """
+
+        normalized_reason = str(reason or "").strip()
+
+        if not normalized_reason:
+            raise ValidationError(
+                {
+                    "reason": (
+                        "Укажите причину переноса часов."
+                    )
+                }
+            )
+
+        transfer_hours = cls.normalize_hours(
+            transfer_hours
+        )
+
+        source_distribution = (
+            WorkloadDistribution.objects
+            .select_for_update()
+            .select_related(
+                "planned_workload",
+                "planned_workload__academic_year",
+                "planned_workload__teaching_department",
+                "staff_employment",
+                "staff_employment__staff_member",
+                "staff_employment__position",
+            )
+            .get(pk=source_distribution.pk)
+        )
+
+        planned_workload = (
+            PlannedWorkload.objects
+            .select_for_update()
+            .select_related(
+                "academic_year",
+                "teaching_department",
+            )
+            .get(
+                pk=source_distribution.planned_workload_id
+            )
+        )
+
+        if (
+                source_distribution.status
+                != WorkloadDistribution.Status.DRAFT
+        ):
+            raise ValidationError(
+                {
+                    "detail": (
+                        "Переносить часы можно только "
+                        "из чернового распределения."
+                    )
+                }
+            )
+
+        if (
+                source_distribution.staff_employment_id
+                == target_staff_employment.pk
+        ):
+            raise ValidationError(
+                {
+                    "target_staff_employment": (
+                        "Исходный и целевой преподаватель "
+                        "не должны совпадать."
+                    )
+                }
+            )
+
+        if (
+                transfer_hours
+                > source_distribution.allocated_hours
+        ):
+            raise ValidationError(
+                {
+                    "transfer_hours": (
+                        "Количество переносимых часов "
+                        "превышает часы исходного "
+                        "распределения. "
+                        f"Доступно: "
+                        f"{source_distribution.allocated_hours}."
+                    )
+                }
+            )
+
+        year_staff_record = cls.validate_employment(
+            planned_workload=planned_workload,
+            staff_employment=target_staff_employment,
+        )
+
+        target_distribution = (
+            WorkloadDistribution.objects
+            .select_for_update()
+            .select_related(
+                "staff_employment",
+                "staff_employment__staff_member",
+                "staff_employment__position",
+            )
+            .filter(
+                planned_workload=planned_workload,
+                staff_employment=target_staff_employment,
+                status__in=cls.ACTIVE_STATUSES,
+                is_archived=False,
+            )
+            .first()
+        )
+
+        if (
+                target_distribution is not None
+                and target_distribution.status
+                == WorkloadDistribution.Status.APPROVED
+        ):
+            raise ValidationError(
+                {
+                    "target_staff_employment": (
+                        "У целевого преподавателя уже есть "
+                        "утверждённое распределение по этой "
+                        "плановой нагрузке. Сначала отмените "
+                        "его утверждение."
+                    )
+                }
+            )
+
+        source_old_hours = (
+            source_distribution.allocated_hours
+        )
+        source_remaining_hours = (
+                source_old_hours - transfer_hours
+        ).quantize(Decimal("0.01"))
+
+        source_old_status = source_distribution.status
+
+        if source_remaining_hours == Decimal("0.00"):
+            source_distribution.status = (
+                WorkloadDistribution.Status.CANCELLED
+            )
+            source_distribution.approved_at = None
+            source_distribution.approved_by = None
+        else:
+            source_distribution.allocated_hours = (
+                source_remaining_hours
+            )
+
+        source_distribution.notes = (
+            f"{source_distribution.notes}\n"
+            f"Перенесено {transfer_hours} часов "
+            f"на трудовое назначение "
+            f"ID {target_staff_employment.pk}. "
+            f"Причина: {normalized_reason}"
+        ).strip()
+        source_distribution.updated_by = user
+
+        if source_remaining_hours == Decimal("0.00"):
+            source_distribution.save(
+                update_fields=(
+                    "status",
+                    "approved_at",
+                    "approved_by",
+                    "notes",
+                    "updated_by",
+                    "updated_at",
+                )
+            )
+        else:
+            source_distribution.full_clean()
+            source_distribution.save(
+                update_fields=(
+                    "allocated_hours",
+                    "notes",
+                    "updated_by",
+                    "updated_at",
+                )
+            )
+
+        target_created = target_distribution is None
+
+        if target_created:
+            target_distribution = WorkloadDistribution(
+                planned_workload=planned_workload,
+                staff_employment=target_staff_employment,
+                allocated_hours=transfer_hours,
+                status=WorkloadDistribution.Status.DRAFT,
+                notes=(
+                    f"Получено {transfer_hours} часов "
+                    f"из распределения "
+                    f"ID {source_distribution.pk}. "
+                    f"Причина: {normalized_reason}"
+                ),
+                created_by=user,
+                updated_by=user,
+            )
+        else:
+            target_old_hours = (
+                target_distribution.allocated_hours
+            )
+            target_distribution.allocated_hours = (
+                    target_old_hours + transfer_hours
+            ).quantize(Decimal("0.01"))
+            target_distribution.notes = (
+                f"{target_distribution.notes}\n"
+                f"Добавлено {transfer_hours} часов "
+                f"из распределения "
+                f"ID {source_distribution.pk}. "
+                f"Причина: {normalized_reason}"
+            ).strip()
+            target_distribution.updated_by = user
+
+        target_distribution.full_clean()
+
+        if target_created:
+            target_distribution.save()
+        else:
+            target_distribution.save(
+                update_fields=(
+                    "allocated_hours",
+                    "notes",
+                    "updated_by",
+                    "updated_at",
+                )
+            )
+
+        cls.update_planned_workload_status(
+            planned_workload=planned_workload,
+            user=user,
+        )
+
+        AuditService.log(
+            instance=source_distribution,
+            action=AuditEvent.Action.UPDATE,
+            actor=user,
+            action_label=(
+                "Часы нагрузки перенесены "
+                "другому преподавателю"
+            ),
+            old_values={
+                "allocated_hours": source_old_hours,
+                "status": source_old_status,
+            },
+            new_values={
+                "allocated_hours": (
+                    source_remaining_hours
+                    if source_remaining_hours
+                       > Decimal("0.00")
+                    else Decimal("0.00")
+                ),
+                "status": source_distribution.status,
+            },
+            changed_fields=[
+                "allocated_hours",
+                "status",
+            ],
+            reason=normalized_reason,
+            metadata={
+                "operation": "transfer_hours",
+                "target_distribution_id": (
+                    target_distribution.pk
+                ),
+                "target_staff_employment_id": (
+                    target_staff_employment.pk
+                ),
+                "target_year_staff_record_id": (
+                    year_staff_record.pk
+                ),
+                "transferred_hours": transfer_hours,
+            },
+        )
+
+        AuditService.log(
+            instance=target_distribution,
+            action=(
+                AuditEvent.Action.DISTRIBUTE
+                if target_created
+                else AuditEvent.Action.UPDATE
+            ),
+            actor=user,
+            action_label=(
+                "Получены часы нагрузки "
+                "от другого преподавателя"
+            ),
+            old_values=(
+                {}
+                if target_created
+                else {
+                    "allocated_hours": (
+                            target_distribution.allocated_hours
+                            - transfer_hours
+                    )
+                }
+            ),
+            new_values={
+                "allocated_hours": (
+                    target_distribution.allocated_hours
+                ),
+                "status": target_distribution.status,
+            },
+            changed_fields=[
+                "allocated_hours",
+                "status",
+            ],
+            reason=normalized_reason,
+            metadata={
+                "operation": "receive_transferred_hours",
+                "source_distribution_id": (
+                    source_distribution.pk
+                ),
+                "source_staff_employment_id": (
+                    source_distribution
+                    .staff_employment_id
+                ),
+                "transferred_hours": transfer_hours,
+            },
+        )
+
+        cls.notify_teacher(
+            distribution=source_distribution,
+            title="Часть учебной нагрузки перенесена",
+            message=(
+                f"Из вашего распределения перенесено "
+                f"{transfer_hours} часов. "
+                f"Причина: {normalized_reason}"
+            ),
+            notification_type=(
+                Notification.Type.WARNING
+            ),
+            metadata={
+                "operation": "transfer_hours",
+                "transferred_hours": str(
+                    transfer_hours
+                ),
+                "target_distribution_id": (
+                    target_distribution.pk
+                ),
+            },
+        )
+
+        cls.notify_teacher(
+            distribution=target_distribution,
+            title="Добавлена учебная нагрузка",
+            message=(
+                f"Вам передано {transfer_hours} часов "
+                "учебной нагрузки. "
+                f"Причина: {normalized_reason}"
+            ),
+            notification_type=(
+                Notification.Type.INFO
+            ),
+            metadata={
+                "operation": (
+                    "receive_transferred_hours"
+                ),
+                "transferred_hours": str(
+                    transfer_hours
+                ),
+                "source_distribution_id": (
+                    source_distribution.pk
+                ),
+            },
+        )
+
+        return {
+            "source_distribution": (
+                source_distribution
+            ),
+            "target_distribution": (
+                target_distribution
+            ),
+            "transferred_hours": transfer_hours,
+            "source_cancelled": (
+                    source_distribution.status
+                    == WorkloadDistribution.Status.CANCELLED
+            ),
+            "target_created": target_created,
+        }
+
     @staticmethod
     def _validation_error_data(exc):
         """

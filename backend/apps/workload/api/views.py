@@ -25,6 +25,8 @@ from apps.workload.api.serializers import (
     RestoreDistributionSerializer,
     RestoreSelectedDistributionsResultSerializer,
     RestoreSelectedDistributionsSerializer,
+    TransferDistributionHoursResultSerializer,
+    TransferDistributionHoursSerializer,
 )
 from apps.workload.models import WorkloadDistribution
 from apps.workload.services.distribution_service import (
@@ -61,6 +63,7 @@ from apps.workload.services.workload_dashboard_service import (
 from apps.workload.services.workload_dashboard_export_service import (
     WorkloadDashboardExportService,
 )
+from apps.staff.models import StaffEmployment
 
 
 
@@ -285,6 +288,100 @@ class WorkloadDistributionViewSet(
             {
                 "detail": "Распределение отменено.",
                 "data": serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="transfer",
+    )
+    def transfer(self, request, pk=None):
+        input_serializer = (
+            TransferDistributionHoursSerializer(
+                data=request.data
+            )
+        )
+        input_serializer.is_valid(
+            raise_exception=True
+        )
+
+        source_distribution = self.get_object()
+
+        target_staff_employment_id = (
+            input_serializer.validated_data[
+                "target_staff_employment"
+            ]
+        )
+
+        try:
+            target_staff_employment = (
+                StaffEmployment.objects
+                .select_related(
+                    "staff_member",
+                    "department",
+                    "position",
+                )
+                .get(
+                    pk=target_staff_employment_id,
+                    is_archived=False,
+                )
+            )
+        except StaffEmployment.DoesNotExist as exc:
+            raise ValidationError(
+                {
+                    "target_staff_employment": (
+                        "Указанное трудовое назначение "
+                        "не найдено."
+                    )
+                }
+            ) from exc
+
+        try:
+            result = (
+                WorkloadDistributionService
+                .transfer_distribution_hours(
+                    source_distribution=(
+                        source_distribution
+                    ),
+                    target_staff_employment=(
+                        target_staff_employment
+                    ),
+                    transfer_hours=(
+                        input_serializer.validated_data[
+                            "transfer_hours"
+                        ]
+                    ),
+                    user=request.user,
+                    reason=(
+                        input_serializer.validated_data[
+                            "reason"
+                        ]
+                    ),
+                )
+            )
+        except DjangoValidationError as exc:
+            raise ValidationError(
+                getattr(
+                    exc,
+                    "message_dict",
+                    exc.messages,
+                )
+            ) from exc
+
+        output_serializer = (
+            TransferDistributionHoursResultSerializer(
+                result
+            )
+        )
+
+        return Response(
+            {
+                "detail": (
+                    "Часы нагрузки успешно перенесены."
+                ),
+                "data": output_serializer.data,
             },
             status=status.HTTP_200_OK,
         )
@@ -851,6 +948,7 @@ class WorkloadDistributionViewSet(
                 "approve",
                 "cancel",
                 "restore",
+                "transfer",
                 "approve_selected",
                 "cancel_selected",
                 "restore_selected",

@@ -1,3 +1,4 @@
+from decimal import Decimal
 from rest_framework import serializers
 
 from apps.common.api.serializers import AuditFieldsSerializer
@@ -497,4 +498,52 @@ class RestoreSelectedDistributionsResultSerializer(
     errors_count = serializers.IntegerField()
     errors = BulkDistributionErrorSerializer(
         many=True,
+    )
+
+class TransferDistributionHoursSerializer(
+    serializers.Serializer
+):
+    target_staff_employment = (
+        serializers.IntegerField(
+            min_value=1,
+        )
+    )
+
+    transfer_hours = serializers.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        min_value=Decimal("0.01"),
+    )
+
+    reason = serializers.CharField(
+        max_length=1000,
+        allow_blank=False,
+        trim_whitespace=True,
+    )
+
+    def validate_reason(self, value):
+        normalized_value = value.strip()
+
+        if not normalized_value:
+            raise serializers.ValidationError(
+                "Укажите причину переноса часов."
+            )
+
+        return normalized_value
+
+class TransferDistributionHoursResultSerializer(
+    serializers.Serializer
+):
+    transferred_hours = serializers.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+    )
+    source_cancelled = serializers.BooleanField()
+    target_created = serializers.BooleanField()
+
+    source_distribution = (
+        WorkloadDistributionSerializer()
+    )
+    target_distribution = (
+        WorkloadDistributionSerializer()
     )
