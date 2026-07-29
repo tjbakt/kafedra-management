@@ -27,6 +27,9 @@ from apps.workload.api.serializers import (
     RestoreSelectedDistributionsSerializer,
     TransferDistributionHoursResultSerializer,
     TransferDistributionHoursSerializer,
+    ReturnDistributionToDraftSerializer,
+    ReturnSelectedToDraftResultSerializer,
+    ReturnSelectedToDraftSerializer,
 )
 from apps.workload.models import WorkloadDistribution
 from apps.workload.services.distribution_service import (
@@ -218,6 +221,60 @@ class WorkloadDistributionViewSet(
             ) from exc
 
         serializer.instance = distribution
+
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="return-to-draft",
+    )
+    def return_to_draft(self, request, pk=None):
+        input_serializer = (
+            ReturnDistributionToDraftSerializer(
+                data=request.data
+            )
+        )
+        input_serializer.is_valid(
+            raise_exception=True
+        )
+
+        distribution = self.get_object()
+
+        try:
+            distribution = (
+                WorkloadDistributionService
+                .return_distribution_to_draft(
+                    distribution=distribution,
+                    user=request.user,
+                    reason=(
+                        input_serializer.validated_data[
+                            "reason"
+                        ]
+                    ),
+                )
+            )
+        except DjangoValidationError as exc:
+            raise ValidationError(
+                getattr(
+                    exc,
+                    "message_dict",
+                    exc.messages,
+                )
+            ) from exc
+
+        output_serializer = self.get_serializer(
+            distribution
+        )
+
+        return Response(
+            {
+                "detail": (
+                    "Распределение возвращено "
+                    "в статус черновика."
+                ),
+                "data": output_serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
 
     @action(
         detail=True,
@@ -656,6 +713,84 @@ class WorkloadDistributionViewSet(
 
     @action(
         detail=False,
+        methods=["post"],
+        url_path="return-selected-to-draft",
+    )
+    def return_selected_to_draft(self, request):
+        input_serializer = (
+            ReturnSelectedToDraftSerializer(
+                data=request.data
+            )
+        )
+        input_serializer.is_valid(
+            raise_exception=True
+        )
+
+        requested_ids = input_serializer.validated_data[
+            "ids"
+        ]
+        reason = input_serializer.validated_data[
+            "reason"
+        ]
+
+        distributions = list(
+            self.get_queryset()
+            .filter(pk__in=requested_ids)
+            .order_by("pk")
+        )
+
+        found_ids = {
+            distribution.pk
+            for distribution in distributions
+        }
+
+        unavailable_ids = [
+            distribution_id
+            for distribution_id in requested_ids
+            if distribution_id not in found_ids
+        ]
+
+        service_result = (
+            WorkloadDistributionService
+            .return_distributions_to_draft(
+                distributions=distributions,
+                user=request.user,
+                reason=reason,
+            )
+        )
+
+        result = {
+            "requested_count": len(requested_ids),
+            "found_count": len(distributions),
+            "returned_count": service_result[
+                "returned_count"
+            ],
+            "returned_ids": service_result[
+                "returned_ids"
+            ],
+            "unavailable_count": len(
+                unavailable_ids
+            ),
+            "unavailable_ids": unavailable_ids,
+            "errors_count": service_result[
+                "errors_count"
+            ],
+            "errors": service_result["errors"],
+        }
+
+        output_serializer = (
+            ReturnSelectedToDraftResultSerializer(
+                result
+            )
+        )
+
+        return Response(
+            output_serializer.data,
+            status=status.HTTP_200_OK,
+        )
+
+    @action(
+        detail=False,
         methods=["get"],
         url_path="teacher-summary",
     )
@@ -946,10 +1081,12 @@ class WorkloadDistributionViewSet(
                 "partial_update",
                 "destroy",
                 "approve",
+                "return_to_draft",
                 "cancel",
                 "restore",
                 "transfer",
                 "approve_selected",
+                "return_selected_to_draft",
                 "cancel_selected",
                 "restore_selected",
         ):

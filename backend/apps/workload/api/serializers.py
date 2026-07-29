@@ -547,3 +547,75 @@ class TransferDistributionHoursResultSerializer(
     target_distribution = (
         WorkloadDistributionSerializer()
     )
+
+class ReturnDistributionToDraftSerializer(
+    serializers.Serializer
+):
+    reason = serializers.CharField(
+        max_length=1000,
+        allow_blank=False,
+        trim_whitespace=True,
+    )
+
+    def validate_reason(self, value):
+        normalized_value = value.strip()
+
+        if not normalized_value:
+            raise serializers.ValidationError(
+                "Укажите причину возврата "
+                "распределения в черновик."
+            )
+
+        return normalized_value
+
+class ReturnSelectedToDraftSerializer(
+    serializers.Serializer
+):
+    ids = serializers.ListField(
+        child=serializers.IntegerField(
+            min_value=1,
+        ),
+        allow_empty=False,
+        max_length=500,
+    )
+
+    reason = serializers.CharField(
+        max_length=1000,
+        allow_blank=False,
+        trim_whitespace=True,
+    )
+
+    def validate_ids(self, value):
+        return list(dict.fromkeys(value))
+
+    def validate_reason(self, value):
+        normalized_value = value.strip()
+
+        if not normalized_value:
+            raise serializers.ValidationError(
+                "Укажите причину массового "
+                "возврата в черновик."
+            )
+
+        return normalized_value
+
+class ReturnSelectedToDraftResultSerializer(
+    serializers.Serializer
+):
+    requested_count = serializers.IntegerField()
+    found_count = serializers.IntegerField()
+
+    returned_count = serializers.IntegerField()
+    returned_ids = serializers.ListField(
+        child=serializers.IntegerField(),
+    )
+
+    unavailable_count = serializers.IntegerField()
+    unavailable_ids = serializers.ListField(
+        child=serializers.IntegerField(),
+    )
+
+    errors_count = serializers.IntegerField()
+    errors = BulkDistributionErrorSerializer(
+        many=True,
+    )

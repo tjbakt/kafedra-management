@@ -597,6 +597,208 @@ class WorkloadDistributionService:
 
     @classmethod
     @transaction.atomic
+    def return_distribution_to_draft(
+            cls,
+            *,
+            distribution,
+            user=None,
+            reason="",
+    ) -> WorkloadDistribution:
+        """
+        Возвращает утверждённое распределение
+        в статус черновика.
+
+        Количество распределённых часов не изменяется.
+        """
+
+        normalized_reason = str(reason or "").strip()
+
+        if not normalized_reason:
+            raise ValidationError(
+                {
+                    "reason": (
+                        "Укажите причину возврата "
+                        "распределения в черновик."
+                    )
+                }
+            )
+
+        distribution = (
+            WorkloadDistribution.objects
+            .select_for_update()
+            .select_related(
+                "planned_workload",
+                "planned_workload__academic_year",
+                "planned_workload__teaching_department",
+                "staff_employment",
+                "staff_employment__staff_member",
+                "staff_employment__position",
+                "approved_by",
+            )
+            .get(pk=distribution.pk)
+        )
+
+        if (
+                distribution.status
+                != WorkloadDistribution.Status.APPROVED
+        ):
+            raise ValidationError(
+                {
+                    "detail": (
+                        "Вернуть в черновик можно только "
+                        "утверждённое распределение."
+                    )
+                }
+            )
+
+        cls.validate_employment(
+            planned_workload=distribution.planned_workload,
+            staff_employment=distribution.staff_employment,
+        )
+
+        cls.validate_available_hours(
+            planned_workload=distribution.planned_workload,
+            allocated_hours=distribution.allocated_hours,
+            exclude_distribution=distribution,
+        )
+
+        old_status = distribution.status
+        old_approved_at = distribution.approved_at
+        old_approved_by_id = distribution.approved_by_id
+
+        distribution.status = (
+            WorkloadDistribution.Status.DRAFT
+        )
+        distribution.approved_at = None
+        distribution.approved_by = None
+        distribution.updated_by = user
+
+        distribution.notes = (
+            f"{distribution.notes}\n"
+            f"Причина возврата в черновик: "
+            f"{normalized_reason}"
+        ).strip()
+
+        distribution.full_clean()
+        distribution.save(
+            update_fields=(
+                "status",
+                "approved_at",
+                "approved_by",
+                "notes",
+                "updated_by",
+                "updated_at",
+            )
+        )
+
+        cls.update_planned_workload_status(
+            planned_workload=distribution.planned_workload,
+            user=user,
+        )
+
+        AuditService.log_status_change(
+            instance=distribution,
+            old_status=old_status,
+            new_status=distribution.status,
+            actor=user,
+            action=AuditEvent.Action.RETURN,
+            action_label=(
+                "Утверждённое распределение "
+                "возвращено в черновик"
+            ),
+            reason=normalized_reason,
+            metadata={
+                "allocated_hours": (
+                    distribution.allocated_hours
+                ),
+                "old_approved_at": old_approved_at,
+                "old_approved_by_id": (
+                    old_approved_by_id
+                ),
+            },
+        )
+
+        cls.notify_teacher(
+            distribution=distribution,
+            title=(
+                "Учебная нагрузка возвращена "
+                "в черновик"
+            ),
+            message=(
+                "Утверждение распределения "
+                f"на {distribution.allocated_hours} часов "
+                "отменено. Распределение возвращено "
+                "в статус черновика. "
+                f"Причина: {normalized_reason}"
+            ),
+            notification_type=Notification.Type.WARNING,
+            metadata={
+                "reason": normalized_reason,
+                "status": WorkloadDistribution.Status.DRAFT,
+                "allocated_hours": str(
+                    distribution.allocated_hours
+                ),
+            },
+        )
+
+        return distribution
+
+    @classmethod
+    def return_distributions_to_draft(
+            cls,
+            *,
+            distributions,
+            user=None,
+            reason="",
+    ) -> dict:
+        """
+        Возвращает набор утверждённых распределений
+        в черновик с частичным успехом.
+        """
+
+        normalized_reason = str(reason or "").strip()
+
+        if not normalized_reason:
+            raise ValidationError(
+                {
+                    "reason": (
+                        "Укажите причину массового "
+                        "возврата в черновик."
+                    )
+                }
+            )
+
+        returned_ids = []
+        errors = []
+
+        for distribution in distributions:
+            try:
+                returned = cls.return_distribution_to_draft(
+                    distribution=distribution,
+                    user=user,
+                    reason=normalized_reason,
+                )
+            except ValidationError as exc:
+                errors.append(
+                    {
+                        "id": distribution.pk,
+                        "error": cls._validation_error_data(
+                            exc
+                        ),
+                    }
+                )
+            else:
+                returned_ids.append(returned.pk)
+
+        return {
+            "returned_count": len(returned_ids),
+            "returned_ids": returned_ids,
+            "errors_count": len(errors),
+            "errors": errors,
+        }
+
+    @classmethod
+    @transaction.atomic
     def cancel_distribution(
         cls,
         *,
