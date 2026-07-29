@@ -17,12 +17,18 @@ class AcademicYearFilter(filters.FilterSet):
     is_active = filters.BooleanFilter()
     start_year = filters.NumberFilter()
 
+    status = filters.ChoiceFilter(
+        choices=AcademicYear.Status.choices,
+    )
+
     class Meta:
         model = AcademicYear
         fields = (
             "start_year",
+            "end_year",
             "is_current",
             "is_active",
+            "status",
         )
 
 

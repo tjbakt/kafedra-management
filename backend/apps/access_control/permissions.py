@@ -235,3 +235,20 @@ class CanCheckAcademicYearClosingReadiness(
             SystemRole.Code.ACADEMIC_OFFICE,
             SystemRole.Code.DEPARTMENT_HEAD,
         )
+
+class CanCloseAcademicYear(BasePermission):
+    message = (
+        "У пользователя нет права закрывать "
+        "или повторно открывать учебный год."
+    )
+
+    def has_permission(
+        self,
+        request,
+        view,
+    ):
+        return AccessService.has_role(
+            request.user,
+            SystemRole.Code.SYSTEM_ADMIN,
+            SystemRole.Code.ACADEMIC_OFFICE,
+        )

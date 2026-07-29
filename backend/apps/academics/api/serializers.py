@@ -11,6 +11,9 @@ from apps.academics.models import (
     StudyProgram,
 )
 from apps.common.api.serializers import AuditFieldsSerializer
+from apps.workload.api.serializers import (
+    AcademicYearClosingReadinessResultSerializer,
+)
 
 
 class LocalizedNameMixin:
@@ -36,6 +39,15 @@ class LocalizedNameMixin:
 
 class AcademicYearSerializer(AuditFieldsSerializer):
     name = serializers.CharField(read_only=True)
+    status_label = serializers.CharField(
+        source="get_status_display",
+        read_only=True,
+    )
+    is_closed = serializers.BooleanField(
+        read_only=True,
+    )
+    closed_by_name = serializers.SerializerMethodField()
+    reopened_by_name = serializers.SerializerMethodField()
 
     class Meta:
         model = AcademicYear
@@ -46,12 +58,28 @@ class AcademicYearSerializer(AuditFieldsSerializer):
             "name",
             "is_current",
             "is_active",
+
+            "status",
+            "status_label",
+            "is_closed",
+
+            "closed_at",
+            "closed_by",
+            "closed_by_name",
+            "closing_comment",
+
+            "reopened_at",
+            "reopened_by",
+            "reopened_by_name",
+            "reopening_reason",
+
             "created_at",
             "updated_at",
             "created_by",
             "created_by_name",
             "updated_by",
             "updated_by_name",
+
             "is_archived",
             "archived_at",
             "archived_by",
@@ -60,17 +88,65 @@ class AcademicYearSerializer(AuditFieldsSerializer):
         read_only_fields = (
             "id",
             "name",
+
+            "status",
+            "status_label",
+            "is_closed",
+
+            "closed_at",
+            "closed_by",
+            "closed_by_name",
+            "closing_comment",
+
+            "reopened_at",
+            "reopened_by",
+            "reopened_by_name",
+            "reopening_reason",
+
             "created_at",
             "updated_at",
             "created_by",
             "updated_by",
+
             "is_archived",
             "archived_at",
             "archived_by",
         )
 
+    def get_closed_by_name(self, obj):
+        return self._user_name(
+            obj.closed_by
+        )
+
+    def get_reopened_by_name(self, obj):
+        return self._user_name(
+            obj.reopened_by
+        )
+
+    @staticmethod
+    def _user_name(user):
+        if user is None:
+            return None
+
+        full_name = user.get_full_name().strip()
+
+        return full_name or str(user)
+
     def validate(self, attrs):
         instance = getattr(self, "instance", None)
+        if (
+                instance is not None
+                and instance.is_closed
+        ):
+            raise serializers.ValidationError(
+                {
+                    "academic_year": (
+                        "Закрытый учебный год нельзя "
+                        "изменять. Сначала повторно "
+                        "откройте его."
+                    )
+                }
+            )
 
         start_year = attrs.get(
             "start_year",
@@ -96,6 +172,89 @@ class AcademicYearSerializer(AuditFieldsSerializer):
             )
 
         return attrs
+
+class CloseAcademicYearSerializer(
+    serializers.Serializer
+):
+    comment = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        trim_whitespace=True,
+        max_length=5000,
+    )
+
+
+class ReopenAcademicYearSerializer(
+    serializers.Serializer
+):
+    reason = serializers.CharField(
+        required=True,
+        allow_blank=False,
+        trim_whitespace=True,
+        max_length=5000,
+    )
+
+    def validate_reason(self, value):
+        normalized = value.strip()
+
+        if not normalized:
+            raise serializers.ValidationError(
+                (
+                    "Для повторного открытия необходимо "
+                    "указать причину."
+                )
+            )
+
+        return normalized
+
+
+class AcademicYearClosingOperationResultSerializer(
+    serializers.Serializer
+):
+    id = serializers.IntegerField()
+    name = serializers.CharField()
+
+    status = serializers.ChoiceField(
+        choices=AcademicYear.Status.choices,
+    )
+    status_label = serializers.CharField()
+
+    is_current = serializers.BooleanField()
+    is_active = serializers.BooleanField()
+
+    closed_at = serializers.DateTimeField(
+        allow_null=True,
+    )
+    closed_by = serializers.IntegerField(
+        allow_null=True,
+    )
+    closed_by_name = serializers.CharField(
+        allow_null=True,
+        allow_blank=True,
+    )
+    closing_comment = serializers.CharField(
+        allow_blank=True,
+    )
+
+    reopened_at = serializers.DateTimeField(
+        allow_null=True,
+    )
+    reopened_by = serializers.IntegerField(
+        allow_null=True,
+    )
+    reopened_by_name = serializers.CharField(
+        allow_null=True,
+        allow_blank=True,
+    )
+    reopening_reason = serializers.CharField(
+        allow_blank=True,
+    )
+
+    readiness = (
+        AcademicYearClosingReadinessResultSerializer(
+            required=False,
+        )
+    )
 
 
 class EducationLevelSerializer(

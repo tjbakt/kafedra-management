@@ -3,6 +3,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
+from django.conf import settings
 
 from apps.common.models import BaseModel
 from apps.organizations.models import Department, Faculty, University
@@ -12,6 +13,10 @@ class AcademicYear(BaseModel):
     """
     Учебный год, например 2025/2026.
     """
+
+    class Status(models.TextChoices):
+        OPEN = "open", _("Открыт")
+        CLOSED = "closed", _("Закрыт")
 
     start_year = models.PositiveSmallIntegerField(
         _("Год начала"),
@@ -36,6 +41,49 @@ class AcademicYear(BaseModel):
         _("Активен"),
         default=True,
         db_index=True,
+    )
+    status = models.CharField(
+        _("Статус"),
+        max_length=20,
+        choices=Status.choices,
+        default=Status.OPEN,
+        db_index=True,
+    )
+    closed_at = models.DateTimeField(
+        _("Дата закрытия"),
+        null=True,
+        blank=True,
+        db_index=True,
+    )
+    closed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        verbose_name=_("Закрыл"),
+        related_name="closed_academic_years",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+    closing_comment = models.TextField(
+        _("Комментарий при закрытии"),
+        blank=True,
+    )
+
+    reopened_at = models.DateTimeField(
+        _("Дата последнего открытия"),
+        null=True,
+        blank=True,
+    )
+    reopened_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        verbose_name=_("Повторно открыл"),
+        related_name="reopened_academic_years",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+    reopening_reason = models.TextField(
+        _("Причина повторного открытия"),
+        blank=True,
     )
 
     class Meta:
@@ -66,10 +114,61 @@ class AcademicYear(BaseModel):
                     )
                 }
             )
+        if self.status == self.Status.CLOSED:
+            if self.is_current:
+                raise ValidationError(
+                    {
+                        "is_current": _(
+                            "Закрытый учебный год не может "
+                            "быть текущим."
+                        )
+                    }
+                )
+
+            if self.is_active:
+                raise ValidationError(
+                    {
+                        "is_active": _(
+                            "Закрытый учебный год не может "
+                            "быть активным."
+                        )
+                    }
+                )
+
+            if self.closed_at is None:
+                raise ValidationError(
+                    {
+                        "closed_at": _(
+                            "Для закрытого учебного года "
+                            "должна быть указана дата закрытия."
+                        )
+                    }
+                )
+
+        if (
+                self.status == self.Status.OPEN
+                and self.closed_at is not None
+        ):
+            raise ValidationError(
+                {
+                    "closed_at": _(
+                        "Открытый учебный год не должен "
+                        "содержать активную дату закрытия."
+                    )
+                }
+            )
 
     @property
     def name(self) -> str:
         return f"{self.start_year}/{self.end_year}"
+
+    @property
+    def is_closed(self) -> bool:
+        return self.status == self.Status.CLOSED
+
+    @property
+    def is_open(self) -> bool:
+        return self.status == self.Status.OPEN
 
     def __str__(self) -> str:
         return self.name

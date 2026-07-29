@@ -33,16 +33,29 @@ class AcademicYearAdmin(
 ):
     list_display = (
         "name",
+        "status",
         "is_current",
         "is_active",
+        "closed_at",
+        "closed_by",
         "is_archived",
         "start_year",
         "end_year",
     )
     list_filter = (
+        "status",
         "is_current",
         "is_active",
         "is_archived",
+    )
+    readonly_fields = (
+        "status",
+        "closed_at",
+        "closed_by",
+        "closing_comment",
+        "reopened_at",
+        "reopened_by",
+        "reopening_reason",
     )
     ordering = ("-start_year",)
     search_fields = ("name", "start_year", "end_year")
