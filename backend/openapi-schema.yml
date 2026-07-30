@@ -16011,27 +16011,31 @@ paths:
   /api/v1/workload/distributions/approve-selected/:
     post:
       operationId: workload_distributions_approve_selected_create
-      description: |-
-        Базовый ViewSet для моделей с мягким удалением.
-
-        Дочерний ViewSet должен определить:
-        - model;
-        - get_queryset();
-        - при необходимости scope_queryset();
-        - permission_classes.
+      description: Утверждает доступные распределения нагрузки из переданного списка
+        ID. Распределения, недоступные текущему пользователю, возвращаются в поле
+        unavailable_ids. Ошибка одного объекта не отменяет обработку остальных.
+      summary: Массово утвердить распределения
       tags:
-      - workload
+      - Распределение нагрузки
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/WorkloadDistributionRequest'
+              $ref: '#/components/schemas/ApproveSelectedDistributionsRequest'
+            examples:
+              МассовоеУтверждение:
+                value:
+                  ids:
+                  - 12
+                  - 13
+                  - 14
+                summary: Массовое утверждение
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/WorkloadDistributionRequest'
+              $ref: '#/components/schemas/ApproveSelectedDistributionsRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/WorkloadDistributionRequest'
+              $ref: '#/components/schemas/ApproveSelectedDistributionsRequest'
         required: true
       security:
       - jwtAuth: []
@@ -16040,8 +16044,97 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/WorkloadDistribution'
+                $ref: '#/components/schemas/ApproveSelectedDistributionsResult'
+              examples:
+                РезультатУтверждения:
+                  value:
+                    requested_count: 3
+                    found_count: 2
+                    approved_count: 1
+                    approved_ids:
+                    - 12
+                    unavailable_count: 1
+                    unavailable_ids:
+                    - 14
+                    errors_count: 1
+                    errors:
+                    - id: 13
+                      error:
+                      - Распределение уже утверждено.
+                  summary: Результат утверждения
           description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                ОшибкаВалидации:
+                  value:
+                    success: false
+                    status_code: 400
+                    error:
+                      code: validation_error
+                      message: Ошибка проверки данных.
+                      fields:
+                        name:
+                        - message: Это поле обязательно.
+                          code: required
+                      details: null
+                  summary: Ошибка валидации
+          description: Ошибка проверки данных.
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                ТребуетсяАутентификация:
+                  value:
+                    success: false
+                    status_code: 401
+                    error:
+                      code: authentication_required
+                      message: Учетные данные не были предоставлены.
+                      fields: null
+                      details: null
+                  summary: Требуется аутентификация
+          description: Требуется аутентификация.
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                НедостаточноПрав:
+                  value:
+                    success: false
+                    status_code: 403
+                    error:
+                      code: permission_denied
+                      message: Доступ запрещён.
+                      fields: null
+                      details: null
+                  summary: Недостаточно прав
+          description: Недостаточно прав.
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                КонфликтСостояния:
+                  value:
+                    success: false
+                    status_code: 409
+                    error:
+                      code: resource_state_conflict
+                      message: Операция недоступна в текущем состоянии ресурса.
+                      fields: null
+                      details:
+                        status: approved
+                  summary: Конфликт состояния
+          description: Конфликт текущего состояния ресурса.
   /api/v1/workload/distributions/archived/:
     get:
       operationId: workload_distributions_archived_retrieve
@@ -16114,27 +16207,31 @@ paths:
   /api/v1/workload/distributions/cancel-selected/:
     post:
       operationId: workload_distributions_cancel_selected_create
-      description: |-
-        Базовый ViewSet для моделей с мягким удалением.
-
-        Дочерний ViewSet должен определить:
-        - model;
-        - get_queryset();
-        - при необходимости scope_queryset();
-        - permission_classes.
+      description: Отменяет доступные распределения нагрузки из переданного списка
+        ID. Причина отмены обязательна. Ошибка обработки одного распределения не останавливает
+        остальные операции.
+      summary: Массово отменить распределения
       tags:
-      - workload
+      - Распределение нагрузки
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/WorkloadDistributionRequest'
+              $ref: '#/components/schemas/CancelSelectedDistributionsRequest'
+            examples:
+              МассоваяОтмена:
+                value:
+                  ids:
+                  - 21
+                  - 22
+                  reason: Исправление распределения учебной нагрузки.
+                summary: Массовая отмена
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/WorkloadDistributionRequest'
+              $ref: '#/components/schemas/CancelSelectedDistributionsRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/WorkloadDistributionRequest'
+              $ref: '#/components/schemas/CancelSelectedDistributionsRequest'
         required: true
       security:
       - jwtAuth: []
@@ -16143,21 +16240,117 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/WorkloadDistribution'
+                $ref: '#/components/schemas/CancelSelectedDistributionsResult'
+              examples:
+                РезультатОтмены:
+                  value:
+                    requested_count: 2
+                    found_count: 2
+                    cancelled_count: 2
+                    cancelled_ids:
+                    - 21
+                    - 22
+                    unavailable_count: 0
+                    unavailable_ids: []
+                    errors_count: 0
+                    errors: []
+                  summary: Результат отмены
           description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                ОшибкаВалидации:
+                  value:
+                    success: false
+                    status_code: 400
+                    error:
+                      code: validation_error
+                      message: Ошибка проверки данных.
+                      fields:
+                        name:
+                        - message: Это поле обязательно.
+                          code: required
+                      details: null
+                  summary: Ошибка валидации
+          description: Ошибка проверки данных.
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                ТребуетсяАутентификация:
+                  value:
+                    success: false
+                    status_code: 401
+                    error:
+                      code: authentication_required
+                      message: Учетные данные не были предоставлены.
+                      fields: null
+                      details: null
+                  summary: Требуется аутентификация
+          description: Требуется аутентификация.
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                НедостаточноПрав:
+                  value:
+                    success: false
+                    status_code: 403
+                    error:
+                      code: permission_denied
+                      message: Доступ запрещён.
+                      fields: null
+                      details: null
+                  summary: Недостаточно прав
+          description: Недостаточно прав.
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                КонфликтСостояния:
+                  value:
+                    success: false
+                    status_code: 409
+                    error:
+                      code: resource_state_conflict
+                      message: Операция недоступна в текущем состоянии ресурса.
+                      fields: null
+                      details:
+                        status: approved
+                  summary: Конфликт состояния
+          description: Конфликт текущего состояния ресурса.
   /api/v1/workload/distributions/dashboard/:
     get:
       operationId: workload_distributions_dashboard_retrieve
-      description: |-
-        Базовый ViewSet для моделей с мягким удалением.
-
-        Дочерний ViewSet должен определить:
-        - model;
-        - get_queryset();
-        - при необходимости scope_queryset();
-        - permission_classes.
+      description: Возвращает агрегированные показатели плановой и распределённой
+        нагрузки, а также статистику по преподавателям и кафедрам.
+      summary: Получить dashboard нагрузки
+      parameters:
+      - in: query
+        name: academic_year
+        schema:
+          type: integer
+          minimum: 1
+        description: ID учебного года.
+        required: true
+      - in: query
+        name: department
+        schema:
+          type: integer
+          minimum: 1
+        description: ID кафедры. Если не указан, dashboard строится по всей доступной
+          области.
       tags:
-      - workload
+      - Dashboard нагрузки
       security:
       - jwtAuth: []
       responses:
@@ -16165,43 +16358,284 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/WorkloadDistribution'
+                $ref: '#/components/schemas/WorkloadDashboard'
           description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                ОшибкаВалидации:
+                  value:
+                    success: false
+                    status_code: 400
+                    error:
+                      code: validation_error
+                      message: Ошибка проверки данных.
+                      fields:
+                        name:
+                        - message: Это поле обязательно.
+                          code: required
+                      details: null
+                  summary: Ошибка валидации
+          description: Ошибка проверки данных.
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                ТребуетсяАутентификация:
+                  value:
+                    success: false
+                    status_code: 401
+                    error:
+                      code: authentication_required
+                      message: Учетные данные не были предоставлены.
+                      fields: null
+                      details: null
+                  summary: Требуется аутентификация
+          description: Требуется аутентификация.
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                НедостаточноПрав:
+                  value:
+                    success: false
+                    status_code: 403
+                    error:
+                      code: permission_denied
+                      message: Доступ запрещён.
+                      fields: null
+                      details: null
+                  summary: Недостаточно прав
+          description: Недостаточно прав.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                ОбъектНеНайден:
+                  value:
+                    success: false
+                    status_code: 404
+                    error:
+                      code: not_found
+                      message: Запрашиваемый ресурс не найден.
+                      fields: null
+                      details: null
+                  summary: Объект не найден
+          description: Ресурс не найден.
   /api/v1/workload/distributions/dashboard/export/:
     get:
       operationId: workload_distributions_dashboard_export_retrieve
-      description: |-
-        Базовый ViewSet для моделей с мягким удалением.
-
-        Дочерний ViewSet должен определить:
-        - model;
-        - get_queryset();
-        - при необходимости scope_queryset();
-        - permission_classes.
+      description: Формирует Excel-файл с агрегированными показателями dashboard учебной
+        нагрузки.
+      summary: Экспортировать dashboard нагрузки
+      parameters:
+      - in: query
+        name: academic_year
+        schema:
+          type: integer
+          minimum: 1
+        description: ID учебного года.
+        required: true
+      - in: query
+        name: department
+        schema:
+          type: integer
+          minimum: 1
+        description: ID кафедры. Если не указан, dashboard строится по всей доступной
+          области.
       tags:
-      - workload
+      - Dashboard нагрузки
       security:
       - jwtAuth: []
       responses:
         '200':
           content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+          description: ''
+        '400':
+          content:
             application/json:
               schema:
-                $ref: '#/components/schemas/WorkloadDistribution'
-          description: ''
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                ОшибкаВалидации:
+                  value:
+                    success: false
+                    status_code: 400
+                    error:
+                      code: validation_error
+                      message: Ошибка проверки данных.
+                      fields:
+                        name:
+                        - message: Это поле обязательно.
+                          code: required
+                      details: null
+                  summary: Ошибка валидации
+          description: Ошибка проверки данных.
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                ТребуетсяАутентификация:
+                  value:
+                    success: false
+                    status_code: 401
+                    error:
+                      code: authentication_required
+                      message: Учетные данные не были предоставлены.
+                      fields: null
+                      details: null
+                  summary: Требуется аутентификация
+          description: Требуется аутентификация.
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                НедостаточноПрав:
+                  value:
+                    success: false
+                    status_code: 403
+                    error:
+                      code: permission_denied
+                      message: Доступ запрещён.
+                      fields: null
+                      details: null
+                  summary: Недостаточно прав
+          description: Недостаточно прав.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                ОбъектНеНайден:
+                  value:
+                    success: false
+                    status_code: 404
+                    error:
+                      code: not_found
+                      message: Запрашиваемый ресурс не найден.
+                      fields: null
+                      details: null
+                  summary: Объект не найден
+          description: Ресурс не найден.
   /api/v1/workload/distributions/department-summary/:
     get:
-      operationId: workload_distributions_department_summary_retrieve
-      description: |-
-        Базовый ViewSet для моделей с мягким удалением.
-
-        Дочерний ViewSet должен определить:
-        - model;
-        - get_queryset();
-        - при необходимости scope_queryset();
-        - permission_classes.
+      operationId: workload_distributions_department_summary_list
+      description: Возвращает плановые, распределённые, утверждённые и оставшиеся
+        часы кафедр за выбранный учебный год.
+      summary: Получить сводку нагрузки кафедр
+      parameters:
+      - in: query
+        name: academic_semester
+        schema:
+          type: integer
+          minimum: 1
+        description: ID семестра учебного года.
+      - in: query
+        name: academic_year
+        schema:
+          type: integer
+          minimum: 1
+        description: ID учебного года.
+        required: true
+      - in: query
+        name: department
+        schema:
+          type: integer
+          minimum: 1
+        description: ID кафедры. Если не указан, возвращаются все доступные кафедры.
+      - in: query
+        name: discipline
+        schema:
+          type: number
+      - in: query
+        name: faculty
+        schema:
+          type: number
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: planned_workload
+        schema:
+          type: number
+      - in: query
+        name: position
+        schema:
+          type: number
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: staff_employment
+        schema:
+          type: number
+      - in: query
+        name: staff_member
+        schema:
+          type: number
+      - in: query
+        name: status
+        schema:
+          type: string
+          title: Статус
+          enum:
+          - approved
+          - cancelled
+          - draft
+        description: |-
+          * `draft` - Черновик
+          * `approved` - Утверждено
+          * `cancelled` - Отменено
+      - in: query
+        name: teaching_department
+        schema:
+          type: number
+      - in: query
+        name: teaching_stream
+        schema:
+          type: number
+      - in: query
+        name: workload_type
+        schema:
+          type: number
       tags:
-      - workload
+      - Сводки нагрузки
       security:
       - jwtAuth: []
       responses:
@@ -16209,54 +16643,214 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/WorkloadDistribution'
+                $ref: '#/components/schemas/PaginatedDepartmentWorkloadSummaryList'
           description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                ОшибкаВалидации:
+                  value:
+                    success: false
+                    status_code: 400
+                    error:
+                      code: validation_error
+                      message: Ошибка проверки данных.
+                      fields:
+                        name:
+                        - message: Это поле обязательно.
+                          code: required
+                      details: null
+                  summary: Ошибка валидации
+          description: Ошибка проверки данных.
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                ТребуетсяАутентификация:
+                  value:
+                    success: false
+                    status_code: 401
+                    error:
+                      code: authentication_required
+                      message: Учетные данные не были предоставлены.
+                      fields: null
+                      details: null
+                  summary: Требуется аутентификация
+          description: Требуется аутентификация.
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                НедостаточноПрав:
+                  value:
+                    success: false
+                    status_code: 403
+                    error:
+                      code: permission_denied
+                      message: Доступ запрещён.
+                      fields: null
+                      details: null
+                  summary: Недостаточно прав
+          description: Недостаточно прав.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                ОбъектНеНайден:
+                  value:
+                    success: false
+                    status_code: 404
+                    error:
+                      code: not_found
+                      message: Запрашиваемый ресурс не найден.
+                      fields: null
+                      details: null
+                  summary: Объект не найден
+          description: Ресурс не найден.
   /api/v1/workload/distributions/department-summary/export/:
     get:
       operationId: workload_distributions_department_summary_export_retrieve
-      description: |-
-        Базовый ViewSet для моделей с мягким удалением.
-
-        Дочерний ViewSet должен определить:
-        - model;
-        - get_queryset();
-        - при необходимости scope_queryset();
-        - permission_classes.
+      description: Формирует Excel-файл со сводкой нагрузки кафедр.
+      summary: Экспортировать сводку нагрузки кафедр
+      parameters:
+      - in: query
+        name: academic_semester
+        schema:
+          type: integer
+          minimum: 1
+        description: ID семестра учебного года.
+      - in: query
+        name: academic_year
+        schema:
+          type: integer
+          minimum: 1
+        description: ID учебного года.
+        required: true
+      - in: query
+        name: department
+        schema:
+          type: integer
+          minimum: 1
+        description: ID кафедры. Если не указан, возвращаются все доступные кафедры.
       tags:
-      - workload
+      - Сводки нагрузки
       security:
       - jwtAuth: []
       responses:
         '200':
           content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+          description: ''
+        '400':
+          content:
             application/json:
               schema:
-                $ref: '#/components/schemas/WorkloadDistribution'
-          description: ''
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                ОшибкаВалидации:
+                  value:
+                    success: false
+                    status_code: 400
+                    error:
+                      code: validation_error
+                      message: Ошибка проверки данных.
+                      fields:
+                        name:
+                        - message: Это поле обязательно.
+                          code: required
+                      details: null
+                  summary: Ошибка валидации
+          description: Ошибка проверки данных.
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                ТребуетсяАутентификация:
+                  value:
+                    success: false
+                    status_code: 401
+                    error:
+                      code: authentication_required
+                      message: Учетные данные не были предоставлены.
+                      fields: null
+                      details: null
+                  summary: Требуется аутентификация
+          description: Требуется аутентификация.
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                НедостаточноПрав:
+                  value:
+                    success: false
+                    status_code: 403
+                    error:
+                      code: permission_denied
+                      message: Доступ запрещён.
+                      fields: null
+                      details: null
+                  summary: Недостаточно прав
+          description: Недостаточно прав.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                ОбъектНеНайден:
+                  value:
+                    success: false
+                    status_code: 404
+                    error:
+                      code: not_found
+                      message: Запрашиваемый ресурс не найден.
+                      fields: null
+                      details: null
+                  summary: Объект не найден
+          description: Ресурс не найден.
   /api/v1/workload/distributions/restore-selected/:
     post:
       operationId: workload_distributions_restore_selected_create
-      description: |-
-        Базовый ViewSet для моделей с мягким удалением.
-
-        Дочерний ViewSet должен определить:
-        - model;
-        - get_queryset();
-        - при необходимости scope_queryset();
-        - permission_classes.
+      description: Восстанавливает доступные отменённые распределения и переводит
+        их в статус черновика. Причина восстановления обязательна.
+      summary: Массово восстановить распределения
       tags:
-      - workload
+      - Распределение нагрузки
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/WorkloadDistributionRequest'
+              $ref: '#/components/schemas/RestoreSelectedDistributionsRequest'
+            examples:
+              МассовоеВосстановление:
+                value:
+                  ids:
+                  - 31
+                  - 32
+                  reason: Распределения отменены по ошибке.
+                summary: Массовое восстановление
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/WorkloadDistributionRequest'
+              $ref: '#/components/schemas/RestoreSelectedDistributionsRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/WorkloadDistributionRequest'
+              $ref: '#/components/schemas/RestoreSelectedDistributionsRequest'
         required: true
       security:
       - jwtAuth: []
@@ -16265,32 +16859,123 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/WorkloadDistribution'
+                $ref: '#/components/schemas/RestoreSelectedDistributionsResult'
+              examples:
+                РезультатВосстановления:
+                  value:
+                    requested_count: 2
+                    found_count: 2
+                    restored_count: 1
+                    restored_ids:
+                    - 31
+                    unavailable_count: 0
+                    unavailable_ids: []
+                    errors_count: 1
+                    errors:
+                    - id: 32
+                      error:
+                      - Распределение нельзя восстановить.
+                  summary: Результат восстановления
           description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                ОшибкаВалидации:
+                  value:
+                    success: false
+                    status_code: 400
+                    error:
+                      code: validation_error
+                      message: Ошибка проверки данных.
+                      fields:
+                        name:
+                        - message: Это поле обязательно.
+                          code: required
+                      details: null
+                  summary: Ошибка валидации
+          description: Ошибка проверки данных.
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                ТребуетсяАутентификация:
+                  value:
+                    success: false
+                    status_code: 401
+                    error:
+                      code: authentication_required
+                      message: Учетные данные не были предоставлены.
+                      fields: null
+                      details: null
+                  summary: Требуется аутентификация
+          description: Требуется аутентификация.
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                НедостаточноПрав:
+                  value:
+                    success: false
+                    status_code: 403
+                    error:
+                      code: permission_denied
+                      message: Доступ запрещён.
+                      fields: null
+                      details: null
+                  summary: Недостаточно прав
+          description: Недостаточно прав.
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                КонфликтСостояния:
+                  value:
+                    success: false
+                    status_code: 409
+                    error:
+                      code: resource_state_conflict
+                      message: Операция недоступна в текущем состоянии ресурса.
+                      fields: null
+                      details:
+                        status: approved
+                  summary: Конфликт состояния
+          description: Конфликт текущего состояния ресурса.
   /api/v1/workload/distributions/return-selected-to-draft/:
     post:
       operationId: workload_distributions_return_selected_to_draft_create
-      description: |-
-        Базовый ViewSet для моделей с мягким удалением.
-
-        Дочерний ViewSet должен определить:
-        - model;
-        - get_queryset();
-        - при необходимости scope_queryset();
-        - permission_classes.
+      description: Возвращает доступные утверждённые или отменённые распределения
+        в статус черновика. Причина возврата обязательна.
+      summary: Массово вернуть распределения в черновик
       tags:
-      - workload
+      - Распределение нагрузки
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/WorkloadDistributionRequest'
+              $ref: '#/components/schemas/ReturnSelectedToDraftRequest'
+            examples:
+              МассовыйВозвратВЧерновик:
+                value:
+                  ids:
+                  - 41
+                  - 42
+                  reason: Необходимо скорректировать распределённые часы.
+                summary: Массовый возврат в черновик
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/WorkloadDistributionRequest'
+              $ref: '#/components/schemas/ReturnSelectedToDraftRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/WorkloadDistributionRequest'
+              $ref: '#/components/schemas/ReturnSelectedToDraftRequest'
         required: true
       security:
       - jwtAuth: []
@@ -16299,21 +16984,196 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/WorkloadDistribution'
+                $ref: '#/components/schemas/ReturnSelectedToDraftResult'
+              examples:
+                РезультатВозврата:
+                  value:
+                    requested_count: 2
+                    found_count: 2
+                    returned_count: 2
+                    returned_ids:
+                    - 41
+                    - 42
+                    unavailable_count: 0
+                    unavailable_ids: []
+                    errors_count: 0
+                    errors: []
+                  summary: Результат возврата
           description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                ОшибкаВалидации:
+                  value:
+                    success: false
+                    status_code: 400
+                    error:
+                      code: validation_error
+                      message: Ошибка проверки данных.
+                      fields:
+                        name:
+                        - message: Это поле обязательно.
+                          code: required
+                      details: null
+                  summary: Ошибка валидации
+          description: Ошибка проверки данных.
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                ТребуетсяАутентификация:
+                  value:
+                    success: false
+                    status_code: 401
+                    error:
+                      code: authentication_required
+                      message: Учетные данные не были предоставлены.
+                      fields: null
+                      details: null
+                  summary: Требуется аутентификация
+          description: Требуется аутентификация.
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                НедостаточноПрав:
+                  value:
+                    success: false
+                    status_code: 403
+                    error:
+                      code: permission_denied
+                      message: Доступ запрещён.
+                      fields: null
+                      details: null
+                  summary: Недостаточно прав
+          description: Недостаточно прав.
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                КонфликтСостояния:
+                  value:
+                    success: false
+                    status_code: 409
+                    error:
+                      code: resource_state_conflict
+                      message: Операция недоступна в текущем состоянии ресурса.
+                      fields: null
+                      details:
+                        status: approved
+                  summary: Конфликт состояния
+          description: Конфликт текущего состояния ресурса.
   /api/v1/workload/distributions/teacher-summary/:
     get:
-      operationId: workload_distributions_teacher_summary_retrieve
-      description: |-
-        Базовый ViewSet для моделей с мягким удалением.
-
-        Дочерний ViewSet должен определить:
-        - model;
-        - get_queryset();
-        - при необходимости scope_queryset();
-        - permission_classes.
+      operationId: workload_distributions_teacher_summary_list
+      description: Возвращает расчёт рекомендованной, распределённой и оставшейся
+        нагрузки преподавателей за учебный год.
+      summary: Получить сводку нагрузки преподавателей
+      parameters:
+      - in: query
+        name: academic_semester
+        schema:
+          type: number
+      - in: query
+        name: academic_year
+        schema:
+          type: integer
+          minimum: 1
+        description: ID учебного года.
+        required: true
+      - in: query
+        name: department
+        schema:
+          type: integer
+          minimum: 1
+        description: ID кафедры для фильтрации преподавателей.
+      - in: query
+        name: discipline
+        schema:
+          type: number
+      - in: query
+        name: faculty
+        schema:
+          type: number
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: planned_workload
+        schema:
+          type: number
+      - in: query
+        name: position
+        schema:
+          type: number
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: staff_employment
+        schema:
+          type: number
+      - in: query
+        name: staff_member
+        schema:
+          type: integer
+          minimum: 1
+        description: ID преподавателя. Если не указан, возвращаются все доступные
+          преподаватели.
+      - in: query
+        name: status
+        schema:
+          type: string
+          title: Статус
+          enum:
+          - approved
+          - cancelled
+          - draft
+        description: |-
+          * `draft` - Черновик
+          * `approved` - Утверждено
+          * `cancelled` - Отменено
+      - in: query
+        name: teaching_department
+        schema:
+          type: number
+      - in: query
+        name: teaching_stream
+        schema:
+          type: number
+      - in: query
+        name: workload_type
+        schema:
+          type: number
       tags:
-      - workload
+      - Сводки нагрузки
       security:
       - jwtAuth: []
       responses:
@@ -16321,30 +17181,188 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/WorkloadDistribution'
+                $ref: '#/components/schemas/PaginatedTeacherWorkloadSummaryList'
           description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                ОшибкаВалидации:
+                  value:
+                    success: false
+                    status_code: 400
+                    error:
+                      code: validation_error
+                      message: Ошибка проверки данных.
+                      fields:
+                        name:
+                        - message: Это поле обязательно.
+                          code: required
+                      details: null
+                  summary: Ошибка валидации
+          description: Ошибка проверки данных.
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                ТребуетсяАутентификация:
+                  value:
+                    success: false
+                    status_code: 401
+                    error:
+                      code: authentication_required
+                      message: Учетные данные не были предоставлены.
+                      fields: null
+                      details: null
+                  summary: Требуется аутентификация
+          description: Требуется аутентификация.
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                НедостаточноПрав:
+                  value:
+                    success: false
+                    status_code: 403
+                    error:
+                      code: permission_denied
+                      message: Доступ запрещён.
+                      fields: null
+                      details: null
+                  summary: Недостаточно прав
+          description: Недостаточно прав.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                ОбъектНеНайден:
+                  value:
+                    success: false
+                    status_code: 404
+                    error:
+                      code: not_found
+                      message: Запрашиваемый ресурс не найден.
+                      fields: null
+                      details: null
+                  summary: Объект не найден
+          description: Ресурс не найден.
   /api/v1/workload/distributions/teacher-summary/export/:
     get:
       operationId: workload_distributions_teacher_summary_export_retrieve
-      description: |-
-        Базовый ViewSet для моделей с мягким удалением.
-
-        Дочерний ViewSet должен определить:
-        - model;
-        - get_queryset();
-        - при необходимости scope_queryset();
-        - permission_classes.
+      description: Формирует Excel-файл со сводкой нагрузки преподавателей.
+      summary: Экспортировать сводку нагрузки преподавателей
+      parameters:
+      - in: query
+        name: academic_year
+        schema:
+          type: integer
+          minimum: 1
+        description: ID учебного года.
+        required: true
+      - in: query
+        name: department
+        schema:
+          type: integer
+          minimum: 1
+        description: ID кафедры для фильтрации преподавателей.
+      - in: query
+        name: staff_member
+        schema:
+          type: integer
+          minimum: 1
+        description: ID преподавателя. Если не указан, возвращаются все доступные
+          преподаватели.
       tags:
-      - workload
+      - Сводки нагрузки
       security:
       - jwtAuth: []
       responses:
         '200':
           content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+          description: ''
+        '400':
+          content:
             application/json:
               schema:
-                $ref: '#/components/schemas/WorkloadDistribution'
-          description: ''
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                ОшибкаВалидации:
+                  value:
+                    success: false
+                    status_code: 400
+                    error:
+                      code: validation_error
+                      message: Ошибка проверки данных.
+                      fields:
+                        name:
+                        - message: Это поле обязательно.
+                          code: required
+                      details: null
+                  summary: Ошибка валидации
+          description: Ошибка проверки данных.
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                ТребуетсяАутентификация:
+                  value:
+                    success: false
+                    status_code: 401
+                    error:
+                      code: authentication_required
+                      message: Учетные данные не были предоставлены.
+                      fields: null
+                      details: null
+                  summary: Требуется аутентификация
+          description: Требуется аутентификация.
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                НедостаточноПрав:
+                  value:
+                    success: false
+                    status_code: 403
+                    error:
+                      code: permission_denied
+                      message: Доступ запрещён.
+                      fields: null
+                      details: null
+                  summary: Недостаточно прав
+          description: Недостаточно прав.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                ОбъектНеНайден:
+                  value:
+                    success: false
+                    status_code: 404
+                    error:
+                      code: not_found
+                      message: Запрашиваемый ресурс не найден.
+                      fields: null
+                      details: null
+                  summary: Объект не найден
+          description: Ресурс не найден.
   /api/v1/workload/validation/academic-year/:
     get:
       operationId: workload_validation_academic_year_retrieve
@@ -17215,6 +18233,59 @@ components:
       required:
       - error
       - status_code
+    ApproveSelectedDistributionsRequest:
+      type: object
+      description: Запрос на массовое утверждение распределений.
+      properties:
+        ids:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+          description: Список ID распределений нагрузки. Повторяющиеся ID будут удалены.
+          maxItems: 500
+      required:
+      - ids
+    ApproveSelectedDistributionsResult:
+      type: object
+      description: Результат массового утверждения.
+      properties:
+        requested_count:
+          type: integer
+          minimum: 0
+        found_count:
+          type: integer
+          minimum: 0
+        approved_count:
+          type: integer
+          minimum: 0
+        approved_ids:
+          type: array
+          items:
+            type: integer
+        unavailable_count:
+          type: integer
+          minimum: 0
+        unavailable_ids:
+          type: array
+          items:
+            type: integer
+        errors_count:
+          type: integer
+          minimum: 0
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/BulkDistributionError'
+      required:
+      - approved_count
+      - approved_ids
+      - errors
+      - errors_count
+      - found_count
+      - requested_count
+      - unavailable_count
+      - unavailable_ids
     AuditEvent:
       type: object
       properties:
@@ -17332,6 +18403,15 @@ components:
     BlankEnum:
       enum:
       - ''
+    BulkDistributionError:
+      type: object
+      properties:
+        id:
+          type: integer
+        error: {}
+      required:
+      - error
+      - id
     CalculationModeEnum:
       enum:
       - fixed
@@ -17355,6 +18435,58 @@ components:
           maxLength: 1000
       required:
       - reason
+    CancelSelectedDistributionsRequest:
+      type: object
+      properties:
+        ids:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+          description: Список ID распределений для отмены.
+          maxItems: 500
+        reason:
+          type: string
+          minLength: 1
+          description: Общая причина отмены распределений.
+          maxLength: 1000
+      required:
+      - ids
+      - reason
+    CancelSelectedDistributionsResult:
+      type: object
+      properties:
+        requested_count:
+          type: integer
+        found_count:
+          type: integer
+        cancelled_count:
+          type: integer
+        cancelled_ids:
+          type: array
+          items:
+            type: integer
+        unavailable_count:
+          type: integer
+        unavailable_ids:
+          type: array
+          items:
+            type: integer
+        errors_count:
+          type: integer
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/BulkDistributionError'
+      required:
+      - cancelled_count
+      - cancelled_ids
+      - errors
+      - errors_count
+      - found_count
+      - requested_count
+      - unavailable_count
+      - unavailable_ids
     CategoryEnum:
       enum:
       - teaching
@@ -18122,6 +19254,58 @@ components:
       - faculty
       - name_ru
       - name_uz
+    DepartmentWorkloadSummary:
+      type: object
+      properties:
+        department:
+          type: integer
+        department_name:
+          type: string
+        academic_year:
+          type: integer
+        academic_year_name:
+          type: string
+        planned_positions:
+          type: integer
+        planned_hours:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+        draft_hours:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+        approved_hours:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+        distributed_hours:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+        remaining_hours:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+        distribution_percent:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,2})?$
+        distribution_status:
+          $ref: '#/components/schemas/DistributionStatusEnum'
+      required:
+      - academic_year
+      - academic_year_name
+      - approved_hours
+      - department
+      - department_name
+      - distributed_hours
+      - distribution_percent
+      - distribution_status
+      - draft_hours
+      - planned_hours
+      - planned_positions
+      - remaining_hours
     DetailResponse:
       type: object
       description: Простой успешный ответ с сообщением.
@@ -18306,6 +19490,16 @@ components:
       - distribution_id
       - status
       - status_label
+    DistributionStatusEnum:
+      enum:
+      - incomplete
+      - complete
+      - exceeded
+      type: string
+      description: |-
+        * `incomplete` - incomplete
+        * `complete` - complete
+        * `exceeded` - exceeded
     EducationDuration:
       type: object
       description: Базовый сериализатор для моделей с полями аудита.
@@ -19801,6 +20995,18 @@ components:
       description: |-
         * `ru` - Русский
         * `uz` - O‘zbekcha
+    LoadStatusEnum:
+      enum:
+      - underloaded
+      - balanced
+      - overloaded
+      - norm_missing
+      type: string
+      description: |-
+        * `underloaded` - underloaded
+        * `balanced` - balanced
+        * `overloaded` - overloaded
+        * `norm_missing` - norm_missing
     LogoutRequest:
       type: object
       properties:
@@ -20113,6 +21319,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Department'
+    PaginatedDepartmentWorkloadSummaryList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/DepartmentWorkloadSummary'
     PaginatedDisciplineList:
       type: object
       required:
@@ -20573,6 +21802,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SystemRole'
+    PaginatedTeacherWorkloadSummaryList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/TeacherWorkloadSummary'
     PaginatedTeachingStreamGroupList:
       type: object
       required:
@@ -22258,6 +23510,58 @@ components:
       required:
       - data
       - detail
+    RestoreSelectedDistributionsRequest:
+      type: object
+      properties:
+        ids:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+          description: Список ID распределений для восстановления.
+          maxItems: 500
+        reason:
+          type: string
+          minLength: 1
+          description: Общая причина восстановления.
+          maxLength: 1000
+      required:
+      - ids
+      - reason
+    RestoreSelectedDistributionsResult:
+      type: object
+      properties:
+        requested_count:
+          type: integer
+        found_count:
+          type: integer
+        restored_count:
+          type: integer
+        restored_ids:
+          type: array
+          items:
+            type: integer
+        unavailable_count:
+          type: integer
+        unavailable_ids:
+          type: array
+          items:
+            type: integer
+        errors_count:
+          type: integer
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/BulkDistributionError'
+      required:
+      - errors
+      - errors_count
+      - found_count
+      - requested_count
+      - restored_count
+      - restored_ids
+      - unavailable_count
+      - unavailable_ids
     ReturnDistributionToDraftRequest:
       type: object
       properties:
@@ -22267,6 +23571,58 @@ components:
           maxLength: 1000
       required:
       - reason
+    ReturnSelectedToDraftRequest:
+      type: object
+      properties:
+        ids:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+          description: Список ID распределений для возврата в статус черновика.
+          maxItems: 500
+        reason:
+          type: string
+          minLength: 1
+          description: Общая причина возврата в черновик.
+          maxLength: 1000
+      required:
+      - ids
+      - reason
+    ReturnSelectedToDraftResult:
+      type: object
+      properties:
+        requested_count:
+          type: integer
+        found_count:
+          type: integer
+        returned_count:
+          type: integer
+        returned_ids:
+          type: array
+          items:
+            type: integer
+        unavailable_count:
+          type: integer
+        unavailable_ids:
+          type: array
+          items:
+            type: integer
+        errors_count:
+          type: integer
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/BulkDistributionError'
+      required:
+      - errors
+      - errors_count
+      - found_count
+      - requested_count
+      - returned_count
+      - returned_ids
+      - unavailable_count
+      - unavailable_ids
     ScopeTypeEnum:
       enum:
       - global
@@ -23667,6 +25023,89 @@ components:
         * `update_plan` - Доработать индивидуальный план
         * `deadline_reminder` - Напоминание о сроке
         * `other` - Другая задача
+    TeacherWorkloadSummary:
+      type: object
+      properties:
+        staff_employment_academic_year:
+          type: integer
+        staff_employment:
+          type: integer
+        staff_member:
+          type: integer
+        teacher_name:
+          type: string
+        personnel_number:
+          type: string
+        department:
+          type: integer
+        department_name:
+          type: string
+        position:
+          type: integer
+        position_name:
+          type: string
+        academic_year:
+          type: integer
+        academic_year_name:
+          type: string
+        employment_rate:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,2})?$
+        has_academic_degree:
+          type: boolean
+        has_academic_title:
+          type: boolean
+        recommended_hours:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          nullable: true
+        distributed_hours:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        remaining_hours:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          nullable: true
+        difference_hours:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          nullable: true
+        load_percent:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,2})?$
+          nullable: true
+        load_status:
+          $ref: '#/components/schemas/LoadStatusEnum'
+        norm_found:
+          type: boolean
+      required:
+      - academic_year
+      - academic_year_name
+      - department
+      - department_name
+      - difference_hours
+      - distributed_hours
+      - employment_rate
+      - has_academic_degree
+      - has_academic_title
+      - load_percent
+      - load_status
+      - norm_found
+      - personnel_number
+      - position
+      - position_name
+      - recommended_hours
+      - remaining_hours
+      - staff_employment
+      - staff_employment_academic_year
+      - staff_member
+      - teacher_name
     TeachingStream:
       type: object
       description: Базовый сериализатор для моделей с полями аудита.
@@ -24699,6 +26138,114 @@ components:
         * `completed` - Выполнена
         * `cancelled` - Отменена
         * `expired` - Просрочена
+    WorkloadDashboard:
+      type: object
+      properties:
+        academic_year:
+          type: integer
+        academic_year_name:
+          type: string
+        department:
+          type: integer
+          nullable: true
+        workload:
+          $ref: '#/components/schemas/WorkloadDashboardTotals'
+        teachers:
+          $ref: '#/components/schemas/WorkloadDashboardTeachers'
+        departments:
+          $ref: '#/components/schemas/WorkloadDashboardDepartments'
+      required:
+      - academic_year
+      - academic_year_name
+      - department
+      - departments
+      - teachers
+      - workload
+    WorkloadDashboardDepartments:
+      type: object
+      properties:
+        total:
+          type: integer
+        incomplete:
+          type: integer
+        complete:
+          type: integer
+        exceeded:
+          type: integer
+      required:
+      - complete
+      - exceeded
+      - incomplete
+      - total
+    WorkloadDashboardTeachers:
+      type: object
+      properties:
+        total:
+          type: integer
+        with_norm:
+          type: integer
+        without_norm:
+          type: integer
+        underloaded:
+          type: integer
+        balanced:
+          type: integer
+        overloaded:
+          type: integer
+        recommended_hours:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+        distributed_hours:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+      required:
+      - balanced
+      - distributed_hours
+      - overloaded
+      - recommended_hours
+      - total
+      - underloaded
+      - with_norm
+      - without_norm
+    WorkloadDashboardTotals:
+      type: object
+      properties:
+        planned_positions:
+          type: integer
+        planned_hours:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+        draft_hours:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+        approved_hours:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+        distributed_hours:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+        remaining_hours:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+        distribution_percent:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,2})?$
+      required:
+      - approved_hours
+      - distributed_hours
+      - distribution_percent
+      - draft_hours
+      - planned_hours
+      - planned_positions
+      - remaining_hours
     WorkloadDistribution:
       type: object
       description: Базовый сериализатор для моделей с полями аудита.

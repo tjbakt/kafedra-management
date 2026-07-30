@@ -41,6 +41,9 @@ from apps.workload.api.serializers import (
     WorkloadDistributionActionResponseSerializer,
     ApproveSelectedDistributionsResultSerializer,
     ApproveSelectedDistributionsSerializer,
+    DepartmentWorkloadSummaryQuerySerializer,
+    TeacherWorkloadSummaryQuerySerializer,
+    WorkloadDashboardQuerySerializer,
 )
 from apps.workload.models import WorkloadDistribution
 
@@ -111,6 +114,10 @@ from apps.workload.api.schema_serializers import (
 )
 
 
+EXCEL_CONTENT_TYPE = (
+    "application/vnd.openxmlformats-officedocument."
+    "spreadsheetml.sheet"
+)
 
 class WorkloadDistributionViewSet(
     BaseArchiveModelViewSet
@@ -1304,47 +1311,77 @@ class WorkloadDistributionViewSet(
             status=status.HTTP_200_OK,
         )
 
+    @extend_schema(
+        tags=["Сводки нагрузки"],
+        summary=(
+                "Получить сводку нагрузки "
+                "преподавателей"
+        ),
+        description=(
+                "Возвращает расчёт рекомендованной, "
+                "распределённой и оставшейся нагрузки "
+                "преподавателей за учебный год."
+        ),
+        parameters=[
+            TeacherWorkloadSummaryQuerySerializer,
+        ],
+        request=None,
+        responses={
+            200: TeacherWorkloadSummarySerializer(
+                many=True
+            ),
+            400: BAD_REQUEST_RESPONSE,
+            401: UNAUTHORIZED_RESPONSE,
+            403: FORBIDDEN_RESPONSE,
+            404: NOT_FOUND_RESPONSE,
+        },
+    )
     @action(
         detail=False,
         methods=["get"],
         url_path="teacher-summary",
     )
-    def teacher_summary(self, request):
-        academic_year_id = request.query_params.get(
-            "academic_year"
+    def teacher_summary(
+            self,
+            request,
+    ):
+        query_serializer = (
+            TeacherWorkloadSummaryQuerySerializer(
+                data=request.query_params
+            )
         )
-        staff_member_id = request.query_params.get(
-            "staff_member"
-        )
-        department_id = request.query_params.get(
-            "department"
+        query_serializer.is_valid(
+            raise_exception=True
         )
 
-        if not academic_year_id:
-            return Response(
-                {
-                    "detail": (
-                        "Необходимо указать academic_year."
-                    )
-                },
-                status=status.HTTP_400_BAD_REQUEST,
+        academic_year = (
+            self.get_academic_year_or_error(
+                query_serializer.validated_data[
+                    "academic_year"
+                ]
             )
+        )
 
-        try:
-            academic_year = AcademicYear.objects.get(
-                pk=academic_year_id
+        staff_member_id = (
+            query_serializer.validated_data.get(
+                "staff_member"
             )
-        except AcademicYear.DoesNotExist:
-            return Response(
-                {
-                    "academic_year": (
-                        "Указанный учебный год не найден."
-                    )
-                },
-                status=status.HTTP_404_NOT_FOUND,
+        )
+        department_id = (
+            query_serializer.validated_data.get(
+                "department"
             )
+        )
 
-        access_scope = self.get_workload_access_scope()
+        access_scope = (
+            self.get_workload_access_scope()
+        )
+
+        self.validate_department_access(
+            access_scope=access_scope,
+            department_id=department_id,
+        )
+
         result = TeacherWorkloadService.get_summary(
             academic_year=academic_year,
             staff_member_id=staff_member_id,
@@ -1357,61 +1394,88 @@ class WorkloadDistributionViewSet(
             ),
         )
 
-        serializer = TeacherWorkloadSummarySerializer(
-            result,
-            many=True,
+        output_serializer = (
+            TeacherWorkloadSummarySerializer(
+                result,
+                many=True,
+            )
         )
 
         return Response(
-            serializer.data,
+            output_serializer.data,
             status=status.HTTP_200_OK,
         )
 
+    @extend_schema(
+        tags=["Сводки нагрузки"],
+        summary=(
+                "Экспортировать сводку нагрузки "
+                "преподавателей"
+        ),
+        description=(
+                "Формирует Excel-файл со сводкой "
+                "нагрузки преподавателей."
+        ),
+        parameters=[
+            TeacherWorkloadSummaryQuerySerializer,
+        ],
+        request=None,
+        responses={
+            (
+                    200,
+                    EXCEL_CONTENT_TYPE,
+            ): OpenApiTypes.BINARY,
+            400: BAD_REQUEST_RESPONSE,
+            401: UNAUTHORIZED_RESPONSE,
+            403: FORBIDDEN_RESPONSE,
+            404: NOT_FOUND_RESPONSE,
+        },
+    )
     @action(
         detail=False,
         methods=["get"],
         url_path="teacher-summary/export",
     )
-    def export_teacher_summary(self, request):
-        academic_year_id = request.query_params.get(
-            "academic_year"
+    def export_teacher_summary(
+            self,
+            request,
+    ):
+        query_serializer = (
+            TeacherWorkloadSummaryQuerySerializer(
+                data=request.query_params
+            )
         )
-        staff_member_id = request.query_params.get(
-            "staff_member"
-        )
-        department_id = request.query_params.get(
-            "department"
+        query_serializer.is_valid(
+            raise_exception=True
         )
 
-        if not academic_year_id:
-            return Response(
-                {
-                    "academic_year": (
-                        "Необходимо указать учебный год."
-                    )
-                },
-                status=status.HTTP_400_BAD_REQUEST,
+        academic_year = (
+            self.get_academic_year_or_error(
+                query_serializer.validated_data[
+                    "academic_year"
+                ]
             )
+        )
 
-        try:
-            academic_year = AcademicYear.objects.get(
-                pk=academic_year_id,
+        staff_member_id = (
+            query_serializer.validated_data.get(
+                "staff_member"
             )
-        except (
-                AcademicYear.DoesNotExist,
-                ValueError,
-                TypeError,
-        ):
-            return Response(
-                {
-                    "academic_year": (
-                        "Указан некорректный учебный год."
-                    )
-                },
-                status=status.HTTP_400_BAD_REQUEST,
+        )
+        department_id = (
+            query_serializer.validated_data.get(
+                "department"
             )
+        )
 
-        access_scope = self.get_workload_access_scope()
+        access_scope = (
+            self.get_workload_access_scope()
+        )
+
+        self.validate_department_access(
+            access_scope=access_scope,
+            department_id=department_id,
+        )
 
         file_content, filename = (
             TeacherWorkloadExportService.export(
@@ -1428,11 +1492,8 @@ class WorkloadDistributionViewSet(
         )
 
         response = HttpResponse(
-            file_content,
-            content_type=(
-                "application/vnd.openxmlformats-officedocument."
-                "spreadsheetml.sheet"
-            ),
+            content=file_content,
+            content_type=EXCEL_CONTENT_TYPE,
         )
         response["Content-Disposition"] = (
             f'attachment; filename="{filename}"'
@@ -1443,129 +1504,176 @@ class WorkloadDistributionViewSet(
 
         return response
 
+    @extend_schema(
+        tags=["Сводки нагрузки"],
+        summary="Получить сводку нагрузки кафедр",
+        description=(
+                "Возвращает плановые, распределённые, "
+                "утверждённые и оставшиеся часы кафедр "
+                "за выбранный учебный год."
+        ),
+        parameters=[
+            DepartmentWorkloadSummaryQuerySerializer,
+        ],
+        request=None,
+        responses={
+            200: DepartmentWorkloadSummarySerializer(
+                many=True
+            ),
+            400: BAD_REQUEST_RESPONSE,
+            401: UNAUTHORIZED_RESPONSE,
+            403: FORBIDDEN_RESPONSE,
+            404: NOT_FOUND_RESPONSE,
+        },
+    )
     @action(
         detail=False,
         methods=["get"],
         url_path="department-summary",
     )
-    def department_summary(self, request):
-        academic_year_id = request.query_params.get(
-            "academic_year"
+    def department_summary(
+            self,
+            request,
+    ):
+        query_serializer = (
+            DepartmentWorkloadSummaryQuerySerializer(
+                data=request.query_params
+            )
         )
-        academic_semester_id = request.query_params.get(
-            "academic_semester"
-        )
-        department_id = request.query_params.get(
-            "department"
+        query_serializer.is_valid(
+            raise_exception=True
         )
 
-        if not academic_year_id:
-            return Response(
-                {
-                    "academic_year": (
-                        "Необходимо указать учебный год."
-                    )
-                },
-                status=status.HTTP_400_BAD_REQUEST,
+        academic_year = (
+            self.get_academic_year_or_error(
+                query_serializer.validated_data[
+                    "academic_year"
+                ]
             )
+        )
 
-        try:
-            academic_year = AcademicYear.objects.get(
-                pk=academic_year_id,
+        academic_semester_id = (
+            query_serializer.validated_data.get(
+                "academic_semester"
             )
-        except AcademicYear.DoesNotExist:
-            return Response(
-                {
-                    "academic_year": (
-                        "Указанный учебный год не найден."
-                    )
-                },
-                status=status.HTTP_404_NOT_FOUND,
+        )
+        department_id = (
+            query_serializer.validated_data.get(
+                "department"
             )
+        )
 
-        access_scope = self.get_workload_access_scope()
+        access_scope = (
+            self.get_workload_access_scope()
+        )
 
         self.validate_department_access(
             access_scope=access_scope,
             department_id=department_id,
         )
 
-        result = DepartmentWorkloadService.get_summary(
-            academic_year=academic_year,
-            academic_semester_id=academic_semester_id,
-            department_id=department_id,
-            allowed_department_ids=(
-                access_scope.department_ids
-            ),
+        result = (
+            DepartmentWorkloadService.get_summary(
+                academic_year=academic_year,
+                academic_semester_id=(
+                    academic_semester_id
+                ),
+                department_id=department_id,
+                allowed_department_ids=(
+                    access_scope.department_ids
+                ),
+            )
         )
 
-        serializer = DepartmentWorkloadSummarySerializer(
-            result,
-            many=True,
+        output_serializer = (
+            DepartmentWorkloadSummarySerializer(
+                result,
+                many=True,
+            )
         )
 
         return Response(
-            serializer.data,
+            output_serializer.data,
             status=status.HTTP_200_OK,
         )
 
+    @extend_schema(
+        tags=["Сводки нагрузки"],
+        summary=(
+                "Экспортировать сводку "
+                "нагрузки кафедр"
+        ),
+        description=(
+                "Формирует Excel-файл со сводкой "
+                "нагрузки кафедр."
+        ),
+        parameters=[
+            DepartmentWorkloadSummaryQuerySerializer,
+        ],
+        request=None,
+        responses={
+            (
+                    200,
+                    EXCEL_CONTENT_TYPE,
+            ): OpenApiTypes.BINARY,
+            400: BAD_REQUEST_RESPONSE,
+            401: UNAUTHORIZED_RESPONSE,
+            403: FORBIDDEN_RESPONSE,
+            404: NOT_FOUND_RESPONSE,
+        },
+    )
     @action(
         detail=False,
         methods=["get"],
         url_path="department-summary/export",
     )
-    def export_department_summary(self, request):
-        academic_year_id = request.query_params.get(
-            "academic_year"
+    def export_department_summary(
+            self,
+            request,
+    ):
+        query_serializer = (
+            DepartmentWorkloadSummaryQuerySerializer(
+                data=request.query_params
+            )
         )
-        academic_semester_id = request.query_params.get(
-            "academic_semester"
-        )
-        department_id = request.query_params.get(
-            "department"
+        query_serializer.is_valid(
+            raise_exception=True
         )
 
-        if not academic_year_id:
-            return Response(
-                {
-                    "academic_year": (
-                        "Необходимо указать учебный год."
-                    )
-                },
-                status=status.HTTP_400_BAD_REQUEST,
+        academic_year = (
+            self.get_academic_year_or_error(
+                query_serializer.validated_data[
+                    "academic_year"
+                ]
             )
+        )
 
-        try:
-            academic_year = AcademicYear.objects.get(
-                pk=academic_year_id,
+        academic_semester_id = (
+            query_serializer.validated_data.get(
+                "academic_semester"
             )
-        except (
-                AcademicYear.DoesNotExist,
-                ValueError,
-                TypeError,
-        ):
-            return Response(
-                {
-                    "academic_year": (
-                        "Указан некорректный учебный год."
-                    )
-                },
-                status=status.HTTP_400_BAD_REQUEST,
+        )
+        department_id = (
+            query_serializer.validated_data.get(
+                "department"
             )
+        )
 
-        access_scope = self.get_workload_access_scope()
+        access_scope = (
+            self.get_workload_access_scope()
+        )
 
         self.validate_department_access(
             access_scope=access_scope,
             department_id=department_id,
         )
 
-        access_scope = self.get_workload_access_scope()
-
         file_content, filename = (
             DepartmentWorkloadExportService.export(
                 academic_year=academic_year,
-                academic_semester_id=academic_semester_id,
+                academic_semester_id=(
+                    academic_semester_id
+                ),
                 department_id=department_id,
                 allowed_department_ids=(
                     access_scope.department_ids
@@ -1574,11 +1682,8 @@ class WorkloadDistributionViewSet(
         )
 
         response = HttpResponse(
-            file_content,
-            content_type=(
-                "application/vnd.openxmlformats-officedocument."
-                "spreadsheetml.sheet"
-            ),
+            content=file_content,
+            content_type=EXCEL_CONTENT_TYPE,
         )
         response["Content-Disposition"] = (
             f'attachment; filename="{filename}"'
@@ -1588,6 +1693,30 @@ class WorkloadDistributionViewSet(
         )
 
         return response
+
+    @staticmethod
+    def get_academic_year_or_error(
+            academic_year_id,
+    ):
+        """
+        Возвращает активный учебный год либо
+        формирует стандартную ошибку валидации.
+        """
+
+        try:
+            return AcademicYear.objects.get(
+                pk=academic_year_id,
+                is_archived=False,
+            )
+        except AcademicYear.DoesNotExist as exc:
+            raise ValidationError(
+                {
+                    "academic_year": (
+                        "Указанный учебный год "
+                        "не найден."
+                    )
+                }
+            ) from exc
 
     def get_permissions(self):
         if self.action in (
@@ -1641,116 +1770,147 @@ class WorkloadDistributionViewSet(
                 "У вас нет доступа к указанной кафедре."
             )
 
+    @extend_schema(
+        tags=["Dashboard нагрузки"],
+        summary="Получить dashboard нагрузки",
+        description=(
+                "Возвращает агрегированные показатели "
+                "плановой и распределённой нагрузки, "
+                "а также статистику по преподавателям "
+                "и кафедрам."
+        ),
+        parameters=[
+            WorkloadDashboardQuerySerializer,
+        ],
+        request=None,
+        responses={
+            200: WorkloadDashboardSerializer,
+            400: BAD_REQUEST_RESPONSE,
+            401: UNAUTHORIZED_RESPONSE,
+            403: FORBIDDEN_RESPONSE,
+            404: NOT_FOUND_RESPONSE,
+        },
+    )
     @action(
         detail=False,
         methods=["get"],
         url_path="dashboard",
     )
-    def dashboard(self, request):
-        academic_year_id = request.query_params.get(
-            "academic_year"
+    def dashboard(
+            self,
+            request,
+    ):
+        query_serializer = (
+            WorkloadDashboardQuerySerializer(
+                data=request.query_params
+            )
         )
-        department_id = request.query_params.get(
-            "department"
+        query_serializer.is_valid(
+            raise_exception=True
         )
 
-        if not academic_year_id:
-            return Response(
-                {
-                    "academic_year": (
-                        "Необходимо указать учебный год."
-                    )
-                },
-                status=status.HTTP_400_BAD_REQUEST,
+        academic_year = (
+            self.get_academic_year_or_error(
+                query_serializer.validated_data[
+                    "academic_year"
+                ]
             )
+        )
 
-        try:
-            academic_year = AcademicYear.objects.get(
-                pk=academic_year_id,
+        department_id = (
+            query_serializer.validated_data.get(
+                "department"
             )
-        except (
-                AcademicYear.DoesNotExist,
-                TypeError,
-                ValueError,
-        ):
-            return Response(
-                {
-                    "academic_year": (
-                        "Указан некорректный учебный год."
-                    )
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        )
 
-        access_scope = self.get_workload_access_scope()
+        access_scope = (
+            self.get_workload_access_scope()
+        )
 
         self.validate_department_access(
             access_scope=access_scope,
             department_id=department_id,
         )
 
-        result = WorkloadDashboardService.get_dashboard(
-            academic_year=academic_year,
-            department_id=department_id,
-            allowed_department_ids=(
-                access_scope.department_ids
-            ),
-            allowed_staff_member_ids=(
-                access_scope.staff_member_ids
-            ),
+        result = (
+            WorkloadDashboardService.get_dashboard(
+                academic_year=academic_year,
+                department_id=department_id,
+                allowed_department_ids=(
+                    access_scope.department_ids
+                ),
+                allowed_staff_member_ids=(
+                    access_scope.staff_member_ids
+                ),
+            )
         )
 
-        serializer = WorkloadDashboardSerializer(
-            result
+        output_serializer = (
+            WorkloadDashboardSerializer(result)
         )
 
         return Response(
-            serializer.data,
+            output_serializer.data,
             status=status.HTTP_200_OK,
         )
 
+    @extend_schema(
+        tags=["Dashboard нагрузки"],
+        summary="Экспортировать dashboard нагрузки",
+        description=(
+                "Формирует Excel-файл с агрегированными "
+                "показателями dashboard учебной нагрузки."
+        ),
+        parameters=[
+            WorkloadDashboardQuerySerializer,
+        ],
+        request=None,
+        responses={
+            (
+                    200,
+                    EXCEL_CONTENT_TYPE,
+            ): OpenApiTypes.BINARY,
+            400: BAD_REQUEST_RESPONSE,
+            401: UNAUTHORIZED_RESPONSE,
+            403: FORBIDDEN_RESPONSE,
+            404: NOT_FOUND_RESPONSE,
+        },
+    )
     @action(
         detail=False,
         methods=["get"],
         url_path="dashboard/export",
     )
-    def export_dashboard(self, request):
-        academic_year_id = request.query_params.get(
-            "academic_year"
+    def export_dashboard(
+            self,
+            request,
+    ):
+        query_serializer = (
+            WorkloadDashboardQuerySerializer(
+                data=request.query_params
+            )
         )
-        department_id = request.query_params.get(
-            "department"
+        query_serializer.is_valid(
+            raise_exception=True
         )
 
-        if not academic_year_id:
-            return Response(
-                {
-                    "academic_year": (
-                        "Необходимо указать учебный год."
-                    )
-                },
-                status=status.HTTP_400_BAD_REQUEST,
+        academic_year = (
+            self.get_academic_year_or_error(
+                query_serializer.validated_data[
+                    "academic_year"
+                ]
             )
+        )
 
-        try:
-            academic_year = AcademicYear.objects.get(
-                pk=academic_year_id,
+        department_id = (
+            query_serializer.validated_data.get(
+                "department"
             )
-        except (
-                AcademicYear.DoesNotExist,
-                TypeError,
-                ValueError,
-        ):
-            return Response(
-                {
-                    "academic_year": (
-                        "Указан некорректный учебный год."
-                    )
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        )
 
-        access_scope = self.get_workload_access_scope()
+        access_scope = (
+            self.get_workload_access_scope()
+        )
 
         self.validate_department_access(
             access_scope=access_scope,
@@ -1772,9 +1932,7 @@ class WorkloadDistributionViewSet(
 
         response = HttpResponse(
             content=file_content,
-            content_type=(
-                WorkloadDashboardExportService.CONTENT_TYPE
-            ),
+            content_type=EXCEL_CONTENT_TYPE,
         )
         response["Content-Disposition"] = (
             f'attachment; filename="{filename}"'

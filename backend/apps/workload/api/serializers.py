@@ -380,6 +380,90 @@ class WorkloadDashboardSerializer(
         WorkloadDashboardDepartmentsSerializer()
     )
 
+class TeacherWorkloadSummaryQuerySerializer(
+    serializers.Serializer
+):
+    """
+    Параметры сводки нагрузки преподавателей.
+    """
+
+    academic_year = serializers.IntegerField(
+        min_value=1,
+        required=True,
+        help_text="ID учебного года.",
+    )
+
+    staff_member = serializers.IntegerField(
+        min_value=1,
+        required=False,
+        help_text=(
+            "ID преподавателя. Если не указан, "
+            "возвращаются все доступные преподаватели."
+        ),
+    )
+
+    department = serializers.IntegerField(
+        min_value=1,
+        required=False,
+        help_text=(
+            "ID кафедры для фильтрации преподавателей."
+        ),
+    )
+
+
+class DepartmentWorkloadSummaryQuerySerializer(
+    serializers.Serializer
+):
+    """
+    Параметры сводки нагрузки кафедр.
+    """
+
+    academic_year = serializers.IntegerField(
+        min_value=1,
+        required=True,
+        help_text="ID учебного года.",
+    )
+
+    academic_semester = serializers.IntegerField(
+        min_value=1,
+        required=False,
+        help_text=(
+            "ID семестра учебного года."
+        ),
+    )
+
+    department = serializers.IntegerField(
+        min_value=1,
+        required=False,
+        help_text=(
+            "ID кафедры. Если не указан, "
+            "возвращаются все доступные кафедры."
+        ),
+    )
+
+
+class WorkloadDashboardQuerySerializer(
+    serializers.Serializer
+):
+    """
+    Параметры dashboard учебной нагрузки.
+    """
+
+    academic_year = serializers.IntegerField(
+        min_value=1,
+        required=True,
+        help_text="ID учебного года.",
+    )
+
+    department = serializers.IntegerField(
+        min_value=1,
+        required=False,
+        help_text=(
+            "ID кафедры. Если не указан, dashboard "
+            "строится по всей доступной области."
+        ),
+    )
+
 class ApproveSelectedDistributionsSerializer(
     serializers.Serializer
 ):
