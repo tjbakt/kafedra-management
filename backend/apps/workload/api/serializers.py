@@ -380,6 +380,74 @@ class WorkloadDashboardSerializer(
         WorkloadDashboardDepartmentsSerializer()
     )
 
+class ApproveSelectedDistributionsSerializer(
+    serializers.Serializer
+):
+    """
+    Запрос на массовое утверждение распределений.
+    """
+
+    ids = serializers.ListField(
+        child=serializers.IntegerField(
+            min_value=1,
+        ),
+        allow_empty=False,
+        max_length=500,
+        help_text=(
+            "Список ID распределений нагрузки. "
+            "Повторяющиеся ID будут удалены."
+        ),
+    )
+
+    def validate_ids(
+        self,
+        value,
+    ):
+        return list(
+            dict.fromkeys(value)
+        )
+
+class BulkDistributionErrorSerializer(
+    serializers.Serializer
+):
+    id = serializers.IntegerField()
+    error = serializers.JSONField()
+
+class ApproveSelectedDistributionsResultSerializer(
+    serializers.Serializer
+):
+    """
+    Результат массового утверждения.
+    """
+
+    requested_count = serializers.IntegerField(
+        min_value=0,
+    )
+    found_count = serializers.IntegerField(
+        min_value=0,
+    )
+
+    approved_count = serializers.IntegerField(
+        min_value=0,
+    )
+    approved_ids = serializers.ListField(
+        child=serializers.IntegerField(),
+    )
+
+    unavailable_count = serializers.IntegerField(
+        min_value=0,
+    )
+    unavailable_ids = serializers.ListField(
+        child=serializers.IntegerField(),
+    )
+
+    errors_count = serializers.IntegerField(
+        min_value=0,
+    )
+    errors = BulkDistributionErrorSerializer(
+        many=True,
+    )
+
 class CancelSelectedDistributionsSerializer(
     serializers.Serializer
 ):
@@ -389,12 +457,18 @@ class CancelSelectedDistributionsSerializer(
         ),
         allow_empty=False,
         max_length=500,
+        help_text=(
+            "Список ID распределений для отмены."
+        ),
     )
 
     reason = serializers.CharField(
         max_length=1000,
         allow_blank=False,
         trim_whitespace=True,
+        help_text=(
+            "Общая причина отмены распределений."
+        ),
     )
 
     def validate_ids(self, value):
@@ -413,12 +487,6 @@ class CancelSelectedDistributionsSerializer(
             )
 
         return normalized_value
-
-class BulkDistributionErrorSerializer(
-    serializers.Serializer
-):
-    id = serializers.IntegerField()
-    error = serializers.JSONField()
 
 
 class CancelSelectedDistributionsResultSerializer(
@@ -470,12 +538,18 @@ class RestoreSelectedDistributionsSerializer(
         ),
         allow_empty=False,
         max_length=500,
+        help_text=(
+            "Список ID распределений для восстановления."
+        ),
     )
 
     reason = serializers.CharField(
         max_length=1000,
         allow_blank=False,
         trim_whitespace=True,
+        help_text=(
+            "Общая причина восстановления."
+        ),
     )
 
     def validate_ids(self, value):
@@ -590,12 +664,18 @@ class ReturnSelectedToDraftSerializer(
         ),
         allow_empty=False,
         max_length=500,
+        help_text=(
+            "Список ID распределений для возврата в статус черновика."
+        ),
     )
 
     reason = serializers.CharField(
         max_length=1000,
         allow_blank=False,
         trim_whitespace=True,
+        help_text=(
+            "Общая причина возврата в черновик."
+        ),
     )
 
     def validate_ids(self, value):

@@ -39,6 +39,8 @@ from apps.workload.api.serializers import (
     CancelDistributionSerializer,
     TransferDistributionActionResponseSerializer,
     WorkloadDistributionActionResponseSerializer,
+    ApproveSelectedDistributionsResultSerializer,
+    ApproveSelectedDistributionsSerializer,
 )
 from apps.workload.models import WorkloadDistribution
 
@@ -92,6 +94,7 @@ from apps.workload.services.academic_year_closing_readiness_service import (
 from apps.staff.models import StaffEmployment
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import (
+    OpenApiExample,
     OpenApiParameter,
     extend_schema,
 )
@@ -714,33 +717,120 @@ class WorkloadDistributionViewSet(
             status=status.HTTP_200_OK,
         )
 
+    @extend_schema(
+        tags=["Распределение нагрузки"],
+        summary=(
+                "Массово утвердить распределения"
+        ),
+        description=(
+                "Утверждает доступные распределения "
+                "нагрузки из переданного списка ID. "
+                "Распределения, недоступные текущему "
+                "пользователю, возвращаются в поле "
+                "unavailable_ids. Ошибка одного объекта "
+                "не отменяет обработку остальных."
+        ),
+        request=(
+                ApproveSelectedDistributionsSerializer
+        ),
+        responses={
+            200: (
+                    ApproveSelectedDistributionsResultSerializer
+            ),
+            400: BAD_REQUEST_RESPONSE,
+            401: UNAUTHORIZED_RESPONSE,
+            403: FORBIDDEN_RESPONSE,
+            409: CONFLICT_RESPONSE,
+        },
+        examples=[
+            OpenApiExample(
+                name="Массовое утверждение",
+                value={
+                    "ids": [
+                        12,
+                        13,
+                        14,
+                    ],
+                },
+                request_only=True,
+            ),
+            OpenApiExample(
+                name="Результат утверждения",
+                value={
+                    "requested_count": 3,
+                    "found_count": 2,
+                    "approved_count": 1,
+                    "approved_ids": [
+                        12,
+                    ],
+                    "unavailable_count": 1,
+                    "unavailable_ids": [
+                        14,
+                    ],
+                    "errors_count": 1,
+                    "errors": [
+                        {
+                            "id": 13,
+                            "error": [
+                                (
+                                        "Распределение уже "
+                                        "утверждено."
+                                )
+                            ],
+                        }
+                    ],
+                },
+                response_only=True,
+                status_codes=["200"],
+            ),
+        ],
+    )
     @action(
         detail=False,
         methods=["post"],
         url_path="approve-selected",
     )
-    def approve_selected(self, request):
-        ids = request.data.get("ids", [])
-
-        if not isinstance(ids, list) or not ids:
-            return Response(
-                {
-                    "detail": (
-                        "Необходимо передать непустой список ids."
-                    )
-                },
-                status=status.HTTP_400_BAD_REQUEST,
+    def approve_selected(
+            self,
+            request,
+    ):
+        input_serializer = (
+            ApproveSelectedDistributionsSerializer(
+                data=request.data
             )
-
-        queryset = self.get_queryset().filter(
-            id__in=ids
         )
+        input_serializer.is_valid(
+            raise_exception=True
+        )
+
+        requested_ids = (
+            input_serializer.validated_data["ids"]
+        )
+
+        distributions = list(
+            self.get_queryset()
+            .filter(
+                pk__in=requested_ids
+            )
+            .order_by("pk")
+        )
+
+        found_ids = {
+            distribution.pk
+            for distribution in distributions
+        }
+
+        unavailable_ids = [
+            distribution_id
+            for distribution_id in requested_ids
+            if distribution_id not in found_ids
+        ]
 
         approved_ids = []
         errors = []
 
         with transaction.atomic():
-            for distribution in queryset:
+            for distribution in distributions:
                 try:
                     approved = (
                         WorkloadDistributionService
@@ -749,31 +839,112 @@ class WorkloadDistributionViewSet(
                             user=request.user,
                         )
                     )
-                    approved_ids.append(approved.id)
+                    approved_ids.append(
+                        approved.pk
+                    )
                 except DjangoValidationError as exc:
                     errors.append(
                         {
-                            "id": distribution.id,
-                            "error": (
-                                getattr(
-                                    exc,
-                                    "message_dict",
-                                    exc.messages,
-                                )
+                            "id": distribution.pk,
+                            "error": getattr(
+                                exc,
+                                "message_dict",
+                                exc.messages,
                             ),
                         }
                     )
 
+        result = {
+            "requested_count": len(
+                requested_ids
+            ),
+            "found_count": len(
+                distributions
+            ),
+            "approved_count": len(
+                approved_ids
+            ),
+            "approved_ids": approved_ids,
+            "unavailable_count": len(
+                unavailable_ids
+            ),
+            "unavailable_ids": (
+                unavailable_ids
+            ),
+            "errors_count": len(errors),
+            "errors": errors,
+        }
+
+        output_serializer = (
+            ApproveSelectedDistributionsResultSerializer(
+                result
+            )
+        )
+
         return Response(
-            {
-                "approved_count": len(approved_ids),
-                "approved_ids": approved_ids,
-                "errors_count": len(errors),
-                "errors": errors,
-            },
+            output_serializer.data,
             status=status.HTTP_200_OK,
         )
 
+    @extend_schema(
+        tags=["Распределение нагрузки"],
+        summary=(
+                "Массово отменить распределения"
+        ),
+        description=(
+                "Отменяет доступные распределения "
+                "нагрузки из переданного списка ID. "
+                "Причина отмены обязательна. Ошибка "
+                "обработки одного распределения не "
+                "останавливает остальные операции."
+        ),
+        request=(
+                CancelSelectedDistributionsSerializer
+        ),
+        responses={
+            200: (
+                    CancelSelectedDistributionsResultSerializer
+            ),
+            400: BAD_REQUEST_RESPONSE,
+            401: UNAUTHORIZED_RESPONSE,
+            403: FORBIDDEN_RESPONSE,
+            409: CONFLICT_RESPONSE,
+        },
+        examples=[
+            OpenApiExample(
+                name="Массовая отмена",
+                value={
+                    "ids": [
+                        21,
+                        22,
+                    ],
+                    "reason": (
+                            "Исправление распределения "
+                            "учебной нагрузки."
+                    ),
+                },
+                request_only=True,
+            ),
+            OpenApiExample(
+                name="Результат отмены",
+                value={
+                    "requested_count": 2,
+                    "found_count": 2,
+                    "cancelled_count": 2,
+                    "cancelled_ids": [
+                        21,
+                        22,
+                    ],
+                    "unavailable_count": 0,
+                    "unavailable_ids": [],
+                    "errors_count": 0,
+                    "errors": [],
+                },
+                response_only=True,
+                status_codes=["200"],
+            ),
+        ],
+    )
     @action(
         detail=False,
         methods=["post"],
@@ -852,6 +1023,73 @@ class WorkloadDistributionViewSet(
             status=status.HTTP_200_OK,
         )
 
+    @extend_schema(
+        tags=["Распределение нагрузки"],
+        summary=(
+                "Массово восстановить распределения"
+        ),
+        description=(
+                "Восстанавливает доступные отменённые "
+                "распределения и переводит их в статус "
+                "черновика. Причина восстановления "
+                "обязательна."
+        ),
+        request=(
+                RestoreSelectedDistributionsSerializer
+        ),
+        responses={
+            200: (
+                    RestoreSelectedDistributionsResultSerializer
+            ),
+            400: BAD_REQUEST_RESPONSE,
+            401: UNAUTHORIZED_RESPONSE,
+            403: FORBIDDEN_RESPONSE,
+            409: CONFLICT_RESPONSE,
+        },
+        examples=[
+            OpenApiExample(
+                name="Массовое восстановление",
+                value={
+                    "ids": [
+                        31,
+                        32,
+                    ],
+                    "reason": (
+                            "Распределения отменены "
+                            "по ошибке."
+                    ),
+                },
+                request_only=True,
+            ),
+            OpenApiExample(
+                name="Результат восстановления",
+                value={
+                    "requested_count": 2,
+                    "found_count": 2,
+                    "restored_count": 1,
+                    "restored_ids": [
+                        31,
+                    ],
+                    "unavailable_count": 0,
+                    "unavailable_ids": [],
+                    "errors_count": 1,
+                    "errors": [
+                        {
+                            "id": 32,
+                            "error": [
+                                (
+                                        "Распределение нельзя "
+                                        "восстановить."
+                                )
+                            ],
+                        }
+                    ],
+                },
+                response_only=True,
+                status_codes=["200"],
+            ),
+        ],
+    )
     @action(
         detail=False,
         methods=["post"],
@@ -930,6 +1168,64 @@ class WorkloadDistributionViewSet(
             status=status.HTTP_200_OK,
         )
 
+    @extend_schema(
+        tags=["Распределение нагрузки"],
+        summary=(
+                "Массово вернуть распределения "
+                "в черновик"
+        ),
+        description=(
+                "Возвращает доступные утверждённые или "
+                "отменённые распределения в статус "
+                "черновика. Причина возврата обязательна."
+        ),
+        request=(
+                ReturnSelectedToDraftSerializer
+        ),
+        responses={
+            200: (
+                    ReturnSelectedToDraftResultSerializer
+            ),
+            400: BAD_REQUEST_RESPONSE,
+            401: UNAUTHORIZED_RESPONSE,
+            403: FORBIDDEN_RESPONSE,
+            409: CONFLICT_RESPONSE,
+        },
+        examples=[
+            OpenApiExample(
+                name="Массовый возврат в черновик",
+                value={
+                    "ids": [
+                        41,
+                        42,
+                    ],
+                    "reason": (
+                            "Необходимо скорректировать "
+                            "распределённые часы."
+                    ),
+                },
+                request_only=True,
+            ),
+            OpenApiExample(
+                name="Результат возврата",
+                value={
+                    "requested_count": 2,
+                    "found_count": 2,
+                    "returned_count": 2,
+                    "returned_ids": [
+                        41,
+                        42,
+                    ],
+                    "unavailable_count": 0,
+                    "unavailable_ids": [],
+                    "errors_count": 0,
+                    "errors": [],
+                },
+                response_only=True,
+                status_codes=["200"],
+            ),
+        ],
+    )
     @action(
         detail=False,
         methods=["post"],
