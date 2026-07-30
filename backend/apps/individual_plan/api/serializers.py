@@ -8,6 +8,7 @@ from apps.individual_plan.models import (
     IndividualPlanSection,
     IndividualPlanTeachingWorkload,
 )
+from drf_spectacular.utils import extend_schema_field
 
 class IndividualPlanSectionSerializer(
     AuditFieldsSerializer
@@ -169,7 +170,12 @@ class IndividualPlanItemSerializer(
             "archived_by",
         )
 
-    def get_confirmed_by_name(self, obj):
+    @extend_schema_field(
+        serializers.CharField(
+            allow_null=True,
+        )
+    )
+    def get_confirmed_by_name(self, obj) -> str | None:
         if not obj.confirmed_by:
             return None
 
@@ -178,7 +184,10 @@ class IndividualPlanItemSerializer(
             or obj.confirmed_by.username
         )
 
-    def get_is_imported_teaching_workload(self, obj):
+    @extend_schema_field(
+        serializers.BooleanField()
+    )
+    def get_is_imported_teaching_workload(self, obj) -> bool:
         return hasattr(obj, "teaching_workload_link")
 
     def validate(self, attrs):

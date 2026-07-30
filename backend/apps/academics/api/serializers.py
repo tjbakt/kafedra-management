@@ -1,6 +1,12 @@
 from django.utils.translation import get_language
 from rest_framework import serializers
 
+from typing import Any
+
+from drf_spectacular.utils import (
+    extend_schema_field,
+)
+
 from apps.academics.models import (
     AcademicSemester,
     AcademicYear,
@@ -17,9 +23,10 @@ from apps.workload.api.serializers import (
 
 
 class LocalizedNameMixin:
-    display_name = serializers.SerializerMethodField()
-
-    def get_display_name(self, obj):
+    @extend_schema_field(
+        serializers.CharField()
+    )
+    def get_display_name(self, obj)-> str:
         request = self.context.get("request")
 
         if (
@@ -113,12 +120,26 @@ class AcademicYearSerializer(AuditFieldsSerializer):
             "archived_by",
         )
 
-    def get_closed_by_name(self, obj):
+    @extend_schema_field(
+        serializers.CharField(
+            allow_null=True,
+        )
+    )
+    def get_closed_by_name(self, obj: Any,) -> str | None:
+        if not obj.closed_by:
+            return None
         return self._user_name(
             obj.closed_by
         )
 
-    def get_reopened_by_name(self, obj):
+    @extend_schema_field(
+        serializers.CharField(
+            allow_null=True,
+        )
+    )
+    def get_reopened_by_name(self, obj: Any,) -> str | None:
+        if not obj.reopened_by:
+            return None
         return self._user_name(
             obj.reopened_by
         )
@@ -261,6 +282,7 @@ class EducationLevelSerializer(
     LocalizedNameMixin,
     AuditFieldsSerializer,
 ):
+    display_name = serializers.SerializerMethodField()
     class Meta:
         model = EducationLevel
         fields = (
@@ -284,6 +306,7 @@ class EducationLevelSerializer(
         )
         read_only_fields = (
             "id",
+            "display_name",
             "created_at",
             "updated_at",
             "created_by",
@@ -298,6 +321,7 @@ class StudyFormSerializer(
     LocalizedNameMixin,
     AuditFieldsSerializer,
 ):
+    display_name = serializers.SerializerMethodField()
     class Meta:
         model = StudyForm
         fields = (
@@ -321,6 +345,7 @@ class StudyFormSerializer(
         )
         read_only_fields = (
             "id",
+            "display_name",
             "created_at",
             "updated_at",
             "created_by",
@@ -452,6 +477,7 @@ class StudyProgramSerializer(
     LocalizedNameMixin,
     AuditFieldsSerializer,
 ):
+    display_name = serializers.SerializerMethodField()
     university_name = serializers.CharField(
         source="university.name_ru",
         read_only=True,
@@ -504,6 +530,7 @@ class StudyProgramSerializer(
         )
         read_only_fields = (
             "id",
+            "display_name",
             "profiling_faculty",
             "created_at",
             "updated_at",

@@ -1,32 +1,32 @@
 from django.urls import path
-from rest_framework_simplejwt.views import (
-    TokenObtainPairView,
-    TokenRefreshView,
-    TokenVerifyView,
+from apps.accounts.api.token_views import (
+    CustomTokenObtainPairView,
+    CustomTokenRefreshView,
+    CustomTokenVerifyView,
 )
-
 from apps.accounts.api.views import (
     ChangePasswordAPIView,
     CurrentUserAPIView,
     LogoutAPIView,
 )
 
+
 app_name = "accounts"
 
 urlpatterns = [
     path(
         "login/",
-        TokenObtainPairView.as_view(),
+        CustomTokenObtainPairView.as_view(),
         name="login",
     ),
     path(
         "refresh/",
-        TokenRefreshView.as_view(),
+        CustomTokenRefreshView.as_view(),
         name="token-refresh",
     ),
     path(
         "verify/",
-        TokenVerifyView.as_view(),
+        CustomTokenVerifyView.as_view(),
         name="token-verify",
     ),
     path(

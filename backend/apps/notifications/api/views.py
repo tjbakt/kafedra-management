@@ -38,9 +38,16 @@ class NotificationViewSet(ReadOnlyModelViewSet):
     )
     ordering = ("-created_at",)
 
+    queryset = Notification.objects.none()
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return Notification.objects.none()
+        user = self.request.user
+        if not user.is_authenticated:
+            return Notification.objects.none()
+
         return Notification.objects.filter(
-            recipient=self.request.user,
+            recipient=user,
         ).select_related(
             "content_type",
         )
@@ -131,9 +138,17 @@ class UserTaskViewSet(ReadOnlyModelViewSet):
         "-created_at",
     )
 
+    queryset = UserTask.objects.none()
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return UserTask.objects.none()
+
+        user = self.request.user
+        if not user.is_authenticated:
+            return UserTask.objects.none()
+
         return UserTask.objects.filter(
-            assignee=self.request.user,
+            assignee=user,
         ).select_related(
             "content_type",
             "assignee",

@@ -39,6 +39,8 @@ THIRD_PARTY_APPS = [
     "rest_framework",
     "django_filters",
     "corsheaders",
+    "drf_spectacular",
+    "drf_spectacular_sidecar",
     "rest_framework_simplejwt.token_blacklist",
 ]
 
@@ -181,6 +183,9 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # Django REST Framework
 
 REST_FRAMEWORK = {
+    "DEFAULT_SCHEMA_CLASS": (
+        "drf_spectacular.openapi.AutoSchema"
+    ),
     "DEFAULT_AUTHENTICATION_CLASSES": [
         (
             "rest_framework_simplejwt.authentication."
@@ -253,3 +258,48 @@ CORS_ALLOWED_ORIGINS = config(
         if origin.strip()
     ],
 )
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Kafedra Management API",
+    "DESCRIPTION": (
+        "API системы автоматизации учебной нагрузки "
+        "кафедры.\n\n"
+        "Аутентификация выполняется JWT-токеном:\n\n"
+        "`Authorization: Bearer <access_token>`"
+    ),
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+    "SERVE_PERMISSIONS": [
+        "rest_framework.permissions.AllowAny",
+    ],
+    "SCHEMA_PATH_PREFIX": r"/api/v1",
+    "SCHEMA_PATH_PREFIX_TRIM": False,
+    "COMPONENT_SPLIT_REQUEST": True,
+    "COMPONENT_NO_READ_ONLY_REQUIRED": True,
+    "SORT_OPERATIONS": True,
+    "ENUM_NAME_OVERRIDES": {},
+    "POSTPROCESSING_HOOKS": [
+        (
+            "drf_spectacular.hooks."
+            "postprocess_schema_enums"
+        ),
+    ],
+    "SWAGGER_UI_DIST": "SIDECAR",
+    "SWAGGER_UI_FAVICON_HREF": "SIDECAR",
+    "REDOC_DIST": "SIDECAR",
+    "SWAGGER_UI_SETTINGS": {
+        "deepLinking": True,
+        "displayOperationId": False,
+        "defaultModelsExpandDepth": 1,
+        "defaultModelExpandDepth": 2,
+        "docExpansion": "none",
+        "filter": True,
+        "persistAuthorization": True,
+        "tryItOutEnabled": True,
+    },
+    "REDOC_UI_SETTINGS": {
+        "hideDownloadButton": False,
+        "nativeScrollbars": True,
+        "pathInMiddlePanel": True,
+    },
+}

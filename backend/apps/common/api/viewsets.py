@@ -8,6 +8,22 @@ from apps.common.api.mixins import (
     AuditedArchiveModelMixin,
 )
 
+from drf_spectacular.utils import (
+    OpenApiParameter,
+    OpenApiResponse,
+    extend_schema,
+)
+
+from apps.common.api.schema import (
+    BAD_REQUEST_RESPONSE,
+    FORBIDDEN_RESPONSE,
+    NOT_FOUND_RESPONSE,
+    UNAUTHORIZED_RESPONSE,
+)
+from apps.common.api.schema_serializers import (
+    RestoreResponseSerializer,
+)
+
 
 class BaseArchiveModelViewSet(
     AuditedArchiveModelMixin,
@@ -57,6 +73,69 @@ class BaseArchiveModelViewSet(
 
         return self.scope_queryset(queryset)
 
+    @extend_schema(
+        summary="Список архивных записей",
+        description=(
+            "Возвращает архивные записи "
+            "текущего ресурса с учётом прав доступа, "
+            "фильтрации, поиска и пагинации."
+        ),
+        parameters=[
+            OpenApiParameter(
+                name="page",
+                type=int,
+                location=(
+                    OpenApiParameter.QUERY
+                ),
+                required=False,
+                description="Номер страницы.",
+            ),
+            OpenApiParameter(
+                name="page_size",
+                type=int,
+                location=(
+                    OpenApiParameter.QUERY
+                ),
+                required=False,
+                description=(
+                    "Размер страницы, максимум 100."
+                ),
+            ),
+            OpenApiParameter(
+                name="search",
+                type=str,
+                location=(
+                    OpenApiParameter.QUERY
+                ),
+                required=False,
+                description=(
+                    "Поисковая строка, если ViewSet "
+                    "поддерживает поиск."
+                ),
+            ),
+            OpenApiParameter(
+                name="ordering",
+                type=str,
+                location=(
+                    OpenApiParameter.QUERY
+                ),
+                required=False,
+                description=(
+                    "Поле сортировки. Для обратной "
+                    "сортировки используется префикс -."
+                ),
+            ),
+        ],
+        responses={
+            200: OpenApiResponse(
+                description=(
+                    "Список архивных записей."
+                ),
+            ),
+            401: UNAUTHORIZED_RESPONSE,
+            403: FORBIDDEN_RESPONSE,
+        },
+    )
     @action(
         detail=False,
         methods=["get"],
@@ -84,6 +163,22 @@ class BaseArchiveModelViewSet(
 
         return Response(serializer.data)
 
+    @extend_schema(
+        summary="Восстановить запись",
+        description=(
+                "Восстанавливает объект из архива. "
+                "Операция может быть запрещена правами "
+                "доступа или состоянием учебного года."
+        ),
+        request=None,
+        responses={
+            200: RestoreResponseSerializer,
+            400: BAD_REQUEST_RESPONSE,
+            401: UNAUTHORIZED_RESPONSE,
+            403: FORBIDDEN_RESPONSE,
+            404: NOT_FOUND_RESPONSE,
+        },
+    )
     @action(
         detail=True,
         methods=["post"],

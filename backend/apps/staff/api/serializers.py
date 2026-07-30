@@ -19,12 +19,17 @@ from apps.academics.services.closed_academic_year_guard import (
     ClosedAcademicYearMutationGuard,
 )
 from apps.organizations.models import Department
-
+from drf_spectacular.utils import (
+    extend_schema_field,
+)
+from decimal import Decimal
 
 class LocalizedStaffNameMixin:
-    display_name = serializers.SerializerMethodField()
 
-    def get_display_name(self, obj):
+    @extend_schema_field(
+        serializers.CharField()
+    )
+    def get_display_name(self, obj) -> str:
         request = self.context.get("request")
 
         if (
@@ -46,6 +51,7 @@ class StaffPositionSerializer(
     LocalizedStaffNameMixin,
     AuditFieldsSerializer,
 ):
+    display_name = serializers.SerializerMethodField()
     category_name = serializers.CharField(
         source="get_category_display",
         read_only=True,
@@ -77,6 +83,7 @@ class StaffPositionSerializer(
         )
         read_only_fields = (
             "id",
+            "display_name",
             "created_at",
             "updated_at",
             "created_by",
@@ -94,6 +101,7 @@ class AcademicDegreeSerializer(
     LocalizedStaffNameMixin,
     AuditFieldsSerializer,
 ):
+    display_name = serializers.SerializerMethodField()
     class Meta:
         model = AcademicDegree
         fields = (
@@ -119,6 +127,7 @@ class AcademicDegreeSerializer(
         )
         read_only_fields = (
             "id",
+            "display_name",
             "created_at",
             "updated_at",
             "created_by",
@@ -136,6 +145,7 @@ class AcademicTitleSerializer(
     LocalizedStaffNameMixin,
     AuditFieldsSerializer,
 ):
+    display_name = serializers.SerializerMethodField()
     class Meta:
         model = AcademicTitle
         fields = (
@@ -161,6 +171,7 @@ class AcademicTitleSerializer(
         )
         read_only_fields = (
             "id",
+            "display_name",
             "created_at",
             "updated_at",
             "created_by",
@@ -576,7 +587,14 @@ class StaffEmploymentAcademicYearSerializer(
             "archived_by",
         )
 
-    def get_recommended_annual_hours(self, obj):
+    @extend_schema_field(
+        serializers.DecimalField(
+            max_digits=10,
+            decimal_places=2,
+            allow_null=True,
+        )
+    )
+    def get_recommended_annual_hours(self, obj) -> Decimal | None:
         return obj.get_recommended_annual_hours()
 
     def validate(self, attrs):

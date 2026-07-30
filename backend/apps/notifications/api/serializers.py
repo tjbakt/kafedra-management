@@ -4,6 +4,9 @@ from apps.notifications.models import (
     Notification,
     UserTask,
 )
+from drf_spectacular.utils import (
+    extend_schema_field,
+)
 
 
 class NotificationSerializer(
@@ -113,13 +116,25 @@ class UserTaskSerializer(serializers.ModelSerializer):
         )
         read_only_fields = fields
 
-    def get_assignee_name(self, obj):
+    @extend_schema_field(
+        serializers.CharField(
+            allow_null=True,
+        )
+    )
+    def get_assignee_name(self, obj) -> str | None:
+        if not obj.assignee:
+            return None
         return (
             obj.assignee.get_full_name()
             or obj.assignee.username
         )
 
-    def get_created_by_name(self, obj):
+    @extend_schema_field(
+        serializers.CharField(
+            allow_null=True,
+        )
+    )
+    def get_created_by_name(self, obj) -> str | None:
         if not obj.created_by:
             return None
 

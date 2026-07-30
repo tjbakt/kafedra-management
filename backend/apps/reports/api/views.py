@@ -28,6 +28,18 @@ from apps.reports.services.department_workload_excel import (
 from apps.reports.services.teacher_workload_excel import (
     TeacherWorkloadExcelService,
 )
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import (
+    OpenApiParameter,
+    OpenApiResponse,
+    extend_schema,
+)
+from apps.common.api.schema import (
+    BAD_REQUEST_RESPONSE,
+    FORBIDDEN_RESPONSE,
+    NOT_FOUND_RESPONSE,
+    UNAUTHORIZED_RESPONSE,
+)
 
 
 EXCEL_CONTENT_TYPE = (
@@ -124,6 +136,44 @@ class TeacherWorkloadExcelView(
     Выгрузка годовой нагрузки преподавателя.
     """
 
+    @extend_schema(
+        tags=["Отчёты"],
+        summary="Экспорт нагрузки преподавателя",
+        description=(
+                "Формирует Excel-файл с учебной "
+                "нагрузкой выбранного преподавателя."
+        ),
+        parameters=[
+            OpenApiParameter(
+                name="academic_year",
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                required=True,
+                description="ID учебного года.",
+            ),
+            OpenApiParameter(
+                name="teacher",
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                required=True,
+                description="ID преподавателя.",
+            ),
+        ],
+        request=None,
+        responses={
+            (
+                    200,
+                    (
+                            "application/vnd.openxmlformats-"
+                            "officedocument.spreadsheetml.sheet"
+                    ),
+            ): OpenApiTypes.BINARY,
+            400: BAD_REQUEST_RESPONSE,
+            401: UNAUTHORIZED_RESPONSE,
+            403: FORBIDDEN_RESPONSE,
+            404: NOT_FOUND_RESPONSE,
+        },
+    )
     def get(self, request):
         serializer = (
             TeacherWorkloadReportRequestSerializer(
@@ -200,6 +250,44 @@ class DepartmentWorkloadExcelView(
     Выгрузка общей нагрузки кафедры.
     """
 
+    @extend_schema(
+        tags=["Отчёты"],
+        summary="Экспорт нагрузки кафедры",
+        description=(
+                "Формирует Excel-файл с нагрузкой "
+                "кафедры за выбранный учебный год."
+        ),
+        parameters=[
+            OpenApiParameter(
+                name="academic_year",
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                required=True,
+                description="ID учебного года.",
+            ),
+            OpenApiParameter(
+                name="department",
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                required=True,
+                description="ID кафедры.",
+            ),
+        ],
+        request=None,
+        responses={
+            (
+                    200,
+                    (
+                            "application/vnd.openxmlformats-"
+                            "officedocument.spreadsheetml.sheet"
+                    ),
+            ): OpenApiTypes.BINARY,
+            400: BAD_REQUEST_RESPONSE,
+            401: UNAUTHORIZED_RESPONSE,
+            403: FORBIDDEN_RESPONSE,
+            404: NOT_FOUND_RESPONSE,
+        },
+    )
     def get(self, request):
         serializer = (
             DepartmentWorkloadReportRequestSerializer(

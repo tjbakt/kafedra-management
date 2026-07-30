@@ -87,6 +87,22 @@ from apps.workload.services.academic_year_closing_readiness_service import (
 )
 
 from apps.staff.models import StaffEmployment
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import (
+    OpenApiParameter,
+    extend_schema,
+)
+from apps.common.api.schema import (
+    BAD_REQUEST_RESPONSE,
+    FORBIDDEN_RESPONSE,
+    NOT_FOUND_RESPONSE,
+    UNAUTHORIZED_RESPONSE,
+)
+from apps.workload.api.schema_serializers import (
+    AcademicYearClosingReadinessResponseSerializer,
+    AcademicYearWorkloadValidationResponseSerializer,
+)
+
 
 
 class WorkloadDistributionViewSet(
@@ -1328,6 +1344,34 @@ class AcademicYearWorkloadValidationAPIView(
         CanValidateAcademicYearWorkload,
     )
 
+    @extend_schema(
+        tags=["Учебная нагрузка"],
+        summary="Проверить нагрузку учебного года",
+        description=(
+                "Выполняет комплексную проверку "
+                "распределения учебной нагрузки "
+                "за выбранный учебный год."
+        ),
+        parameters=[
+            OpenApiParameter(
+                name="academic_year",
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                required=True,
+                description="ID учебного года.",
+            ),
+        ],
+        request=None,
+        responses={
+            200: (
+                    AcademicYearWorkloadValidationResponseSerializer
+            ),
+            400: BAD_REQUEST_RESPONSE,
+            401: UNAUTHORIZED_RESPONSE,
+            403: FORBIDDEN_RESPONSE,
+            404: NOT_FOUND_RESPONSE,
+        },
+    )
     def get(self, request):
         query_serializer = (
             AcademicYearValidationQuerySerializer(
@@ -1411,6 +1455,40 @@ class AcademicYearWorkloadValidationExportAPIView(
         CanValidateAcademicYearWorkload,
     )
 
+    @extend_schema(
+        tags=["Учебная нагрузка"],
+        summary=(
+                "Экспортировать проверку нагрузки "
+                "учебного года"
+        ),
+        description=(
+                "Формирует Excel-файл с результатами "
+                "проверки нагрузки учебного года."
+        ),
+        parameters=[
+            OpenApiParameter(
+                name="academic_year",
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                required=True,
+                description="ID учебного года.",
+            ),
+        ],
+        request=None,
+        responses={
+            (
+                    200,
+                    (
+                            "application/vnd.openxmlformats-"
+                            "officedocument.spreadsheetml.sheet"
+                    ),
+            ): OpenApiTypes.BINARY,
+            400: BAD_REQUEST_RESPONSE,
+            401: UNAUTHORIZED_RESPONSE,
+            403: FORBIDDEN_RESPONSE,
+            404: NOT_FOUND_RESPONSE,
+        },
+    )
     def get(self, request):
         query_serializer = (
             AcademicYearValidationQuerySerializer(
@@ -1531,6 +1609,36 @@ class AcademicYearClosingReadinessAPIView(
         CanCheckAcademicYearClosingReadiness,
     )
 
+    @extend_schema(
+        tags=["Учебная нагрузка"],
+        summary=(
+                "Проверить готовность учебного года "
+                "к закрытию"
+        ),
+        description=(
+                "Проверяет наличие блокирующих проблем "
+                "перед закрытием учебного года."
+        ),
+        parameters=[
+            OpenApiParameter(
+                name="academic_year",
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                required=True,
+                description="ID учебного года.",
+            ),
+        ],
+        request=None,
+        responses={
+            200: (
+                    AcademicYearClosingReadinessResponseSerializer
+            ),
+            400: BAD_REQUEST_RESPONSE,
+            401: UNAUTHORIZED_RESPONSE,
+            403: FORBIDDEN_RESPONSE,
+            404: NOT_FOUND_RESPONSE,
+        },
+    )
     def get(self, request):
         query_serializer = (
             AcademicYearClosingReadinessQuerySerializer(

@@ -7,11 +7,12 @@ from apps.organizations.models import (
     Faculty,
     University,
 )
+from drf_spectacular.utils import (
+    extend_schema_field,
+)
 
 
 class OrganizationSerializerMixin:
-    display_name = serializers.SerializerMethodField()
-    display_short_name = serializers.SerializerMethodField()
 
     def get_current_language(self, obj):
         request = self.context.get("request")
@@ -26,7 +27,10 @@ class OrganizationSerializerMixin:
         language = get_language() or "ru"
         return language[:2]
 
-    def get_display_name(self, obj):
+    @extend_schema_field(
+        serializers.CharField()
+    )
+    def get_display_name(self, obj) -> str:
         language = self.get_current_language(obj)
 
         if language == "uz":
@@ -34,7 +38,10 @@ class OrganizationSerializerMixin:
 
         return obj.name_ru or obj.name_uz
 
-    def get_display_short_name(self, obj):
+    @extend_schema_field(
+        serializers.CharField()
+    )
+    def get_display_short_name(self, obj) -> str:
         language = self.get_current_language(obj)
 
         if language == "uz":
@@ -70,6 +77,8 @@ class UniversitySerializer(
     OrganizationSerializerMixin,
     AuditFieldsSerializer,
 ):
+    display_name = serializers.SerializerMethodField()
+    display_short_name = serializers.SerializerMethodField()
     faculties_count = serializers.IntegerField(
         read_only=True,
     )
@@ -106,6 +115,8 @@ class UniversitySerializer(
         )
         read_only_fields = (
             "id",
+            "display_name",
+            "display_short_name",
             "faculties_count",
             "created_at",
             "updated_at",
@@ -118,7 +129,6 @@ class UniversitySerializer(
 
 
 class FacultyShortSerializer(serializers.ModelSerializer):
-    display_name = serializers.SerializerMethodField()
 
     class Meta:
         model = Faculty
@@ -128,7 +138,10 @@ class FacultyShortSerializer(serializers.ModelSerializer):
             "display_name",
         )
 
-    def get_display_name(self, obj):
+    @extend_schema_field(
+        serializers.CharField()
+    )
+    def get_display_name(self, obj) -> str:
         request = self.context.get("request")
 
         language = (
@@ -148,6 +161,8 @@ class FacultySerializer(
     OrganizationSerializerMixin,
     AuditFieldsSerializer,
 ):
+    display_name = serializers.SerializerMethodField()
+    display_short_name = serializers.SerializerMethodField()
     university_name = serializers.CharField(
         source="university.name_ru",
         read_only=True,
@@ -189,6 +204,8 @@ class FacultySerializer(
         )
         read_only_fields = (
             "id",
+            "display_name",
+            "display_short_name",
             "departments_count",
             "created_at",
             "updated_at",
@@ -217,6 +234,8 @@ class DepartmentSerializer(
     OrganizationSerializerMixin,
     AuditFieldsSerializer,
 ):
+    display_name = serializers.SerializerMethodField()
+    display_short_name = serializers.SerializerMethodField()
     faculty_name = serializers.CharField(
         source="faculty.name_ru",
         read_only=True,
@@ -264,6 +283,8 @@ class DepartmentSerializer(
         )
         read_only_fields = (
             "id",
+            "display_name",
+            "display_short_name",
             "university",
             "created_at",
             "updated_at",

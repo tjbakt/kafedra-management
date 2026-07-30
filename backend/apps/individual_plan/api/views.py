@@ -443,6 +443,7 @@ class IndividualPlanItemViewSet(
         )
 
 class IndividualPlanViewSet(BaseArchiveModelViewSet):
+    queryset = IndividualPlan.objects.none()
     model = IndividualPlan
     serializer_class = IndividualPlanSerializer
     permission_classes = [IsAuthenticated]
@@ -465,6 +466,12 @@ class IndividualPlanViewSet(BaseArchiveModelViewSet):
     )
 
     def get_queryset(self):
+        if getattr(
+                self,
+                "swagger_fake_view",
+                False,
+        ):
+            return IndividualPlan.objects.none()
         queryset = (
             IndividualPlan.objects
             .select_related(

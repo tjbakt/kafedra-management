@@ -5,6 +5,9 @@ from apps.access_control.models import (
     UserRoleAssignment,
 )
 from apps.common.api.serializers import AuditFieldsSerializer
+from drf_spectacular.utils import (
+    extend_schema_field,
+)
 
 
 class SystemRoleSerializer(AuditFieldsSerializer):
@@ -132,7 +135,12 @@ class UserRoleAssignmentSerializer(
             "archived_by",
         )
 
-    def get_user_full_name(self, obj):
+    @extend_schema_field(
+        serializers.CharField(
+            allow_null=True,
+        )
+    )
+    def get_user_full_name(self, obj) -> str | None:
         if hasattr(obj.user, "get_full_name"):
             return (
                 obj.user.get_full_name()

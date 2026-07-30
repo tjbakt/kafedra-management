@@ -7,6 +7,9 @@ from rest_framework_simplejwt.serializers import (
 from django.contrib.auth.password_validation import (
     validate_password,
 )
+from drf_spectacular.utils import (
+    extend_schema_field,
+)
 
 User = get_user_model()
 
@@ -53,16 +56,27 @@ class UserSerializer(serializers.ModelSerializer):
             "updated_at",
         )
 
-    def get_groups(self, obj) -> list[str]:
-        return list(
-            obj.groups.order_by("name").values_list(
+    @extend_schema_field(
+        serializers.ListField(
+            child=serializers.CharField(),
+        )
+    )
+    def get_groups(self, obj,) -> list[str]:
+        return list(obj.groups.order_by("name").values_list(
                 "name",
                 flat=True,
             )
         )
 
-    def get_permissions(self, obj) -> list[str]:
-        return sorted(obj.get_all_permissions())
+    @extend_schema_field(
+        serializers.ListField(
+            child=serializers.CharField(),
+        )
+    )
+    def get_permissions(self,obj,) -> list[str]:
+        return sorted(
+            obj.get_all_permissions()
+        )
 
 
 class CustomTokenObtainPairSerializer(
@@ -95,6 +109,41 @@ class CustomTokenObtainPairSerializer(
 
         return token
 
+
+class TokenResponseSerializer(
+    serializers.Serializer
+):
+    """
+    Ответ успешной JWT-аутентификации.
+    """
+
+    refresh = serializers.CharField(
+        read_only=True,
+    )
+    access = serializers.CharField(
+        read_only=True,
+    )
+    user = UserSerializer(
+        read_only=True,
+    )
+
+
+class TokenRefreshRequestSerializer(
+    serializers.Serializer
+):
+    refresh = serializers.CharField()
+
+
+class TokenRefreshResponseSerializer(
+    serializers.Serializer
+):
+    access = serializers.CharField(
+        read_only=True,
+    )
+    refresh = serializers.CharField(
+        read_only=True,
+        required=False,
+    )
 
 class LogoutSerializer(serializers.Serializer):
     refresh = serializers.CharField(
@@ -148,3 +197,19 @@ class ChangePasswordSerializer(serializers.Serializer):
 
         return attrs
 
+class TokenVerifyRequestSerializer(
+    serializers.Serializer
+):
+    token = serializers.CharField(
+        help_text=(
+            "JWT-токен, который требуется проверить."
+        ),
+    )
+
+
+class TokenVerifyResponseSerializer(
+    serializers.Serializer
+):
+    """
+    Успешная проверка токена возвращает пустой JSON-объект.
+    """

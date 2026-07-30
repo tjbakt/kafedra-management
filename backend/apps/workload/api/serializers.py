@@ -7,6 +7,9 @@ from apps.workload.models import WorkloadDistribution
 from apps.workload.services.academic_year_validation_service import (
     AcademicYearWorkloadValidationService,
 )
+from drf_spectacular.utils import (
+    extend_schema_field,
+)
 
 
 class WorkloadDistributionSerializer(
@@ -136,7 +139,12 @@ class WorkloadDistributionSerializer(
             "archived_by",
         )
 
-    def get_approved_by_name(self, obj):
+    @extend_schema_field(
+        serializers.CharField(
+            allow_null=True,
+        )
+    )
+    def get_approved_by_name(self, obj) -> str | None:
         if not obj.approved_by:
             return None
 

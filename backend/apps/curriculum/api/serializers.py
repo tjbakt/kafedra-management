@@ -12,12 +12,16 @@ from apps.curriculum.models import (
     Discipline,
     WorkloadType,
 )
+from drf_spectacular.utils import (
+    extend_schema_field,
+)
 
 
 class LocalizedNameMixin:
-    display_name = serializers.SerializerMethodField()
-
-    def get_display_name(self, obj):
+    @extend_schema_field(
+        serializers.CharField()
+    )
+    def get_display_name(self, obj) -> str:
         request = self.context.get("request")
 
         if (
@@ -38,6 +42,7 @@ class DisciplineSerializer(
     LocalizedNameMixin,
     AuditFieldsSerializer,
 ):
+    display_name = serializers.SerializerMethodField()
     default_department_name = serializers.CharField(
         source="default_department.name_ru",
         read_only=True,
@@ -69,6 +74,7 @@ class DisciplineSerializer(
         )
         read_only_fields = (
             "id",
+            "display_name",
             "created_at",
             "updated_at",
             "created_by",
@@ -86,6 +92,7 @@ class WorkloadTypeSerializer(
     LocalizedNameMixin,
     AuditFieldsSerializer,
 ):
+    display_name = serializers.SerializerMethodField()
     calculation_mode_name = serializers.CharField(
         source="get_calculation_mode_display",
         read_only=True,
@@ -118,6 +125,7 @@ class WorkloadTypeSerializer(
         )
         read_only_fields = (
             "id",
+            "display_name",
             "created_at",
             "updated_at",
             "created_by",
