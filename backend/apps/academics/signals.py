@@ -16,9 +16,21 @@ from apps.teaching.models import (
     TeachingStream,
     TeachingStreamGroup,
 )
+from apps.academics.models import (
+    AcademicSemester,
+)
+from apps.curriculum.models import (
+    Curriculum,
+    CurriculumDiscipline,
+    CurriculumWorkload,
+)
 
 
 PROTECTED_MODELS = (
+    AcademicSemester,
+    Curriculum,
+    CurriculumDiscipline,
+    CurriculumWorkload,
     TeachingStream,
     TeachingStreamGroup,
     PlannedWorkload,
@@ -58,6 +70,39 @@ def get_previous_instance(instance):
 
 
 def select_related_fields(model_class):
+    if model_class is AcademicSemester:
+        return (
+            "academic_year",
+        )
+
+    if model_class is Curriculum:
+        return (
+            "effective_academic_year",
+        )
+
+    if model_class is CurriculumDiscipline:
+        return (
+            "curriculum",
+            (
+                "curriculum__"
+                "effective_academic_year"
+            ),
+        )
+
+    if model_class is CurriculumWorkload:
+        return (
+            "curriculum_discipline",
+            (
+                "curriculum_discipline__"
+                "curriculum"
+            ),
+            (
+                "curriculum_discipline__"
+                "curriculum__"
+                "effective_academic_year"
+            ),
+        )
+
     if model_class is TeachingStream:
         return (
             "academic_year",
@@ -87,6 +132,22 @@ def select_related_fields(model_class):
     return ()
 
 
+@receiver(
+    pre_save,
+    sender=AcademicSemester,
+)
+@receiver(
+    pre_save,
+    sender=Curriculum,
+)
+@receiver(
+    pre_save,
+    sender=CurriculumDiscipline,
+)
+@receiver(
+    pre_save,
+    sender=CurriculumWorkload,
+)
 @receiver(
     pre_save,
     sender=TeachingStream,
@@ -131,6 +192,22 @@ def prevent_closed_year_save(
     )
 
 
+@receiver(
+    pre_delete,
+    sender=AcademicSemester,
+)
+@receiver(
+    pre_delete,
+    sender=Curriculum,
+)
+@receiver(
+    pre_delete,
+    sender=CurriculumDiscipline,
+)
+@receiver(
+    pre_delete,
+    sender=CurriculumWorkload,
+)
 @receiver(
     pre_delete,
     sender=TeachingStream,

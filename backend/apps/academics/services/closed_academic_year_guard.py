@@ -91,18 +91,40 @@ class ClosedAcademicYearMutationGuard:
     ):
         """
         Определяет AcademicYear для поддерживаемого
-        объекта без привязки к конкретному приложению.
+        объекта.
+
+        Поддерживаемые пути:
+
+        - instance.academic_year
+        - instance.effective_academic_year
+        - instance.teaching_stream.academic_year
+        - instance.planned_workload.academic_year
+        - instance.group_semester.academic_year
+        - instance.curriculum.effective_academic_year
+        - instance.curriculum_discipline
+          .curriculum.effective_academic_year
         """
 
         if instance is None:
             return None
 
-        direct_year = cls._related_object(
+        academic_year = cls._related_object(
             instance=instance,
             relation_name="academic_year",
         )
-        if direct_year is not None:
-            return direct_year
+        if academic_year is not None:
+            return academic_year
+
+        effective_academic_year = (
+            cls._related_object(
+                instance=instance,
+                relation_name=(
+                    "effective_academic_year"
+                ),
+            )
+        )
+        if effective_academic_year is not None:
+            return effective_academic_year
 
         teaching_stream = cls._related_object(
             instance=instance,
@@ -133,6 +155,41 @@ class ClosedAcademicYearMutationGuard:
                 instance=group_semester,
                 relation_name="academic_year",
             )
+
+        curriculum = cls._related_object(
+            instance=instance,
+            relation_name="curriculum",
+        )
+        if curriculum is not None:
+            return cls._related_object(
+                instance=curriculum,
+                relation_name=(
+                    "effective_academic_year"
+                ),
+            )
+
+        curriculum_discipline = (
+            cls._related_object(
+                instance=instance,
+                relation_name=(
+                    "curriculum_discipline"
+                ),
+            )
+        )
+
+        if curriculum_discipline is not None:
+            curriculum = cls._related_object(
+                instance=curriculum_discipline,
+                relation_name="curriculum",
+            )
+
+            if curriculum is not None:
+                return cls._related_object(
+                    instance=curriculum,
+                    relation_name=(
+                        "effective_academic_year"
+                    ),
+                )
 
         return None
 

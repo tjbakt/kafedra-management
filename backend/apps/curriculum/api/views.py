@@ -1,6 +1,9 @@
 from django.db.models import Count
 from rest_framework.permissions import IsAuthenticated
 
+from apps.common.api.mixins import (
+    DjangoValidationErrorMixin,
+)
 from apps.common.api.viewsets import BaseArchiveModelViewSet
 from apps.curriculum.api.filters import (
     CurriculumDisciplineFilter,
@@ -52,7 +55,7 @@ class WorkloadTypeViewSet(BaseArchiveModelViewSet):
     ordering = ("sort_order", "name_ru")
 
 
-class CurriculumViewSet(BaseArchiveModelViewSet):
+class CurriculumViewSet(DjangoValidationErrorMixin, BaseArchiveModelViewSet,):
     model = Curriculum
     serializer_class = CurriculumSerializer
     permission_classes = [IsAuthenticated]
@@ -93,9 +96,7 @@ class CurriculumViewSet(BaseArchiveModelViewSet):
         )
 
 
-class CurriculumDisciplineViewSet(
-    BaseArchiveModelViewSet
-):
+class CurriculumDisciplineViewSet(DjangoValidationErrorMixin, BaseArchiveModelViewSet,):
     model = CurriculumDiscipline
     serializer_class = CurriculumDisciplineSerializer
     permission_classes = [IsAuthenticated]
@@ -123,6 +124,10 @@ class CurriculumDisciplineViewSet(
             CurriculumDiscipline.objects
             .select_related(
                 "curriculum",
+                (
+                    "curriculum__"
+                    "effective_academic_year"
+                ),
                 "curriculum__study_program",
                 "discipline",
                 "teaching_department",
@@ -135,9 +140,7 @@ class CurriculumDisciplineViewSet(
         )
 
 
-class CurriculumWorkloadViewSet(
-    BaseArchiveModelViewSet
-):
+class CurriculumWorkloadViewSet(DjangoValidationErrorMixin, BaseArchiveModelViewSet,):
     model = CurriculumWorkload
     serializer_class = CurriculumWorkloadSerializer
     permission_classes = [IsAuthenticated]
@@ -159,7 +162,18 @@ class CurriculumWorkloadViewSet(
     def get_queryset(self):
         return CurriculumWorkload.objects.select_related(
             "curriculum_discipline",
-            "curriculum_discipline__discipline",
-            "curriculum_discipline__curriculum",
+            (
+                "curriculum_discipline__"
+                "discipline"
+            ),
+            (
+                "curriculum_discipline__"
+                "curriculum"
+            ),
+            (
+                "curriculum_discipline__"
+                "curriculum__"
+                "effective_academic_year"
+            ),
             "workload_type",
         )

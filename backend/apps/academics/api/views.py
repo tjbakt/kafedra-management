@@ -34,6 +34,9 @@ from apps.academics.models import (
 from apps.academics.exceptions import (
     AcademicYearClosingError,
 )
+from apps.common.api.mixins import (
+    DjangoValidationErrorMixin,
+)
 from apps.common.api.viewsets import BaseArchiveModelViewSet
 from apps.access_control.permissions import (
     CanCloseAcademicYear,
@@ -317,7 +320,7 @@ class EducationDurationViewSet(BaseArchiveModelViewSet):
         )
 
 
-class AcademicSemesterViewSet(BaseArchiveModelViewSet):
+class AcademicSemesterViewSet(DjangoValidationErrorMixin, BaseArchiveModelViewSet,):
     model = AcademicSemester
     serializer_class = AcademicSemesterSerializer
     permission_classes = [IsAuthenticated]
