@@ -36,6 +36,9 @@ from apps.workload.api.serializers import (
     AcademicYearValidationResultSerializer,
     AcademicYearClosingReadinessQuerySerializer,
     AcademicYearClosingReadinessResultSerializer,
+    CancelDistributionSerializer,
+    TransferDistributionActionResponseSerializer,
+    WorkloadDistributionActionResponseSerializer,
 )
 from apps.workload.models import WorkloadDistribution
 
@@ -97,6 +100,7 @@ from apps.common.api.schema import (
     FORBIDDEN_RESPONSE,
     NOT_FOUND_RESPONSE,
     UNAUTHORIZED_RESPONSE,
+    CONFLICT_RESPONSE,
 )
 from apps.workload.api.schema_serializers import (
     AcademicYearClosingReadinessResponseSerializer,
@@ -257,6 +261,28 @@ class WorkloadDistributionViewSet(
 
         serializer.instance = distribution
 
+    @extend_schema(
+        tags=["Распределение нагрузки"],
+        summary=(
+                "Вернуть распределение в черновик"
+        ),
+        description=(
+                "Возвращает утверждённое или отменённое "
+                "распределение нагрузки в статус черновика. "
+                "Необходимо указать причину возврата."
+        ),
+        request=ReturnDistributionToDraftSerializer,
+        responses={
+            200: (
+                    WorkloadDistributionActionResponseSerializer
+            ),
+            400: BAD_REQUEST_RESPONSE,
+            401: UNAUTHORIZED_RESPONSE,
+            403: FORBIDDEN_RESPONSE,
+            404: NOT_FOUND_RESPONSE,
+            409: CONFLICT_RESPONSE,
+        },
+    )
     @action(
         detail=True,
         methods=["post"],
@@ -311,12 +337,36 @@ class WorkloadDistributionViewSet(
             status=status.HTTP_200_OK,
         )
 
+    @extend_schema(
+        tags=["Распределение нагрузки"],
+        summary="Утвердить распределение",
+        description=(
+                "Переводит распределение учебной нагрузки "
+                "из статуса черновика в утверждённое "
+                "состояние."
+        ),
+        request=None,
+        responses={
+            200: (
+                    WorkloadDistributionActionResponseSerializer
+            ),
+            400: BAD_REQUEST_RESPONSE,
+            401: UNAUTHORIZED_RESPONSE,
+            403: FORBIDDEN_RESPONSE,
+            404: NOT_FOUND_RESPONSE,
+            409: CONFLICT_RESPONSE,
+        },
+    )
     @action(
         detail=True,
         methods=["post"],
         url_path="approve",
     )
-    def approve(self, request, pk=None):
+    def approve(
+            self,
+            request,
+            pk=None,
+    ):
         distribution = self.get_object()
 
         try:
@@ -329,67 +379,132 @@ class WorkloadDistributionViewSet(
             )
         except DjangoValidationError as exc:
             raise ValidationError(
-                getattr(exc, "message_dict", exc.messages)
+                getattr(
+                    exc,
+                    "message_dict",
+                    exc.messages,
+                )
             ) from exc
 
-        serializer = self.get_serializer(distribution)
+        serializer = self.get_serializer(
+            distribution
+        )
 
         return Response(
             {
-                "detail": "Распределение утверждено.",
+                "detail": (
+                    "Распределение утверждено."
+                ),
                 "data": serializer.data,
             },
             status=status.HTTP_200_OK,
         )
 
+    @extend_schema(
+        tags=["Распределение нагрузки"],
+        summary="Отменить распределение",
+        description=(
+                "Отменяет существующее распределение "
+                "учебной нагрузки. Причина отмены "
+                "обязательна."
+        ),
+        request=CancelDistributionSerializer,
+        responses={
+            200: (
+                    WorkloadDistributionActionResponseSerializer
+            ),
+            400: BAD_REQUEST_RESPONSE,
+            401: UNAUTHORIZED_RESPONSE,
+            403: FORBIDDEN_RESPONSE,
+            404: NOT_FOUND_RESPONSE,
+            409: CONFLICT_RESPONSE,
+        },
+    )
     @action(
         detail=True,
         methods=["post"],
         url_path="cancel",
     )
-    def cancel(self, request, pk=None):
-        distribution = self.get_object()
-
-        reason = request.data.get(
-            "reason",
-            "",
-        ).strip()
-
-        if not reason:
-            return Response(
-                {
-                    "reason": (
-                        "Укажите причину отмены распределения."
-                    )
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        distribution = (
-            WorkloadDistributionService
-            .cancel_distribution(
-                distribution=distribution,
-                user=request.user,
-                reason=reason,
-            )
+    def cancel(
+            self,
+            request,
+            pk=None,
+    ):
+        input_serializer = CancelDistributionSerializer(
+            data=request.data
+        )
+        input_serializer.is_valid(
+            raise_exception=True
         )
 
-        serializer = self.get_serializer(distribution)
+        distribution = self.get_object()
+
+        try:
+            distribution = (
+                WorkloadDistributionService
+                .cancel_distribution(
+                    distribution=distribution,
+                    user=request.user,
+                    reason=(
+                        input_serializer.validated_data[
+                            "reason"
+                        ]
+                    ),
+                )
+            )
+        except DjangoValidationError as exc:
+            raise ValidationError(
+                getattr(
+                    exc,
+                    "message_dict",
+                    exc.messages,
+                )
+            ) from exc
+
+        output_serializer = self.get_serializer(
+            distribution
+        )
 
         return Response(
             {
-                "detail": "Распределение отменено.",
-                "data": serializer.data,
+                "detail": (
+                    "Распределение отменено."
+                ),
+                "data": output_serializer.data,
             },
             status=status.HTTP_200_OK,
         )
 
+    @extend_schema(
+        tags=["Распределение нагрузки"],
+        summary="Перенести часы нагрузки",
+        description=(
+                "Переносит указанное количество часов "
+                "из текущего распределения на другое "
+                "трудовое назначение преподавателя."
+        ),
+        request=TransferDistributionHoursSerializer,
+        responses={
+            200: (
+                    TransferDistributionActionResponseSerializer
+            ),
+            400: BAD_REQUEST_RESPONSE,
+            401: UNAUTHORIZED_RESPONSE,
+            403: FORBIDDEN_RESPONSE,
+            404: NOT_FOUND_RESPONSE,
+            409: CONFLICT_RESPONSE,
+        },
+    )
     @action(
         detail=True,
         methods=["post"],
         url_path="transfer",
     )
-    def transfer(self, request, pk=None):
+    def transfer(
+            self,
+            request,
+            pk=None,
+    ):
         input_serializer = (
             TransferDistributionHoursSerializer(
                 data=request.data
@@ -478,12 +593,35 @@ class WorkloadDistributionViewSet(
             status=status.HTTP_200_OK,
         )
 
+    @extend_schema(
+        tags=["Распределение нагрузки"],
+        summary="Восстановить распределение",
+        description=(
+                "Восстанавливает отменённое распределение "
+                "и переводит его в статус черновика."
+        ),
+        request=RestoreDistributionSerializer,
+        responses={
+            200: (
+                    WorkloadDistributionActionResponseSerializer
+            ),
+            400: BAD_REQUEST_RESPONSE,
+            401: UNAUTHORIZED_RESPONSE,
+            403: FORBIDDEN_RESPONSE,
+            404: NOT_FOUND_RESPONSE,
+            409: CONFLICT_RESPONSE,
+        },
+    )
     @action(
         detail=True,
         methods=["post"],
         url_path="restore",
     )
-    def restore(self, request, pk=None):
+    def restore(
+            self,
+            request,
+            pk=None,
+    ):
         input_serializer = RestoreDistributionSerializer(
             data=request.data
         )
@@ -530,6 +668,22 @@ class WorkloadDistributionViewSet(
             status=status.HTTP_200_OK,
         )
 
+    @extend_schema(
+        tags=["Распределение нагрузки"],
+        summary="Получить доступные действия",
+        description=(
+                "Возвращает перечень операций, доступных "
+                "для распределения в его текущем состоянии, "
+                "и причины недоступности остальных операций."
+        ),
+        request=None,
+        responses={
+            200: DistributionAvailableActionsSerializer,
+            401: UNAUTHORIZED_RESPONSE,
+            403: FORBIDDEN_RESPONSE,
+            404: NOT_FOUND_RESPONSE,
+        },
+    )
     @action(
         detail=True,
         methods=["get"],

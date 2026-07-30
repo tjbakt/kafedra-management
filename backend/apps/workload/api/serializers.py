@@ -850,3 +850,57 @@ class AcademicYearClosingReadinessResultSerializer(
     warnings = AcademicYearValidationIssueSerializer(
         many=True,
     )
+
+class CancelDistributionSerializer(
+    serializers.Serializer
+):
+    """
+    Запрос на отмену распределения нагрузки.
+    """
+
+    reason = serializers.CharField(
+        max_length=1000,
+        allow_blank=False,
+        trim_whitespace=True,
+        help_text=(
+            "Причина отмены распределения."
+        ),
+    )
+
+    def validate_reason(
+        self,
+        value,
+    ):
+        normalized_value = value.strip()
+
+        if not normalized_value:
+            raise serializers.ValidationError(
+                "Укажите причину отмены "
+                "распределения."
+            )
+
+        return normalized_value
+
+
+class WorkloadDistributionActionResponseSerializer(
+    serializers.Serializer
+):
+    """
+    Результат изменения состояния распределения.
+    """
+
+    detail = serializers.CharField()
+    data = WorkloadDistributionSerializer()
+
+
+class TransferDistributionActionResponseSerializer(
+    serializers.Serializer
+):
+    """
+    Результат переноса часов нагрузки.
+    """
+
+    detail = serializers.CharField()
+    data = (
+        TransferDistributionHoursResultSerializer()
+    )

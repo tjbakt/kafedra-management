@@ -15323,14 +15323,9 @@ paths:
   /api/v1/workload/distributions/{id}/approve/:
     post:
       operationId: workload_distributions_approve_create
-      description: |-
-        Базовый ViewSet для моделей с мягким удалением.
-
-        Дочерний ViewSet должен определить:
-        - model;
-        - get_queryset();
-        - при необходимости scope_queryset();
-        - permission_classes.
+      description: Переводит распределение учебной нагрузки из статуса черновика в
+        утверждённое состояние.
+      summary: Утвердить распределение
       parameters:
       - in: path
         name: id
@@ -15339,19 +15334,7 @@ paths:
         description: A unique integer value identifying this Распределение нагрузки.
         required: true
       tags:
-      - workload
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/WorkloadDistributionRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/WorkloadDistributionRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/WorkloadDistributionRequest'
-        required: true
+      - Распределение нагрузки
       security:
       - jwtAuth: []
       responses:
@@ -15359,19 +15342,103 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/WorkloadDistribution'
+                $ref: '#/components/schemas/WorkloadDistributionActionResponse'
           description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                ОшибкаВалидации:
+                  value:
+                    success: false
+                    status_code: 400
+                    error:
+                      code: validation_error
+                      message: Ошибка проверки данных.
+                      fields:
+                        name:
+                        - message: Это поле обязательно.
+                          code: required
+                      details: null
+                  summary: Ошибка валидации
+          description: Ошибка проверки данных.
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                ТребуетсяАутентификация:
+                  value:
+                    success: false
+                    status_code: 401
+                    error:
+                      code: authentication_required
+                      message: Учетные данные не были предоставлены.
+                      fields: null
+                      details: null
+                  summary: Требуется аутентификация
+          description: Требуется аутентификация.
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                НедостаточноПрав:
+                  value:
+                    success: false
+                    status_code: 403
+                    error:
+                      code: permission_denied
+                      message: Доступ запрещён.
+                      fields: null
+                      details: null
+                  summary: Недостаточно прав
+          description: Недостаточно прав.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                ОбъектНеНайден:
+                  value:
+                    success: false
+                    status_code: 404
+                    error:
+                      code: not_found
+                      message: Запрашиваемый ресурс не найден.
+                      fields: null
+                      details: null
+                  summary: Объект не найден
+          description: Ресурс не найден.
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                КонфликтСостояния:
+                  value:
+                    success: false
+                    status_code: 409
+                    error:
+                      code: resource_state_conflict
+                      message: Операция недоступна в текущем состоянии ресурса.
+                      fields: null
+                      details:
+                        status: approved
+                  summary: Конфликт состояния
+          description: Конфликт текущего состояния ресурса.
   /api/v1/workload/distributions/{id}/available-actions/:
     get:
       operationId: workload_distributions_available_actions_retrieve
-      description: |-
-        Базовый ViewSet для моделей с мягким удалением.
-
-        Дочерний ViewSet должен определить:
-        - model;
-        - get_queryset();
-        - при необходимости scope_queryset();
-        - permission_classes.
+      description: Возвращает перечень операций, доступных для распределения в его
+        текущем состоянии, и причины недоступности остальных операций.
+      summary: Получить доступные действия
       parameters:
       - in: path
         name: id
@@ -15380,7 +15447,7 @@ paths:
         description: A unique integer value identifying this Распределение нагрузки.
         required: true
       tags:
-      - workload
+      - Распределение нагрузки
       security:
       - jwtAuth: []
       responses:
@@ -15388,19 +15455,65 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/WorkloadDistribution'
+                $ref: '#/components/schemas/DistributionAvailableActions'
           description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                ТребуетсяАутентификация:
+                  value:
+                    success: false
+                    status_code: 401
+                    error:
+                      code: authentication_required
+                      message: Учетные данные не были предоставлены.
+                      fields: null
+                      details: null
+                  summary: Требуется аутентификация
+          description: Требуется аутентификация.
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                НедостаточноПрав:
+                  value:
+                    success: false
+                    status_code: 403
+                    error:
+                      code: permission_denied
+                      message: Доступ запрещён.
+                      fields: null
+                      details: null
+                  summary: Недостаточно прав
+          description: Недостаточно прав.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                ОбъектНеНайден:
+                  value:
+                    success: false
+                    status_code: 404
+                    error:
+                      code: not_found
+                      message: Запрашиваемый ресурс не найден.
+                      fields: null
+                      details: null
+                  summary: Объект не найден
+          description: Ресурс не найден.
   /api/v1/workload/distributions/{id}/cancel/:
     post:
       operationId: workload_distributions_cancel_create
-      description: |-
-        Базовый ViewSet для моделей с мягким удалением.
-
-        Дочерний ViewSet должен определить:
-        - model;
-        - get_queryset();
-        - при необходимости scope_queryset();
-        - permission_classes.
+      description: Отменяет существующее распределение учебной нагрузки. Причина отмены
+        обязательна.
+      summary: Отменить распределение
       parameters:
       - in: path
         name: id
@@ -15409,18 +15522,18 @@ paths:
         description: A unique integer value identifying this Распределение нагрузки.
         required: true
       tags:
-      - workload
+      - Распределение нагрузки
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/WorkloadDistributionRequest'
+              $ref: '#/components/schemas/CancelDistributionRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/WorkloadDistributionRequest'
+              $ref: '#/components/schemas/CancelDistributionRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/WorkloadDistributionRequest'
+              $ref: '#/components/schemas/CancelDistributionRequest'
         required: true
       security:
       - jwtAuth: []
@@ -15429,19 +15542,103 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/WorkloadDistribution'
+                $ref: '#/components/schemas/WorkloadDistributionActionResponse'
           description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                ОшибкаВалидации:
+                  value:
+                    success: false
+                    status_code: 400
+                    error:
+                      code: validation_error
+                      message: Ошибка проверки данных.
+                      fields:
+                        name:
+                        - message: Это поле обязательно.
+                          code: required
+                      details: null
+                  summary: Ошибка валидации
+          description: Ошибка проверки данных.
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                ТребуетсяАутентификация:
+                  value:
+                    success: false
+                    status_code: 401
+                    error:
+                      code: authentication_required
+                      message: Учетные данные не были предоставлены.
+                      fields: null
+                      details: null
+                  summary: Требуется аутентификация
+          description: Требуется аутентификация.
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                НедостаточноПрав:
+                  value:
+                    success: false
+                    status_code: 403
+                    error:
+                      code: permission_denied
+                      message: Доступ запрещён.
+                      fields: null
+                      details: null
+                  summary: Недостаточно прав
+          description: Недостаточно прав.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                ОбъектНеНайден:
+                  value:
+                    success: false
+                    status_code: 404
+                    error:
+                      code: not_found
+                      message: Запрашиваемый ресурс не найден.
+                      fields: null
+                      details: null
+                  summary: Объект не найден
+          description: Ресурс не найден.
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                КонфликтСостояния:
+                  value:
+                    success: false
+                    status_code: 409
+                    error:
+                      code: resource_state_conflict
+                      message: Операция недоступна в текущем состоянии ресурса.
+                      fields: null
+                      details:
+                        status: approved
+                  summary: Конфликт состояния
+          description: Конфликт текущего состояния ресурса.
   /api/v1/workload/distributions/{id}/restore/:
     post:
       operationId: workload_distributions_restore_create
-      description: |-
-        Базовый ViewSet для моделей с мягким удалением.
-
-        Дочерний ViewSet должен определить:
-        - model;
-        - get_queryset();
-        - при необходимости scope_queryset();
-        - permission_classes.
+      description: Восстанавливает отменённое распределение и переводит его в статус
+        черновика.
+      summary: Восстановить распределение
       parameters:
       - in: path
         name: id
@@ -15450,18 +15647,18 @@ paths:
         description: A unique integer value identifying this Распределение нагрузки.
         required: true
       tags:
-      - workload
+      - Распределение нагрузки
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/WorkloadDistributionRequest'
+              $ref: '#/components/schemas/RestoreDistributionRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/WorkloadDistributionRequest'
+              $ref: '#/components/schemas/RestoreDistributionRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/WorkloadDistributionRequest'
+              $ref: '#/components/schemas/RestoreDistributionRequest'
         required: true
       security:
       - jwtAuth: []
@@ -15470,19 +15667,103 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/WorkloadDistribution'
+                $ref: '#/components/schemas/WorkloadDistributionActionResponse'
           description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                ОшибкаВалидации:
+                  value:
+                    success: false
+                    status_code: 400
+                    error:
+                      code: validation_error
+                      message: Ошибка проверки данных.
+                      fields:
+                        name:
+                        - message: Это поле обязательно.
+                          code: required
+                      details: null
+                  summary: Ошибка валидации
+          description: Ошибка проверки данных.
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                ТребуетсяАутентификация:
+                  value:
+                    success: false
+                    status_code: 401
+                    error:
+                      code: authentication_required
+                      message: Учетные данные не были предоставлены.
+                      fields: null
+                      details: null
+                  summary: Требуется аутентификация
+          description: Требуется аутентификация.
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                НедостаточноПрав:
+                  value:
+                    success: false
+                    status_code: 403
+                    error:
+                      code: permission_denied
+                      message: Доступ запрещён.
+                      fields: null
+                      details: null
+                  summary: Недостаточно прав
+          description: Недостаточно прав.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                ОбъектНеНайден:
+                  value:
+                    success: false
+                    status_code: 404
+                    error:
+                      code: not_found
+                      message: Запрашиваемый ресурс не найден.
+                      fields: null
+                      details: null
+                  summary: Объект не найден
+          description: Ресурс не найден.
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                КонфликтСостояния:
+                  value:
+                    success: false
+                    status_code: 409
+                    error:
+                      code: resource_state_conflict
+                      message: Операция недоступна в текущем состоянии ресурса.
+                      fields: null
+                      details:
+                        status: approved
+                  summary: Конфликт состояния
+          description: Конфликт текущего состояния ресурса.
   /api/v1/workload/distributions/{id}/return-to-draft/:
     post:
       operationId: workload_distributions_return_to_draft_create
-      description: |-
-        Базовый ViewSet для моделей с мягким удалением.
-
-        Дочерний ViewSet должен определить:
-        - model;
-        - get_queryset();
-        - при необходимости scope_queryset();
-        - permission_classes.
+      description: Возвращает утверждённое или отменённое распределение нагрузки в
+        статус черновика. Необходимо указать причину возврата.
+      summary: Вернуть распределение в черновик
       parameters:
       - in: path
         name: id
@@ -15491,18 +15772,18 @@ paths:
         description: A unique integer value identifying this Распределение нагрузки.
         required: true
       tags:
-      - workload
+      - Распределение нагрузки
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/WorkloadDistributionRequest'
+              $ref: '#/components/schemas/ReturnDistributionToDraftRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/WorkloadDistributionRequest'
+              $ref: '#/components/schemas/ReturnDistributionToDraftRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/WorkloadDistributionRequest'
+              $ref: '#/components/schemas/ReturnDistributionToDraftRequest'
         required: true
       security:
       - jwtAuth: []
@@ -15511,19 +15792,103 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/WorkloadDistribution'
+                $ref: '#/components/schemas/WorkloadDistributionActionResponse'
           description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                ОшибкаВалидации:
+                  value:
+                    success: false
+                    status_code: 400
+                    error:
+                      code: validation_error
+                      message: Ошибка проверки данных.
+                      fields:
+                        name:
+                        - message: Это поле обязательно.
+                          code: required
+                      details: null
+                  summary: Ошибка валидации
+          description: Ошибка проверки данных.
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                ТребуетсяАутентификация:
+                  value:
+                    success: false
+                    status_code: 401
+                    error:
+                      code: authentication_required
+                      message: Учетные данные не были предоставлены.
+                      fields: null
+                      details: null
+                  summary: Требуется аутентификация
+          description: Требуется аутентификация.
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                НедостаточноПрав:
+                  value:
+                    success: false
+                    status_code: 403
+                    error:
+                      code: permission_denied
+                      message: Доступ запрещён.
+                      fields: null
+                      details: null
+                  summary: Недостаточно прав
+          description: Недостаточно прав.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                ОбъектНеНайден:
+                  value:
+                    success: false
+                    status_code: 404
+                    error:
+                      code: not_found
+                      message: Запрашиваемый ресурс не найден.
+                      fields: null
+                      details: null
+                  summary: Объект не найден
+          description: Ресурс не найден.
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                КонфликтСостояния:
+                  value:
+                    success: false
+                    status_code: 409
+                    error:
+                      code: resource_state_conflict
+                      message: Операция недоступна в текущем состоянии ресурса.
+                      fields: null
+                      details:
+                        status: approved
+                  summary: Конфликт состояния
+          description: Конфликт текущего состояния ресурса.
   /api/v1/workload/distributions/{id}/transfer/:
     post:
       operationId: workload_distributions_transfer_create
-      description: |-
-        Базовый ViewSet для моделей с мягким удалением.
-
-        Дочерний ViewSet должен определить:
-        - model;
-        - get_queryset();
-        - при необходимости scope_queryset();
-        - permission_classes.
+      description: Переносит указанное количество часов из текущего распределения
+        на другое трудовое назначение преподавателя.
+      summary: Перенести часы нагрузки
       parameters:
       - in: path
         name: id
@@ -15532,18 +15897,18 @@ paths:
         description: A unique integer value identifying this Распределение нагрузки.
         required: true
       tags:
-      - workload
+      - Распределение нагрузки
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/WorkloadDistributionRequest'
+              $ref: '#/components/schemas/TransferDistributionHoursRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/WorkloadDistributionRequest'
+              $ref: '#/components/schemas/TransferDistributionHoursRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/WorkloadDistributionRequest'
+              $ref: '#/components/schemas/TransferDistributionHoursRequest'
         required: true
       security:
       - jwtAuth: []
@@ -15552,8 +15917,97 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/WorkloadDistribution'
+                $ref: '#/components/schemas/TransferDistributionActionResponse'
           description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                ОшибкаВалидации:
+                  value:
+                    success: false
+                    status_code: 400
+                    error:
+                      code: validation_error
+                      message: Ошибка проверки данных.
+                      fields:
+                        name:
+                        - message: Это поле обязательно.
+                          code: required
+                      details: null
+                  summary: Ошибка валидации
+          description: Ошибка проверки данных.
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                ТребуетсяАутентификация:
+                  value:
+                    success: false
+                    status_code: 401
+                    error:
+                      code: authentication_required
+                      message: Учетные данные не были предоставлены.
+                      fields: null
+                      details: null
+                  summary: Требуется аутентификация
+          description: Требуется аутентификация.
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                НедостаточноПрав:
+                  value:
+                    success: false
+                    status_code: 403
+                    error:
+                      code: permission_denied
+                      message: Доступ запрещён.
+                      fields: null
+                      details: null
+                  summary: Недостаточно прав
+          description: Недостаточно прав.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                ОбъектНеНайден:
+                  value:
+                    success: false
+                    status_code: 404
+                    error:
+                      code: not_found
+                      message: Запрашиваемый ресурс не найден.
+                      fields: null
+                      details: null
+                  summary: Объект не найден
+          description: Ресурс не найден.
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                КонфликтСостояния:
+                  value:
+                    success: false
+                    status_code: 409
+                    error:
+                      code: resource_state_conflict
+                      message: Операция недоступна в текущем состоянии ресурса.
+                      fields: null
+                      details:
+                        status: approved
+                  summary: Конфликт состояния
+          description: Конфликт текущего состояния ресурса.
   /api/v1/workload/distributions/approve-selected/:
     post:
       operationId: workload_distributions_approve_selected_create
@@ -16890,6 +17344,17 @@ components:
         * `per_group` - На учебную группу
         * `per_subgroup` - На подгруппу
         * `per_student` - На одного студента
+    CancelDistributionRequest:
+      type: object
+      description: Запрос на отмену распределения нагрузки.
+      properties:
+        reason:
+          type: string
+          minLength: 1
+          description: Причина отмены распределения.
+          maxLength: 1000
+      required:
+      - reason
     CategoryEnum:
       enum:
       - teaching
@@ -17793,6 +18258,54 @@ components:
       - code
       - name_ru
       - name_uz
+    DistributionActionAvailability:
+      type: object
+      properties:
+        allowed:
+          type: boolean
+        reason:
+          type: string
+      required:
+      - allowed
+      - reason
+    DistributionActions:
+      type: object
+      properties:
+        approve:
+          $ref: '#/components/schemas/DistributionActionAvailability'
+        return_to_draft:
+          $ref: '#/components/schemas/DistributionActionAvailability'
+        cancel:
+          $ref: '#/components/schemas/DistributionActionAvailability'
+        restore:
+          $ref: '#/components/schemas/DistributionActionAvailability'
+        transfer:
+          $ref: '#/components/schemas/DistributionActionAvailability'
+        edit:
+          $ref: '#/components/schemas/DistributionActionAvailability'
+      required:
+      - approve
+      - cancel
+      - edit
+      - restore
+      - return_to_draft
+      - transfer
+    DistributionAvailableActions:
+      type: object
+      properties:
+        distribution_id:
+          type: integer
+        status:
+          type: string
+        status_label:
+          type: string
+        actions:
+          $ref: '#/components/schemas/DistributionActions'
+      required:
+      - actions
+      - distribution_id
+      - status
+      - status_label
     EducationDuration:
       type: object
       description: Базовый сериализатор для моделей с полями аудита.
@@ -21720,6 +22233,15 @@ components:
         * `normal` - Обычный
         * `high` - Высокий
         * `urgent` - Срочный
+    RestoreDistributionRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 1000
+      required:
+      - reason
     RestoreResponse:
       type: object
       description: |-
@@ -21736,6 +22258,15 @@ components:
       required:
       - data
       - detail
+    ReturnDistributionToDraftRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 1000
+      required:
+      - reason
     ScopeTypeEnum:
       enum:
       - global
@@ -23471,6 +24002,56 @@ components:
           description: JWT-токен, который требуется проверить.
       required:
       - token
+    TransferDistributionActionResponse:
+      type: object
+      description: Результат переноса часов нагрузки.
+      properties:
+        detail:
+          type: string
+        data:
+          $ref: '#/components/schemas/TransferDistributionHoursResult'
+      required:
+      - data
+      - detail
+    TransferDistributionHoursRequest:
+      type: object
+      properties:
+        target_staff_employment:
+          type: integer
+          minimum: 1
+        transfer_hours:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 1000
+      required:
+      - reason
+      - target_staff_employment
+      - transfer_hours
+    TransferDistributionHoursResult:
+      type: object
+      properties:
+        transferred_hours:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        source_cancelled:
+          type: boolean
+        target_created:
+          type: boolean
+        source_distribution:
+          $ref: '#/components/schemas/WorkloadDistribution'
+        target_distribution:
+          $ref: '#/components/schemas/WorkloadDistribution'
+      required:
+      - source_cancelled
+      - source_distribution
+      - target_created
+      - target_distribution
+      - transferred_hours
     University:
       type: object
       description: Базовый сериализатор для моделей с полями аудита.
@@ -24258,6 +24839,17 @@ components:
       - allocated_hours
       - planned_workload
       - staff_employment
+    WorkloadDistributionActionResponse:
+      type: object
+      description: Результат изменения состояния распределения.
+      properties:
+        detail:
+          type: string
+        data:
+          $ref: '#/components/schemas/WorkloadDistribution'
+      required:
+      - data
+      - detail
     WorkloadDistributionRequest:
       type: object
       description: Базовый сериализатор для моделей с полями аудита.
