@@ -98,7 +98,7 @@ from apps.staff.models import StaffEmployment
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import (
     OpenApiExample,
-    OpenApiParameter,
+    # OpenApiParameter,
     extend_schema,
 )
 from apps.common.api.schema import (
@@ -108,10 +108,7 @@ from apps.common.api.schema import (
     UNAUTHORIZED_RESPONSE,
     CONFLICT_RESPONSE,
 )
-from apps.workload.api.schema_serializers import (
-    AcademicYearClosingReadinessResponseSerializer,
-    AcademicYearWorkloadValidationResponseSerializer,
-)
+
 
 
 EXCEL_CONTENT_TYPE = (
@@ -1944,6 +1941,28 @@ class WorkloadDistributionViewSet(
         return response
 
 
+def get_active_academic_year_or_error(
+    academic_year_id,
+):
+    """
+    Возвращает неархивный учебный год либо
+    стандартную ошибку валидации.
+    """
+
+    try:
+        return AcademicYear.objects.get(
+            pk=academic_year_id,
+            is_archived=False,
+        )
+    except AcademicYear.DoesNotExist as exc:
+        raise ValidationError(
+            {
+                "academic_year": (
+                    "Указанный учебный год "
+                    "не найден."
+                )
+            }
+        ) from exc
 class AcademicYearWorkloadValidationAPIView(
     APIView
 ):
@@ -1953,34 +1972,93 @@ class AcademicYearWorkloadValidationAPIView(
     )
 
     @extend_schema(
-        tags=["Учебная нагрузка"],
-        summary="Проверить нагрузку учебного года",
+        tags=["Проверка учебного года"],
+        summary= "Проверить нагрузку учебного года",
         description=(
-                "Выполняет комплексную проверку "
-                "распределения учебной нагрузки "
-                "за выбранный учебный год."
+            "Выполняет комплексную проверку "
+            "учебной нагрузки выбранного года. "
+            "Можно ограничить проверку кафедрой, "
+            "уровнем серьёзности и типом проблемы."
         ),
         parameters=[
-            OpenApiParameter(
-                name="academic_year",
-                type=OpenApiTypes.INT,
-                location=OpenApiParameter.QUERY,
-                required=True,
-                description="ID учебного года.",
-            ),
+            AcademicYearValidationQuerySerializer,
         ],
         request=None,
         responses={
-            200: (
-                    AcademicYearWorkloadValidationResponseSerializer
-            ),
+            200: AcademicYearValidationResultSerializer,
             400: BAD_REQUEST_RESPONSE,
             401: UNAUTHORIZED_RESPONSE,
             403: FORBIDDEN_RESPONSE,
             404: NOT_FOUND_RESPONSE,
         },
+        examples=[
+            OpenApiExample(
+                name="Результат проверки",
+                value={
+                    "academic_year": 3,
+                    "academic_year_name": (
+                        "2026/2027"
+                    ),
+                    "department_ids": [
+                        2,
+                        5,
+                    ],
+                    "is_valid": False,
+                    "summary": {
+                        "planned_workloads_count": 120,
+                        "distributions_count": 116,
+                        "year_staff_records_count": 34,
+                        "issues_count": 2,
+                        "errors_count": 1,
+                        "warnings_count": 1,
+                        "issues_by_type": {
+                            "unallocated_workload": 1,
+                            "staff_overload": 1,
+                        },
+                    },
+                    "issues": [
+                        {
+                            "severity": "error",
+                            "issue_type": (
+                                "unallocated_workload"
+                            ),
+                            "message": (
+                                "Нагрузка распределена "
+                                "не полностью."
+                            ),
+                            "department_id": 2,
+                            "department_name": (
+                                "Кафедра информатики"
+                            ),
+                            "staff_employment_id": None,
+                            "staff_member_id": None,
+                            "teacher_name": None,
+                            "planned_workload_id": 41,
+                            "distribution_id": None,
+                            "stream_code": "CS-101",
+                            "discipline_name": (
+                                "Программирование"
+                            ),
+                            "workload_type_name": (
+                                "Лекционные занятия"
+                            ),
+                            "details": {
+                                "planned_hours": "36.00",
+                                "allocated_hours": "24.00",
+                                "remaining_hours": "12.00",
+                            },
+                        }
+                    ],
+                },
+                response_only=True,
+                status_codes=["200"],
+            ),
+        ],
     )
-    def get(self, request):
+    def get(
+        self,
+        request,
+    ):
         query_serializer = (
             AcademicYearValidationQuerySerializer(
                 data=request.query_params
@@ -1990,31 +2068,19 @@ class AcademicYearWorkloadValidationAPIView(
             raise_exception=True
         )
 
-        academic_year_id = (
-            query_serializer.validated_data[
-                "academic_year"
-            ]
+        academic_year = (
+            get_active_academic_year_or_error(
+                query_serializer.validated_data[
+                    "academic_year"
+                ]
+            )
         )
+
         requested_department_id = (
             query_serializer.validated_data.get(
                 "department"
             )
         )
-
-        try:
-            academic_year = AcademicYear.objects.get(
-                pk=academic_year_id,
-                is_archived=False,
-            )
-        except AcademicYear.DoesNotExist:
-            raise ValidationError(
-                {
-                    "academic_year": (
-                        "Указанный учебный год "
-                        "не найден."
-                    )
-                }
-            )
 
         department_ids = (
             WorkloadAccessService
@@ -2064,32 +2130,24 @@ class AcademicYearWorkloadValidationExportAPIView(
     )
 
     @extend_schema(
-        tags=["Учебная нагрузка"],
+        tags=["Проверка учебного года"],
         summary=(
-                "Экспортировать проверку нагрузки "
-                "учебного года"
+            "Экспортировать результат проверки "
+            "учебного года"
         ),
         description=(
-                "Формирует Excel-файл с результатами "
-                "проверки нагрузки учебного года."
+            "Формирует Excel-файл с результатами "
+            "проверки учебной нагрузки. Поддерживает "
+            "те же фильтры, что и JSON endpoint."
         ),
         parameters=[
-            OpenApiParameter(
-                name="academic_year",
-                type=OpenApiTypes.INT,
-                location=OpenApiParameter.QUERY,
-                required=True,
-                description="ID учебного года.",
-            ),
+            AcademicYearValidationQuerySerializer,
         ],
         request=None,
         responses={
             (
-                    200,
-                    (
-                            "application/vnd.openxmlformats-"
-                            "officedocument.spreadsheetml.sheet"
-                    ),
+                200,
+                EXCEL_CONTENT_TYPE,
             ): OpenApiTypes.BINARY,
             400: BAD_REQUEST_RESPONSE,
             401: UNAUTHORIZED_RESPONSE,
@@ -2097,7 +2155,10 @@ class AcademicYearWorkloadValidationExportAPIView(
             404: NOT_FOUND_RESPONSE,
         },
     )
-    def get(self, request):
+    def get(
+        self,
+        request,
+    ):
         query_serializer = (
             AcademicYearValidationQuerySerializer(
                 data=request.query_params
@@ -2107,31 +2168,19 @@ class AcademicYearWorkloadValidationExportAPIView(
             raise_exception=True
         )
 
-        academic_year_id = (
-            query_serializer.validated_data[
-                "academic_year"
-            ]
+        academic_year = (
+            get_active_academic_year_or_error(
+                query_serializer.validated_data[
+                    "academic_year"
+                ]
+            )
         )
+
         requested_department_id = (
             query_serializer.validated_data.get(
                 "department"
             )
         )
-
-        try:
-            academic_year = AcademicYear.objects.get(
-                pk=academic_year_id,
-                is_archived=False,
-            )
-        except AcademicYear.DoesNotExist as exc:
-            raise ValidationError(
-                {
-                    "academic_year": (
-                        "Указанный учебный год "
-                        "не найден."
-                    )
-                }
-            ) from exc
 
         department_ids = (
             WorkloadAccessService
@@ -2177,10 +2226,7 @@ class AcademicYearWorkloadValidationExportAPIView(
 
         response = FileResponse(
             excel_file,
-            content_type=(
-                AcademicYearValidationExcelService
-                .MIME_TYPE
-            ),
+            content_type=EXCEL_CONTENT_TYPE,
             as_attachment=True,
             filename=filename,
         )
@@ -2192,6 +2238,7 @@ class AcademicYearWorkloadValidationExportAPIView(
                 "errors_count"
             ]
         )
+
         response[
             "X-Validation-Warnings-Count"
         ] = str(
@@ -2199,6 +2246,7 @@ class AcademicYearWorkloadValidationExportAPIView(
                 "warnings_count"
             ]
         )
+
         response[
             "X-Validation-Is-Valid"
         ] = (
@@ -2218,36 +2266,99 @@ class AcademicYearClosingReadinessAPIView(
     )
 
     @extend_schema(
-        tags=["Учебная нагрузка"],
+        tags=["Проверка учебного года"],
         summary=(
-                "Проверить готовность учебного года "
-                "к закрытию"
+            "Проверить готовность учебного года "
+            "к закрытию"
         ),
         description=(
-                "Проверяет наличие блокирующих проблем "
-                "перед закрытием учебного года."
+            "Проверяет наличие блокирующих проблем "
+            "и предупреждений перед закрытием "
+            "учебного года."
         ),
         parameters=[
-            OpenApiParameter(
-                name="academic_year",
-                type=OpenApiTypes.INT,
-                location=OpenApiParameter.QUERY,
-                required=True,
-                description="ID учебного года.",
-            ),
+            AcademicYearClosingReadinessQuerySerializer,
         ],
         request=None,
         responses={
             200: (
-                    AcademicYearClosingReadinessResponseSerializer
+                AcademicYearClosingReadinessResultSerializer
             ),
             400: BAD_REQUEST_RESPONSE,
             401: UNAUTHORIZED_RESPONSE,
             403: FORBIDDEN_RESPONSE,
             404: NOT_FOUND_RESPONSE,
         },
+        examples=[
+            OpenApiExample(
+                name="Год не готов к закрытию",
+                value={
+                    "academic_year": 3,
+                    "academic_year_name": (
+                        "2026/2027"
+                    ),
+                    "department_ids": [
+                        2,
+                    ],
+                    "ready_to_close": False,
+                    "status": "not_ready",
+                    "message": (
+                        "Учебный год нельзя закрыть: "
+                        "обнаружены блокирующие проблемы."
+                    ),
+                    "summary": {
+                        "planned_workloads_count": 80,
+                        "distributions_count": 78,
+                        "year_staff_records_count": 22,
+                        "blocking_issues_count": 1,
+                        "warnings_count": 1,
+                        "blocking_issues_by_type": {
+                            "unallocated_workload": 1,
+                        },
+                        "warnings_by_type": {
+                            "staff_overload": 1,
+                        },
+                    },
+                    "blocking_issues": [
+                        {
+                            "severity": "error",
+                            "issue_type": (
+                                "unallocated_workload"
+                            ),
+                            "message": (
+                                "Не вся нагрузка "
+                                "распределена."
+                            ),
+                            "department_id": 2,
+                            "department_name": (
+                                "Кафедра информатики"
+                            ),
+                            "staff_employment_id": None,
+                            "staff_member_id": None,
+                            "teacher_name": None,
+                            "planned_workload_id": 41,
+                            "distribution_id": None,
+                            "stream_code": "CS-101",
+                            "discipline_name": (
+                                "Программирование"
+                            ),
+                            "workload_type_name": (
+                                "Лекционные занятия"
+                            ),
+                            "details": {},
+                        }
+                    ],
+                    "warnings": [],
+                },
+                response_only=True,
+                status_codes=["200"],
+            ),
+        ],
     )
-    def get(self, request):
+    def get(
+        self,
+        request,
+    ):
         query_serializer = (
             AcademicYearClosingReadinessQuerySerializer(
                 data=request.query_params
@@ -2257,31 +2368,19 @@ class AcademicYearClosingReadinessAPIView(
             raise_exception=True
         )
 
-        academic_year_id = (
-            query_serializer.validated_data[
-                "academic_year"
-            ]
+        academic_year = (
+            get_active_academic_year_or_error(
+                query_serializer.validated_data[
+                    "academic_year"
+                ]
+            )
         )
+
         requested_department_id = (
             query_serializer.validated_data.get(
                 "department"
             )
         )
-
-        try:
-            academic_year = AcademicYear.objects.get(
-                pk=academic_year_id,
-                is_archived=False,
-            )
-        except AcademicYear.DoesNotExist as exc:
-            raise ValidationError(
-                {
-                    "academic_year": (
-                        "Указанный учебный год "
-                        "не найден."
-                    )
-                }
-            ) from exc
 
         department_ids = (
             WorkloadAccessService

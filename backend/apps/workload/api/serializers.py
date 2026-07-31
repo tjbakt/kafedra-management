@@ -839,27 +839,46 @@ class DistributionAvailableActionsSerializer(
 class AcademicYearValidationQuerySerializer(
     serializers.Serializer
 ):
+    """
+    Параметры проверки нагрузки учебного года.
+    """
+
     academic_year = serializers.IntegerField(
         min_value=1,
         required=True,
+        help_text="ID учебного года.",
     )
+
     department = serializers.IntegerField(
         min_value=1,
         required=False,
+        help_text=(
+            "ID кафедры. Если параметр не указан, "
+            "проверяются все кафедры, доступные "
+            "текущему пользователю."
+        ),
     )
+
     severity = serializers.ChoiceField(
         choices=(
             AcademicYearWorkloadValidationService
             .Severity.CHOICES
         ),
         required=False,
+        help_text=(
+            "Фильтр проблем по уровню серьёзности."
+        ),
     )
+
     issue_type = serializers.ChoiceField(
         choices=(
             AcademicYearWorkloadValidationService
             .IssueType.CHOICES
         ),
         required=False,
+        help_text=(
+            "Фильтр по типу обнаруженной проблемы."
+        ),
     )
 
 class AcademicYearValidationIssueSerializer(
@@ -953,14 +972,25 @@ class AcademicYearValidationResultSerializer(
 class AcademicYearClosingReadinessQuerySerializer(
     serializers.Serializer
 ):
+    """
+    Параметры проверки готовности учебного года
+    к закрытию.
+    """
+
     academic_year = serializers.IntegerField(
         min_value=1,
         required=True,
+        help_text="ID учебного года.",
     )
 
     department = serializers.IntegerField(
         min_value=1,
         required=False,
+        help_text=(
+            "ID кафедры. Если параметр не указан, "
+            "проверяются все кафедры, доступные "
+            "текущему пользователю."
+        ),
     )
 
 class AcademicYearClosingReadinessSummarySerializer(

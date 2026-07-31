@@ -14959,18 +14959,26 @@ paths:
   /api/v1/workload/closing-readiness/:
     get:
       operationId: workload_closing_readiness_retrieve
-      description: Проверяет наличие блокирующих проблем перед закрытием учебного
-        года.
+      description: Проверяет наличие блокирующих проблем и предупреждений перед закрытием
+        учебного года.
       summary: Проверить готовность учебного года к закрытию
       parameters:
       - in: query
         name: academic_year
         schema:
           type: integer
+          minimum: 1
         description: ID учебного года.
         required: true
+      - in: query
+        name: department
+        schema:
+          type: integer
+          minimum: 1
+        description: ID кафедры. Если параметр не указан, проверяются все кафедры,
+          доступные текущему пользователю.
       tags:
-      - Учебная нагрузка
+      - Проверка учебного года
       security:
       - jwtAuth: []
       responses:
@@ -14978,7 +14986,44 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AcademicYearClosingReadinessResponse'
+                $ref: '#/components/schemas/AcademicYearClosingReadinessResult'
+              examples:
+                ГодНеГотовКЗакрытию:
+                  value:
+                    academic_year: 3
+                    academic_year_name: 2026/2027
+                    department_ids:
+                    - 2
+                    ready_to_close: false
+                    status: not_ready
+                    message: 'Учебный год нельзя закрыть: обнаружены блокирующие проблемы.'
+                    summary:
+                      planned_workloads_count: 80
+                      distributions_count: 78
+                      year_staff_records_count: 22
+                      blocking_issues_count: 1
+                      warnings_count: 1
+                      blocking_issues_by_type:
+                        unallocated_workload: 1
+                      warnings_by_type:
+                        staff_overload: 1
+                    blocking_issues:
+                    - severity: error
+                      issue_type: unallocated_workload
+                      message: Не вся нагрузка распределена.
+                      department_id: 2
+                      department_name: Кафедра информатики
+                      staff_employment_id: null
+                      staff_member_id: null
+                      teacher_name: null
+                      planned_workload_id: 41
+                      distribution_id: null
+                      stream_code: CS-101
+                      discipline_name: Программирование
+                      workload_type_name: Лекционные занятия
+                      details: {}
+                    warnings: []
+                  summary: Год не готов к закрытию
           description: ''
         '400':
           content:
@@ -17366,18 +17411,76 @@ paths:
   /api/v1/workload/validation/academic-year/:
     get:
       operationId: workload_validation_academic_year_retrieve
-      description: Выполняет комплексную проверку распределения учебной нагрузки за
-        выбранный учебный год.
+      description: Выполняет комплексную проверку учебной нагрузки выбранного года.
+        Можно ограничить проверку кафедрой, уровнем серьёзности и типом проблемы.
       summary: Проверить нагрузку учебного года
       parameters:
       - in: query
         name: academic_year
         schema:
           type: integer
+          minimum: 1
         description: ID учебного года.
         required: true
+      - in: query
+        name: department
+        schema:
+          type: integer
+          minimum: 1
+        description: ID кафедры. Если параметр не указан, проверяются все кафедры,
+          доступные текущему пользователю.
+      - in: query
+        name: issue_type
+        schema:
+          enum:
+          - planned_without_distributions
+          - planned_partially_distributed
+          - planned_hours_exceeded
+          - planned_status_mismatch
+          - distribution_draft
+          - approval_data_missing
+          - approval_data_unexpected
+          - employment_archived
+          - employment_inactive
+          - non_teaching_position
+          - employment_department_mismatch
+          - year_staff_record_missing
+          - workload_norm_missing
+          - teacher_overloaded
+          type: string
+          minLength: 1
+        description: |-
+          Фильтр по типу обнаруженной проблемы.
+
+          * `planned_without_distributions` - planned_without_distributions
+          * `planned_partially_distributed` - planned_partially_distributed
+          * `planned_hours_exceeded` - planned_hours_exceeded
+          * `planned_status_mismatch` - planned_status_mismatch
+          * `distribution_draft` - distribution_draft
+          * `approval_data_missing` - approval_data_missing
+          * `approval_data_unexpected` - approval_data_unexpected
+          * `employment_archived` - employment_archived
+          * `employment_inactive` - employment_inactive
+          * `non_teaching_position` - non_teaching_position
+          * `employment_department_mismatch` - employment_department_mismatch
+          * `year_staff_record_missing` - year_staff_record_missing
+          * `workload_norm_missing` - workload_norm_missing
+          * `teacher_overloaded` - teacher_overloaded
+      - in: query
+        name: severity
+        schema:
+          enum:
+          - error
+          - warning
+          type: string
+          minLength: 1
+        description: |-
+          Фильтр проблем по уровню серьёзности.
+
+          * `error` - error
+          * `warning` - warning
       tags:
-      - Учебная нагрузка
+      - Проверка учебного года
       security:
       - jwtAuth: []
       responses:
@@ -17385,7 +17488,45 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AcademicYearWorkloadValidationResponse'
+                $ref: '#/components/schemas/AcademicYearValidationResult'
+              examples:
+                РезультатПроверки:
+                  value:
+                    academic_year: 3
+                    academic_year_name: 2026/2027
+                    department_ids:
+                    - 2
+                    - 5
+                    is_valid: false
+                    summary:
+                      planned_workloads_count: 120
+                      distributions_count: 116
+                      year_staff_records_count: 34
+                      issues_count: 2
+                      errors_count: 1
+                      warnings_count: 1
+                      issues_by_type:
+                        unallocated_workload: 1
+                        staff_overload: 1
+                    issues:
+                    - severity: error
+                      issue_type: unallocated_workload
+                      message: Нагрузка распределена не полностью.
+                      department_id: 2
+                      department_name: Кафедра информатики
+                      staff_employment_id: null
+                      staff_member_id: null
+                      teacher_name: null
+                      planned_workload_id: 41
+                      distribution_id: null
+                      stream_code: CS-101
+                      discipline_name: Программирование
+                      workload_type_name: Лекционные занятия
+                      details:
+                        planned_hours: '36.00'
+                        allocated_hours: '24.00'
+                        remaining_hours: '12.00'
+                  summary: Результат проверки
           description: ''
         '400':
           content:
@@ -17461,18 +17602,76 @@ paths:
   /api/v1/workload/validation/academic-year/export/:
     get:
       operationId: workload_validation_academic_year_export_retrieve
-      description: Формирует Excel-файл с результатами проверки нагрузки учебного
-        года.
-      summary: Экспортировать проверку нагрузки учебного года
+      description: Формирует Excel-файл с результатами проверки учебной нагрузки.
+        Поддерживает те же фильтры, что и JSON endpoint.
+      summary: Экспортировать результат проверки учебного года
       parameters:
       - in: query
         name: academic_year
         schema:
           type: integer
+          minimum: 1
         description: ID учебного года.
         required: true
+      - in: query
+        name: department
+        schema:
+          type: integer
+          minimum: 1
+        description: ID кафедры. Если параметр не указан, проверяются все кафедры,
+          доступные текущему пользователю.
+      - in: query
+        name: issue_type
+        schema:
+          enum:
+          - planned_without_distributions
+          - planned_partially_distributed
+          - planned_hours_exceeded
+          - planned_status_mismatch
+          - distribution_draft
+          - approval_data_missing
+          - approval_data_unexpected
+          - employment_archived
+          - employment_inactive
+          - non_teaching_position
+          - employment_department_mismatch
+          - year_staff_record_missing
+          - workload_norm_missing
+          - teacher_overloaded
+          type: string
+          minLength: 1
+        description: |-
+          Фильтр по типу обнаруженной проблемы.
+
+          * `planned_without_distributions` - planned_without_distributions
+          * `planned_partially_distributed` - planned_partially_distributed
+          * `planned_hours_exceeded` - planned_hours_exceeded
+          * `planned_status_mismatch` - planned_status_mismatch
+          * `distribution_draft` - distribution_draft
+          * `approval_data_missing` - approval_data_missing
+          * `approval_data_unexpected` - approval_data_unexpected
+          * `employment_archived` - employment_archived
+          * `employment_inactive` - employment_inactive
+          * `non_teaching_position` - non_teaching_position
+          * `employment_department_mismatch` - employment_department_mismatch
+          * `year_staff_record_missing` - year_staff_record_missing
+          * `workload_norm_missing` - workload_norm_missing
+          * `teacher_overloaded` - teacher_overloaded
+      - in: query
+        name: severity
+        schema:
+          enum:
+          - error
+          - warning
+          type: string
+          minLength: 1
+        description: |-
+          Фильтр проблем по уровню серьёзности.
+
+          * `error` - error
+          * `warning` - warning
       tags:
-      - Учебная нагрузка
+      - Проверка учебного года
       security:
       - jwtAuth: []
       responses:
@@ -18053,40 +18252,80 @@ components:
       required:
       - end_year
       - start_year
-    AcademicYearClosingReadinessResponse:
+    AcademicYearClosingReadinessResult:
       type: object
-      description: |-
-        Результат проверки готовности учебного года
-        к закрытию.
       properties:
         academic_year:
           type: integer
         academic_year_name:
           type: string
-          nullable: true
-        is_ready:
-          type: boolean
-        blockers_count:
-          type: integer
-          minimum: 0
-        warnings_count:
-          type: integer
-          minimum: 0
-        blockers:
+        department_ids:
           type: array
           items:
-            $ref: '#/components/schemas/WorkloadValidationIssue'
+            type: integer
+        ready_to_close:
+          type: boolean
+        status:
+          $ref: '#/components/schemas/AcademicYearClosingReadinessResultStatusEnum'
+        message:
+          type: string
+        summary:
+          $ref: '#/components/schemas/AcademicYearClosingReadinessSummary'
+        blocking_issues:
+          type: array
+          items:
+            $ref: '#/components/schemas/AcademicYearValidationIssue'
         warnings:
           type: array
           items:
-            $ref: '#/components/schemas/WorkloadValidationIssue'
-        summary:
-          type: object
-          additionalProperties: {}
-          nullable: true
+            $ref: '#/components/schemas/AcademicYearValidationIssue'
       required:
       - academic_year
-      - is_ready
+      - academic_year_name
+      - blocking_issues
+      - department_ids
+      - message
+      - ready_to_close
+      - status
+      - summary
+      - warnings
+    AcademicYearClosingReadinessResultStatusEnum:
+      enum:
+      - ready
+      - not_ready
+      type: string
+      description: |-
+        * `ready` - ready
+        * `not_ready` - not_ready
+    AcademicYearClosingReadinessSummary:
+      type: object
+      properties:
+        planned_workloads_count:
+          type: integer
+        distributions_count:
+          type: integer
+        year_staff_records_count:
+          type: integer
+        blocking_issues_count:
+          type: integer
+        warnings_count:
+          type: integer
+        blocking_issues_by_type:
+          type: object
+          additionalProperties:
+            type: integer
+        warnings_by_type:
+          type: object
+          additionalProperties:
+            type: integer
+      required:
+      - blocking_issues_by_type
+      - blocking_issues_count
+      - distributions_count
+      - planned_workloads_count
+      - warnings_by_type
+      - warnings_count
+      - year_staff_records_count
     AcademicYearRequest:
       type: object
       description: Базовый сериализатор для моделей с полями аудита.
@@ -18118,43 +18357,109 @@ components:
       description: |-
         * `open` - Открыт
         * `closed` - Закрыт
-    AcademicYearWorkloadValidationResponse:
+    AcademicYearValidationIssue:
       type: object
-      description: |-
-        Результат проверки нагрузки учебного года.
-
-        Поля сделаны частично необязательными, чтобы
-        схема не навязывала бизнес-сервису структуру,
-        которой в конкретной проверке может не быть.
+      properties:
+        severity:
+          $ref: '#/components/schemas/SeverityEnum'
+        issue_type:
+          $ref: '#/components/schemas/IssueTypeEnum'
+        message:
+          type: string
+        department_id:
+          type: integer
+        department_name:
+          type: string
+        staff_employment_id:
+          type: integer
+          nullable: true
+        staff_member_id:
+          type: integer
+          nullable: true
+        teacher_name:
+          type: string
+          nullable: true
+        planned_workload_id:
+          type: integer
+          nullable: true
+        distribution_id:
+          type: integer
+          nullable: true
+        stream_code:
+          type: string
+          nullable: true
+        discipline_name:
+          type: string
+          nullable: true
+        workload_type_name:
+          type: string
+          nullable: true
+        details: {}
+      required:
+      - department_id
+      - department_name
+      - details
+      - distribution_id
+      - issue_type
+      - message
+      - planned_workload_id
+      - severity
+      - staff_employment_id
+      - staff_member_id
+      - teacher_name
+    AcademicYearValidationResult:
+      type: object
       properties:
         academic_year:
           type: integer
         academic_year_name:
           type: string
-          nullable: true
+        department_ids:
+          type: array
+          items:
+            type: integer
         is_valid:
           type: boolean
-        errors_count:
-          type: integer
-          minimum: 0
-        warnings_count:
-          type: integer
-          minimum: 0
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/WorkloadValidationIssue'
-        warnings:
-          type: array
-          items:
-            $ref: '#/components/schemas/WorkloadValidationIssue'
         summary:
-          type: object
-          additionalProperties: {}
-          nullable: true
+          $ref: '#/components/schemas/AcademicYearValidationSummary'
+        issues:
+          type: array
+          items:
+            $ref: '#/components/schemas/AcademicYearValidationIssue'
       required:
       - academic_year
+      - academic_year_name
+      - department_ids
       - is_valid
+      - issues
+      - summary
+    AcademicYearValidationSummary:
+      type: object
+      properties:
+        planned_workloads_count:
+          type: integer
+        distributions_count:
+          type: integer
+        year_staff_records_count:
+          type: integer
+        issues_count:
+          type: integer
+        errors_count:
+          type: integer
+        warnings_count:
+          type: integer
+        issues_by_type:
+          type: object
+          additionalProperties:
+            type: integer
+      required:
+      - distributions_count
+      - errors_count
+      - issues_by_type
+      - issues_count
+      - planned_workloads_count
+      - warnings_count
+      - year_staff_records_count
     ActionEnum:
       enum:
       - create
@@ -20995,6 +21300,38 @@ components:
       description: |-
         * `ru` - Русский
         * `uz` - O‘zbekcha
+    IssueTypeEnum:
+      enum:
+      - planned_without_distributions
+      - planned_partially_distributed
+      - planned_hours_exceeded
+      - planned_status_mismatch
+      - distribution_draft
+      - approval_data_missing
+      - approval_data_unexpected
+      - employment_archived
+      - employment_inactive
+      - non_teaching_position
+      - employment_department_mismatch
+      - year_staff_record_missing
+      - workload_norm_missing
+      - teacher_overloaded
+      type: string
+      description: |-
+        * `planned_without_distributions` - planned_without_distributions
+        * `planned_partially_distributed` - planned_partially_distributed
+        * `planned_hours_exceeded` - planned_hours_exceeded
+        * `planned_status_mismatch` - planned_status_mismatch
+        * `distribution_draft` - distribution_draft
+        * `approval_data_missing` - approval_data_missing
+        * `approval_data_unexpected` - approval_data_unexpected
+        * `employment_archived` - employment_archived
+        * `employment_inactive` - employment_inactive
+        * `non_teaching_position` - non_teaching_position
+        * `employment_department_mismatch` - employment_department_mismatch
+        * `year_staff_record_missing` - year_staff_record_missing
+        * `workload_norm_missing` - workload_norm_missing
+        * `teacher_overloaded` - teacher_overloaded
     LoadStatusEnum:
       enum:
       - underloaded
@@ -23645,6 +23982,14 @@ components:
       description: |-
         * `autumn` - Осенний
         * `spring` - Весенний
+    SeverityEnum:
+      enum:
+      - error
+      - warning
+      type: string
+      description: |-
+        * `error` - error
+        * `warning` - warning
     StaffEmployment:
       type: object
       description: Базовый сериализатор для моделей с полями аудита.
@@ -26712,29 +27057,6 @@ components:
       - code
       - name_ru
       - name_uz
-    WorkloadValidationIssue:
-      type: object
-      description: |-
-        Одна проблема, обнаруженная при проверке
-        нагрузки учебного года.
-      properties:
-        code:
-          type: string
-        message:
-          type: string
-        object_type:
-          type: string
-          nullable: true
-        object_id:
-          type: integer
-          nullable: true
-        details:
-          type: object
-          additionalProperties: {}
-          nullable: true
-      required:
-      - code
-      - message
   securitySchemes:
     jwtAuth:
       type: http
