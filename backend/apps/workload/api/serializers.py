@@ -200,6 +200,143 @@ class WorkloadDistributionSerializer(
 
         return attrs
 
+class WorkloadDistributionCreateSerializer(
+    serializers.ModelSerializer
+):
+    """
+    Создание распределения учебной нагрузки.
+    """
+
+    class Meta:
+        model = WorkloadDistribution
+        fields = (
+            "planned_workload",
+            "staff_employment",
+            "allocated_hours",
+            "notes",
+        )
+        extra_kwargs = {
+            "planned_workload": {
+                "required": True,
+                "help_text": (
+                    "ID плановой учебной нагрузки."
+                ),
+            },
+            "staff_employment": {
+                "required": True,
+                "help_text": (
+                    "ID трудового назначения "
+                    "преподавателя."
+                ),
+            },
+            "allocated_hours": {
+                "required": True,
+                "help_text": (
+                    "Количество часов, распределяемых "
+                    "преподавателю."
+                ),
+            },
+            "notes": {
+                "required": False,
+                "allow_blank": True,
+                "help_text": (
+                    "Необязательное примечание "
+                    "к распределению."
+                ),
+            },
+        }
+
+
+class WorkloadDistributionUpdateSerializer(
+    serializers.ModelSerializer
+):
+    """
+    Полное изменение распределения нагрузки.
+
+    Плановая нагрузка после создания не изменяется.
+    """
+
+    class Meta:
+        model = WorkloadDistribution
+        fields = (
+            "staff_employment",
+            "allocated_hours",
+            "notes",
+        )
+        extra_kwargs = {
+            "staff_employment": {
+                "required": True,
+                "help_text": (
+                    "ID трудового назначения "
+                    "преподавателя."
+                ),
+            },
+            "allocated_hours": {
+                "required": True,
+                "help_text": (
+                    "Новое количество распределённых "
+                    "часов."
+                ),
+            },
+            "notes": {
+                "required": False,
+                "allow_blank": True,
+                "help_text": (
+                    "Примечание к распределению."
+                ),
+            },
+        }
+
+
+class WorkloadDistributionPartialUpdateSerializer(
+    serializers.ModelSerializer
+):
+    """
+    Частичное изменение распределения нагрузки.
+    """
+
+    class Meta:
+        model = WorkloadDistribution
+        fields = (
+            "staff_employment",
+            "allocated_hours",
+            "notes",
+        )
+        extra_kwargs = {
+            "staff_employment": {
+                "required": False,
+                "help_text": (
+                    "Новое трудовое назначение "
+                    "преподавателя."
+                ),
+            },
+            "allocated_hours": {
+                "required": False,
+                "help_text": (
+                    "Новое количество распределённых "
+                    "часов."
+                ),
+            },
+            "notes": {
+                "required": False,
+                "allow_blank": True,
+                "help_text": (
+                    "Новое примечание."
+                ),
+            },
+        }
+
+
+class WorkloadDistributionArchiveRestoreResponseSerializer(
+    serializers.Serializer
+):
+    """
+    Результат восстановления распределения из архива.
+    """
+
+    detail = serializers.CharField()
+    data = WorkloadDistributionSerializer()
+
 class TeacherWorkloadSummarySerializer(
     serializers.Serializer
 ):

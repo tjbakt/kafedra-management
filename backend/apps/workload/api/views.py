@@ -18,6 +18,10 @@ from apps.workload.api.filters import (
 )
 from apps.workload.api.serializers import (
     WorkloadDistributionSerializer,
+    WorkloadDistributionCreateSerializer,
+    WorkloadDistributionUpdateSerializer,
+    WorkloadDistributionPartialUpdateSerializer,
+    WorkloadDistributionArchiveRestoreResponseSerializer,
     TeacherWorkloadSummarySerializer,
     DepartmentWorkloadSummarySerializer,
     WorkloadDashboardSerializer,
@@ -108,6 +112,10 @@ from apps.common.api.schema import (
     UNAUTHORIZED_RESPONSE,
     CONFLICT_RESPONSE,
 )
+from apps.common.api.schema_serializers import (
+    ArchiveResponseSerializer,
+)
+from django.shortcuts import get_object_or_404
 
 
 
@@ -143,6 +151,20 @@ class WorkloadDistributionViewSet(
         "-planned_workload__academic_year__start_year",
         "staff_employment__staff_member__last_name",
     )
+
+    def get_serializer_class(self):
+        if self.action == "create":
+            return WorkloadDistributionCreateSerializer
+
+        if self.action == "update":
+            return WorkloadDistributionUpdateSerializer
+
+        if self.action == "partial_update":
+            return (
+                WorkloadDistributionPartialUpdateSerializer
+            )
+
+        return WorkloadDistributionSerializer
 
     def get_queryset(self):
         queryset = WorkloadDistribution.objects.select_related(
@@ -245,7 +267,8 @@ class WorkloadDistributionViewSet(
                     distribution=self.get_object(),
                     staff_employment=(
                         serializer.validated_data.get(
-                            "staff_employment"
+                            "staff_employment",
+                            serializer.instance.staff_employment,
                         )
                     ),
                     allocated_hours=(
@@ -254,19 +277,433 @@ class WorkloadDistributionViewSet(
                             serializer.instance.allocated_hours,
                         )
                     ),
-                    notes=serializer.validated_data.get(
-                        "notes",
-                        serializer.instance.notes,
+                    notes=(
+                        serializer.validated_data.get(
+                            "notes",
+                            serializer.instance.notes,
+                        )
                     ),
                     user=self.request.user,
                 )
             )
         except DjangoValidationError as exc:
             raise ValidationError(
-                getattr(exc, "message_dict", exc.messages)
+                getattr(
+                    exc,
+                    "message_dict",
+                    exc.messages,
+                )
             ) from exc
 
         serializer.instance = distribution
+
+    @extend_schema(
+        tags=["Распределение нагрузки"],
+        summary="Получить список распределений",
+        description=(
+                "Возвращает доступные текущему пользователю "
+                "распределения учебной нагрузки. Поддерживает "
+                "фильтрацию, поиск, сортировку и пагинацию."
+        ),
+        responses={
+            200: WorkloadDistributionSerializer(
+                many=True
+            ),
+            401: UNAUTHORIZED_RESPONSE,
+            403: FORBIDDEN_RESPONSE,
+        },
+    )
+    def list(
+            self,
+            request,
+            *args,
+            **kwargs,
+    ):
+        return super().list(
+            request,
+            *args,
+            **kwargs,
+        )
+
+    @extend_schema(
+        tags=["Распределение нагрузки"],
+        summary="Получить распределение",
+        description=(
+                "Возвращает распределение учебной нагрузки "
+                "по ID с кадровыми, учебными и аудиторскими "
+                "полями."
+        ),
+        responses={
+            200: WorkloadDistributionSerializer,
+            401: UNAUTHORIZED_RESPONSE,
+            403: FORBIDDEN_RESPONSE,
+            404: NOT_FOUND_RESPONSE,
+        },
+    )
+    def retrieve(
+            self,
+            request,
+            *args,
+            **kwargs,
+    ):
+        return super().retrieve(
+            request,
+            *args,
+            **kwargs,
+        )
+
+    @extend_schema(
+        tags=["Распределение нагрузки"],
+        summary="Создать распределение",
+        description=(
+                "Распределяет часть плановой учебной "
+                "нагрузки преподавателю. Новое распределение "
+                "создаётся в статусе черновика."
+        ),
+        request=WorkloadDistributionCreateSerializer,
+        responses={
+            201: WorkloadDistributionSerializer,
+            400: BAD_REQUEST_RESPONSE,
+            401: UNAUTHORIZED_RESPONSE,
+            403: FORBIDDEN_RESPONSE,
+            409: CONFLICT_RESPONSE,
+        },
+        examples=[
+            OpenApiExample(
+                name="Создание распределения",
+                value={
+                    "planned_workload": 15,
+                    "staff_employment": 8,
+                    "allocated_hours": "36.00",
+                    "notes": (
+                            "Распределение лекционных часов."
+                    ),
+                },
+                request_only=True,
+            ),
+        ],
+    )
+    def create(
+            self,
+            request,
+            *args,
+            **kwargs,
+    ):
+        input_serializer = self.get_serializer(
+            data=request.data
+        )
+        input_serializer.is_valid(
+            raise_exception=True
+        )
+
+        self.perform_create(
+            input_serializer
+        )
+
+        output_serializer = (
+            WorkloadDistributionSerializer(
+                input_serializer.instance,
+                context=self.get_serializer_context(),
+            )
+        )
+
+        headers = self.get_success_headers(
+            output_serializer.data
+        )
+
+        return Response(
+            output_serializer.data,
+            status=status.HTTP_201_CREATED,
+            headers=headers,
+        )
+
+    @extend_schema(
+        tags=["Распределение нагрузки"],
+        summary="Полностью изменить распределение",
+        description=(
+                "Изменяет преподавателя, количество часов "
+                "и примечание чернового распределения. "
+                "Плановая нагрузка после создания "
+                "не изменяется."
+        ),
+        request=WorkloadDistributionUpdateSerializer,
+        responses={
+            200: WorkloadDistributionSerializer,
+            400: BAD_REQUEST_RESPONSE,
+            401: UNAUTHORIZED_RESPONSE,
+            403: FORBIDDEN_RESPONSE,
+            404: NOT_FOUND_RESPONSE,
+            409: CONFLICT_RESPONSE,
+        },
+        examples=[
+            OpenApiExample(
+                name="Полное обновление",
+                value={
+                    "staff_employment": 9,
+                    "allocated_hours": "42.00",
+                    "notes": (
+                            "Скорректировано распределение часов."
+                    ),
+                },
+                request_only=True,
+            ),
+        ],
+    )
+    def update(
+            self,
+            request,
+            *args,
+            **kwargs,
+    ):
+        partial = kwargs.pop(
+            "partial",
+            False,
+        )
+
+        instance = self.get_object()
+
+        input_serializer = self.get_serializer(
+            instance,
+            data=request.data,
+            partial=partial,
+        )
+        input_serializer.is_valid(
+            raise_exception=True
+        )
+
+        self.perform_update(
+            input_serializer
+        )
+
+        if getattr(
+                instance,
+                "_prefetched_objects_cache",
+                None,
+        ):
+            instance._prefetched_objects_cache = {}
+
+        output_serializer = (
+            WorkloadDistributionSerializer(
+                input_serializer.instance,
+                context=self.get_serializer_context(),
+            )
+        )
+
+        return Response(
+            output_serializer.data,
+            status=status.HTTP_200_OK,
+        )
+
+    @extend_schema(
+        tags=["Распределение нагрузки"],
+        summary="Частично изменить распределение",
+        description=(
+                "Частично изменяет преподавателя, "
+                "количество часов или примечание "
+                "чернового распределения."
+        ),
+        request=(
+                WorkloadDistributionPartialUpdateSerializer
+        ),
+        responses={
+            200: WorkloadDistributionSerializer,
+            400: BAD_REQUEST_RESPONSE,
+            401: UNAUTHORIZED_RESPONSE,
+            403: FORBIDDEN_RESPONSE,
+            404: NOT_FOUND_RESPONSE,
+            409: CONFLICT_RESPONSE,
+        },
+        examples=[
+            OpenApiExample(
+                name="Изменение количества часов",
+                value={
+                    "allocated_hours": "24.00",
+                },
+                request_only=True,
+            ),
+        ],
+    )
+    def partial_update(
+            self,
+            request,
+            *args,
+            **kwargs,
+    ):
+        kwargs["partial"] = True
+
+        return self.update(
+            request,
+            *args,
+            **kwargs,
+        )
+
+    @extend_schema(
+        tags=["Распределение нагрузки"],
+        summary="Архивировать распределение",
+        description=(
+                "Выполняет мягкое удаление распределения. "
+                "Запись сохраняется в базе данных и "
+                "перемещается в архив."
+        ),
+        request=None,
+        responses={
+            200: ArchiveResponseSerializer,
+            400: BAD_REQUEST_RESPONSE,
+            401: UNAUTHORIZED_RESPONSE,
+            403: FORBIDDEN_RESPONSE,
+            404: NOT_FOUND_RESPONSE,
+            409: CONFLICT_RESPONSE,
+        },
+    )
+    def destroy(
+            self,
+            request,
+            *args,
+            **kwargs,
+    ):
+        return super().destroy(
+            request,
+            *args,
+            **kwargs,
+        )
+
+    @extend_schema(
+        tags=["Распределение нагрузки"],
+        summary="Получить архивные распределения",
+        description=(
+                "Возвращает архивные распределения "
+                "учебной нагрузки с учётом области доступа, "
+                "фильтрации, поиска, сортировки "
+                "и пагинации."
+        ),
+        responses={
+            200: WorkloadDistributionSerializer(
+                many=True
+            ),
+            401: UNAUTHORIZED_RESPONSE,
+            403: FORBIDDEN_RESPONSE,
+        },
+    )
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="archived",
+    )
+    def archived(
+            self,
+            request,
+    ):
+        return super().archived(request)
+
+    @extend_schema(
+        tags=["Распределение нагрузки"],
+        summary=(
+                "Восстановить распределение из архива"
+        ),
+        description=(
+                "Восстанавливает мягко удалённое "
+                "распределение из архива. Этот endpoint "
+                "не меняет бизнес-статус распределения."
+        ),
+        request=None,
+        responses={
+            200: (
+                    WorkloadDistributionArchiveRestoreResponseSerializer
+            ),
+            400: BAD_REQUEST_RESPONSE,
+            401: UNAUTHORIZED_RESPONSE,
+            403: FORBIDDEN_RESPONSE,
+            404: NOT_FOUND_RESPONSE,
+            409: CONFLICT_RESPONSE,
+        },
+    )
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="restore-archived",
+    )
+    def restore_archived(
+            self,
+            request,
+            pk=None,
+    ):
+        queryset = (
+            self.get_archived_queryset()
+            .select_related(
+                "planned_workload",
+                "planned_workload__academic_year",
+                "planned_workload__academic_semester",
+                "planned_workload__teaching_department",
+                "planned_workload__teaching_stream",
+                (
+                    "planned_workload__teaching_stream__"
+                    "curriculum_discipline"
+                ),
+                (
+                    "planned_workload__teaching_stream__"
+                    "curriculum_discipline__discipline"
+                ),
+                "planned_workload__curriculum_workload",
+                (
+                    "planned_workload__curriculum_workload__"
+                    "workload_type"
+                ),
+                "staff_employment",
+                "staff_employment__staff_member",
+                "staff_employment__position",
+                "staff_employment__department",
+                "approved_by",
+            )
+        )
+
+        distribution = get_object_or_404(
+            queryset,
+            pk=pk,
+        )
+
+        self.check_object_permissions(
+            request,
+            distribution,
+        )
+
+        try:
+            WorkloadDistributionService.ensure_academic_year_open(
+                academic_year=(
+                    distribution
+                    .planned_workload
+                    .academic_year
+                )
+            )
+
+            distribution.restore(
+                user=request.user
+            )
+        except DjangoValidationError as exc:
+            raise ValidationError(
+                getattr(
+                    exc,
+                    "message_dict",
+                    exc.messages,
+                )
+            ) from exc
+
+        output_serializer = (
+            WorkloadDistributionSerializer(
+                distribution,
+                context=self.get_serializer_context(),
+            )
+        )
+
+        return Response(
+            {
+                "detail": (
+                    "Распределение восстановлено "
+                    "из архива."
+                ),
+                "data": output_serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
 
     @extend_schema(
         tags=["Распределение нагрузки"],
@@ -1722,15 +2159,16 @@ class WorkloadDistributionViewSet(
                 "partial_update",
                 "destroy",
                 "approve",
-                "return_to_draft",
                 "cancel",
                 "restore",
+                "restore_archived",
+                "return_to_draft",
                 "transfer",
                 "available_actions",
                 "approve_selected",
-                "return_selected_to_draft",
                 "cancel_selected",
                 "restore_selected",
+                "return_selected_to_draft",
         ):
             permission_classes = [
                 IsAuthenticated,
