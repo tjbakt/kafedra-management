@@ -102,7 +102,7 @@ from apps.staff.models import StaffEmployment
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import (
     OpenApiExample,
-    # OpenApiParameter,
+    OpenApiParameter,
     extend_schema,
 )
 from apps.common.api.schema import (
@@ -123,6 +123,168 @@ EXCEL_CONTENT_TYPE = (
     "application/vnd.openxmlformats-officedocument."
     "spreadsheetml.sheet"
 )
+
+WORKLOAD_DISTRIBUTION_LIST_PARAMETERS = [
+    OpenApiParameter(
+        name="academic_year",
+        type=OpenApiTypes.INT,
+        location=OpenApiParameter.QUERY,
+        required=False,
+        description="ID учебного года.",
+    ),
+    OpenApiParameter(
+        name="academic_semester",
+        type=OpenApiTypes.INT,
+        location=OpenApiParameter.QUERY,
+        required=False,
+        description=(
+            "ID семестра учебного года."
+        ),
+    ),
+    OpenApiParameter(
+        name="teaching_department",
+        type=OpenApiTypes.INT,
+        location=OpenApiParameter.QUERY,
+        required=False,
+        description=(
+            "ID кафедры плановой нагрузки."
+        ),
+    ),
+    OpenApiParameter(
+        name="faculty",
+        type=OpenApiTypes.INT,
+        location=OpenApiParameter.QUERY,
+        required=False,
+        description="ID факультета.",
+    ),
+    OpenApiParameter(
+        name="planned_workload",
+        type=OpenApiTypes.INT,
+        location=OpenApiParameter.QUERY,
+        required=False,
+        description=(
+            "ID плановой учебной нагрузки."
+        ),
+    ),
+    OpenApiParameter(
+        name="teaching_stream",
+        type=OpenApiTypes.INT,
+        location=OpenApiParameter.QUERY,
+        required=False,
+        description="ID учебного потока.",
+    ),
+    OpenApiParameter(
+        name="discipline",
+        type=OpenApiTypes.INT,
+        location=OpenApiParameter.QUERY,
+        required=False,
+        description="ID дисциплины.",
+    ),
+    OpenApiParameter(
+        name="workload_type",
+        type=OpenApiTypes.INT,
+        location=OpenApiParameter.QUERY,
+        required=False,
+        description="ID вида учебной нагрузки.",
+    ),
+    OpenApiParameter(
+        name="staff_member",
+        type=OpenApiTypes.INT,
+        location=OpenApiParameter.QUERY,
+        required=False,
+        description="ID преподавателя.",
+    ),
+    OpenApiParameter(
+        name="staff_employment",
+        type=OpenApiTypes.INT,
+        location=OpenApiParameter.QUERY,
+        required=False,
+        description=(
+            "ID трудового назначения "
+            "преподавателя."
+        ),
+    ),
+    OpenApiParameter(
+        name="position",
+        type=OpenApiTypes.INT,
+        location=OpenApiParameter.QUERY,
+        required=False,
+        description="ID должности.",
+    ),
+    OpenApiParameter(
+        name="status",
+        type=OpenApiTypes.STR,
+        location=OpenApiParameter.QUERY,
+        required=False,
+        enum=[
+            value
+            for value, _label
+            in WorkloadDistribution.Status.choices
+        ],
+        description=(
+            "Бизнес-статус распределения."
+        ),
+    ),
+    OpenApiParameter(
+        name="search",
+        type=OpenApiTypes.STR,
+        location=OpenApiParameter.QUERY,
+        required=False,
+        description=(
+            "Поиск по табельному номеру и ФИО "
+            "преподавателя, коду и названию потока, "
+            "а также названию дисциплины."
+        ),
+    ),
+    OpenApiParameter(
+        name="ordering",
+        type=OpenApiTypes.STR,
+        location=OpenApiParameter.QUERY,
+        required=False,
+        description=(
+            "Сортировка по одному или нескольким "
+            "полям через запятую. Разрешены: "
+            "allocated_hours, created_at, "
+            "staff_employment__staff_member__last_name, "
+            "planned_workload__academic_year__start_year. "
+            "Префикс '-' задаёт сортировку по убыванию."
+        ),
+        examples=[
+            OpenApiExample(
+                name="По часам по убыванию",
+                value="-allocated_hours",
+            ),
+            OpenApiExample(
+                name="Составная сортировка",
+                value=(
+                    "-planned_workload__"
+                    "academic_year__start_year,"
+                    "staff_employment__"
+                    "staff_member__last_name"
+                ),
+            ),
+        ],
+    ),
+    OpenApiParameter(
+        name="page",
+        type=OpenApiTypes.INT,
+        location=OpenApiParameter.QUERY,
+        required=False,
+        description=(
+            "Номер страницы. Минимальное значение — 1."
+        ),
+    ),
+    OpenApiParameter(
+        name="page_size",
+        type=OpenApiTypes.INT,
+        location=OpenApiParameter.QUERY,
+        required=False,
+        description=(
+            "Количество записей на странице. "
+            "По умолчанию 20, максимум 100."
+        ),
+    ),
+]
 
 class WorkloadDistributionViewSet(
     BaseArchiveModelViewSet
@@ -302,13 +464,21 @@ class WorkloadDistributionViewSet(
         summary="Получить список распределений",
         description=(
                 "Возвращает доступные текущему пользователю "
-                "распределения учебной нагрузки. Поддерживает "
-                "фильтрацию, поиск, сортировку и пагинацию."
+                "распределения учебной нагрузки.\n\n"
+                "Поддерживаются фильтрация, поиск по данным "
+                "преподавателя, потока и дисциплины, составная "
+                "сортировка и постраничный вывод.\n\n"
+                "Область данных дополнительно ограничивается "
+                "правами текущего пользователя."
+        ),
+        parameters=(
+                WORKLOAD_DISTRIBUTION_LIST_PARAMETERS
         ),
         responses={
             200: WorkloadDistributionSerializer(
                 many=True
             ),
+            400: BAD_REQUEST_RESPONSE,
             401: UNAUTHORIZED_RESPONSE,
             403: FORBIDDEN_RESPONSE,
         },
@@ -571,15 +741,20 @@ class WorkloadDistributionViewSet(
         tags=["Распределение нагрузки"],
         summary="Получить архивные распределения",
         description=(
-                "Возвращает архивные распределения "
-                "учебной нагрузки с учётом области доступа, "
-                "фильтрации, поиска, сортировки "
-                "и пагинации."
+                "Возвращает мягко удалённые распределения "
+                "учебной нагрузки.\n\n"
+                "Поддерживаются те же фильтры, поиск, "
+                "сортировка и пагинация, что и для основного "
+                "списка распределений."
+        ),
+        parameters=(
+                WORKLOAD_DISTRIBUTION_LIST_PARAMETERS
         ),
         responses={
             200: WorkloadDistributionSerializer(
                 many=True
             ),
+            400: BAD_REQUEST_RESPONSE,
             401: UNAUTHORIZED_RESPONSE,
             403: FORBIDDEN_RESPONSE,
         },

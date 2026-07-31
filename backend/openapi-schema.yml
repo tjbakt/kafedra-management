@@ -15099,91 +15099,109 @@ paths:
   /api/v1/workload/distributions/:
     get:
       operationId: workload_distributions_list
-      description: Возвращает доступные текущему пользователю распределения учебной
-        нагрузки. Поддерживает фильтрацию, поиск, сортировку и пагинацию.
+      description: |-
+        Возвращает доступные текущему пользователю распределения учебной нагрузки.
+
+        Поддерживаются фильтрация, поиск по данным преподавателя, потока и дисциплины, составная сортировка и постраничный вывод.
+
+        Область данных дополнительно ограничивается правами текущего пользователя.
       summary: Получить список распределений
       parameters:
       - in: query
         name: academic_semester
         schema:
-          type: number
+          type: integer
+        description: ID семестра учебного года.
       - in: query
         name: academic_year
         schema:
-          type: number
+          type: integer
+        description: ID учебного года.
       - in: query
         name: discipline
         schema:
-          type: number
+          type: integer
+        description: ID дисциплины.
       - in: query
         name: faculty
         schema:
-          type: number
-      - name: ordering
-        required: false
-        in: query
-        description: Which field to use when ordering the results.
+          type: integer
+        description: ID факультета.
+      - in: query
+        name: ordering
         schema:
           type: string
-      - name: page
-        required: false
-        in: query
-        description: A page number within the paginated result set.
+        description: 'Сортировка по одному или нескольким полям через запятую. Разрешены:
+          allocated_hours, created_at, staff_employment__staff_member__last_name,
+          planned_workload__academic_year__start_year. Префикс ''-'' задаёт сортировку
+          по убыванию.'
+        examples:
+          ПоЧасамПоУбыванию:
+            value: -allocated_hours
+            summary: По часам по убыванию
+          СоставнаяСортировка:
+            value: -planned_workload__academic_year__start_year,staff_employment__staff_member__last_name
+            summary: Составная сортировка
+      - in: query
+        name: page
         schema:
           type: integer
-      - name: page_size
-        required: false
-        in: query
-        description: Number of results to return per page.
+        description: Номер страницы. Минимальное значение — 1.
+      - in: query
+        name: page_size
         schema:
           type: integer
+        description: Количество записей на странице. По умолчанию 20, максимум 100.
       - in: query
         name: planned_workload
         schema:
-          type: number
+          type: integer
+        description: ID плановой учебной нагрузки.
       - in: query
         name: position
         schema:
-          type: number
-      - name: search
-        required: false
-        in: query
-        description: A search term.
+          type: integer
+        description: ID должности.
+      - in: query
+        name: search
         schema:
           type: string
+        description: Поиск по табельному номеру и ФИО преподавателя, коду и названию
+          потока, а также названию дисциплины.
       - in: query
         name: staff_employment
         schema:
-          type: number
+          type: integer
+        description: ID трудового назначения преподавателя.
       - in: query
         name: staff_member
         schema:
-          type: number
+          type: integer
+        description: ID преподавателя.
       - in: query
         name: status
         schema:
           type: string
-          title: Статус
           enum:
           - approved
           - cancelled
           - draft
-        description: |-
-          * `draft` - Черновик
-          * `approved` - Утверждено
-          * `cancelled` - Отменено
+        description: Бизнес-статус распределения.
       - in: query
         name: teaching_department
         schema:
-          type: number
+          type: integer
+        description: ID кафедры плановой нагрузки.
       - in: query
         name: teaching_stream
         schema:
-          type: number
+          type: integer
+        description: ID учебного потока.
       - in: query
         name: workload_type
         schema:
-          type: number
+          type: integer
+        description: ID вида учебной нагрузки.
       tags:
       - Распределение нагрузки
       security:
@@ -15195,6 +15213,26 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginatedWorkloadDistributionList'
           description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                ОшибкаВалидации:
+                  value:
+                    success: false
+                    status_code: 400
+                    error:
+                      code: validation_error
+                      message: Ошибка проверки данных.
+                      fields:
+                        name:
+                        - message: Это поле обязательно.
+                          code: required
+                      details: null
+                  summary: Ошибка валидации
+          description: Ошибка проверки данных.
         '401':
           content:
             application/json:
@@ -16714,91 +16752,107 @@ paths:
   /api/v1/workload/distributions/archived/:
     get:
       operationId: workload_distributions_archived_list
-      description: Возвращает архивные распределения учебной нагрузки с учётом области
-        доступа, фильтрации, поиска, сортировки и пагинации.
+      description: |-
+        Возвращает мягко удалённые распределения учебной нагрузки.
+
+        Поддерживаются те же фильтры, поиск, сортировка и пагинация, что и для основного списка распределений.
       summary: Получить архивные распределения
       parameters:
       - in: query
         name: academic_semester
         schema:
-          type: number
+          type: integer
+        description: ID семестра учебного года.
       - in: query
         name: academic_year
         schema:
-          type: number
+          type: integer
+        description: ID учебного года.
       - in: query
         name: discipline
         schema:
-          type: number
+          type: integer
+        description: ID дисциплины.
       - in: query
         name: faculty
         schema:
-          type: number
-      - name: ordering
-        required: false
-        in: query
-        description: Which field to use when ordering the results.
+          type: integer
+        description: ID факультета.
+      - in: query
+        name: ordering
         schema:
           type: string
-      - name: page
-        required: false
-        in: query
-        description: A page number within the paginated result set.
+        description: 'Сортировка по одному или нескольким полям через запятую. Разрешены:
+          allocated_hours, created_at, staff_employment__staff_member__last_name,
+          planned_workload__academic_year__start_year. Префикс ''-'' задаёт сортировку
+          по убыванию.'
+        examples:
+          ПоЧасамПоУбыванию:
+            value: -allocated_hours
+            summary: По часам по убыванию
+          СоставнаяСортировка:
+            value: -planned_workload__academic_year__start_year,staff_employment__staff_member__last_name
+            summary: Составная сортировка
+      - in: query
+        name: page
         schema:
           type: integer
-      - name: page_size
-        required: false
-        in: query
-        description: Number of results to return per page.
+        description: Номер страницы. Минимальное значение — 1.
+      - in: query
+        name: page_size
         schema:
           type: integer
+        description: Количество записей на странице. По умолчанию 20, максимум 100.
       - in: query
         name: planned_workload
         schema:
-          type: number
+          type: integer
+        description: ID плановой учебной нагрузки.
       - in: query
         name: position
         schema:
-          type: number
-      - name: search
-        required: false
-        in: query
-        description: A search term.
+          type: integer
+        description: ID должности.
+      - in: query
+        name: search
         schema:
           type: string
+        description: Поиск по табельному номеру и ФИО преподавателя, коду и названию
+          потока, а также названию дисциплины.
       - in: query
         name: staff_employment
         schema:
-          type: number
+          type: integer
+        description: ID трудового назначения преподавателя.
       - in: query
         name: staff_member
         schema:
-          type: number
+          type: integer
+        description: ID преподавателя.
       - in: query
         name: status
         schema:
           type: string
-          title: Статус
           enum:
           - approved
           - cancelled
           - draft
-        description: |-
-          * `draft` - Черновик
-          * `approved` - Утверждено
-          * `cancelled` - Отменено
+        description: Бизнес-статус распределения.
       - in: query
         name: teaching_department
         schema:
-          type: number
+          type: integer
+        description: ID кафедры плановой нагрузки.
       - in: query
         name: teaching_stream
         schema:
-          type: number
+          type: integer
+        description: ID учебного потока.
       - in: query
         name: workload_type
         schema:
-          type: number
+          type: integer
+        description: ID вида учебной нагрузки.
       tags:
       - Распределение нагрузки
       security:
@@ -16810,6 +16864,26 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginatedWorkloadDistributionList'
           description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                ОшибкаВалидации:
+                  value:
+                    success: false
+                    status_code: 400
+                    error:
+                      code: validation_error
+                      message: Ошибка проверки данных.
+                      fields:
+                        name:
+                        - message: Это поле обязательно.
+                          code: required
+                      details: null
+                  summary: Ошибка валидации
+          description: Ошибка проверки данных.
         '401':
           content:
             application/json:
@@ -17205,10 +17279,12 @@ paths:
         name: discipline
         schema:
           type: number
+        description: Фильтр по ID дисциплины.
       - in: query
         name: faculty
         schema:
           type: number
+        description: Фильтр по ID факультета.
       - name: ordering
         required: false
         in: query
@@ -17231,10 +17307,12 @@ paths:
         name: planned_workload
         schema:
           type: number
+        description: Фильтр по ID плановой учебной нагрузки.
       - in: query
         name: position
         schema:
           type: number
+        description: Фильтр по ID должности.
       - name: search
         required: false
         in: query
@@ -17245,10 +17323,12 @@ paths:
         name: staff_employment
         schema:
           type: number
+        description: Фильтр по ID трудового назначения преподавателя.
       - in: query
         name: staff_member
         schema:
           type: number
+        description: Фильтр по ID преподавателя.
       - in: query
         name: status
         schema:
@@ -17259,6 +17339,8 @@ paths:
           - cancelled
           - draft
         description: |-
+          Фильтр по бизнес-статусу распределения.
+
           * `draft` - Черновик
           * `approved` - Утверждено
           * `cancelled` - Отменено
@@ -17266,14 +17348,17 @@ paths:
         name: teaching_department
         schema:
           type: number
+        description: Фильтр по ID кафедры, за которой закреплена плановая нагрузка.
       - in: query
         name: teaching_stream
         schema:
           type: number
+        description: Фильтр по ID учебного потока.
       - in: query
         name: workload_type
         schema:
           type: number
+        description: Фильтр по ID вида нагрузки.
       tags:
       - Сводки нагрузки
       security:
@@ -17723,6 +17808,7 @@ paths:
         name: academic_semester
         schema:
           type: number
+        description: Фильтр по ID семестра учебного года.
       - in: query
         name: academic_year
         schema:
@@ -17740,10 +17826,12 @@ paths:
         name: discipline
         schema:
           type: number
+        description: Фильтр по ID дисциплины.
       - in: query
         name: faculty
         schema:
           type: number
+        description: Фильтр по ID факультета.
       - name: ordering
         required: false
         in: query
@@ -17766,10 +17854,12 @@ paths:
         name: planned_workload
         schema:
           type: number
+        description: Фильтр по ID плановой учебной нагрузки.
       - in: query
         name: position
         schema:
           type: number
+        description: Фильтр по ID должности.
       - name: search
         required: false
         in: query
@@ -17780,6 +17870,7 @@ paths:
         name: staff_employment
         schema:
           type: number
+        description: Фильтр по ID трудового назначения преподавателя.
       - in: query
         name: staff_member
         schema:
@@ -17797,6 +17888,8 @@ paths:
           - cancelled
           - draft
         description: |-
+          Фильтр по бизнес-статусу распределения.
+
           * `draft` - Черновик
           * `approved` - Утверждено
           * `cancelled` - Отменено
@@ -17804,14 +17897,17 @@ paths:
         name: teaching_department
         schema:
           type: number
+        description: Фильтр по ID кафедры, за которой закреплена плановая нагрузка.
       - in: query
         name: teaching_stream
         schema:
           type: number
+        description: Фильтр по ID учебного потока.
       - in: query
         name: workload_type
         schema:
           type: number
+        description: Фильтр по ID вида нагрузки.
       tags:
       - Сводки нагрузки
       security:
@@ -22056,21 +22152,41 @@ components:
       type: object
       required:
       - count
+      - page
+      - page_size
+      - total_pages
       - results
       properties:
         count:
           type: integer
-          example: 123
+          example: 125
+          description: Общее количество записей.
+        page:
+          type: integer
+          example: 2
+          description: Номер текущей страницы.
+        page_size:
+          type: integer
+          example: 20
+          minimum: 1
+          maximum: 100
+          description: Количество записей на текущей странице.
+        total_pages:
+          type: integer
+          example: 7
+          description: Общее количество страниц.
         next:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=4
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=3&page_size=20
+          description: Ссылка на следующую страницу.
         previous:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=2
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=1&page_size=20
+          description: Ссылка на предыдущую страницу.
         results:
           type: array
           items:
@@ -22079,21 +22195,41 @@ components:
       type: object
       required:
       - count
+      - page
+      - page_size
+      - total_pages
       - results
       properties:
         count:
           type: integer
-          example: 123
+          example: 125
+          description: Общее количество записей.
+        page:
+          type: integer
+          example: 2
+          description: Номер текущей страницы.
+        page_size:
+          type: integer
+          example: 20
+          minimum: 1
+          maximum: 100
+          description: Количество записей на текущей странице.
+        total_pages:
+          type: integer
+          example: 7
+          description: Общее количество страниц.
         next:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=4
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=3&page_size=20
+          description: Ссылка на следующую страницу.
         previous:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=2
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=1&page_size=20
+          description: Ссылка на предыдущую страницу.
         results:
           type: array
           items:
@@ -22102,21 +22238,41 @@ components:
       type: object
       required:
       - count
+      - page
+      - page_size
+      - total_pages
       - results
       properties:
         count:
           type: integer
-          example: 123
+          example: 125
+          description: Общее количество записей.
+        page:
+          type: integer
+          example: 2
+          description: Номер текущей страницы.
+        page_size:
+          type: integer
+          example: 20
+          minimum: 1
+          maximum: 100
+          description: Количество записей на текущей странице.
+        total_pages:
+          type: integer
+          example: 7
+          description: Общее количество страниц.
         next:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=4
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=3&page_size=20
+          description: Ссылка на следующую страницу.
         previous:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=2
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=1&page_size=20
+          description: Ссылка на предыдущую страницу.
         results:
           type: array
           items:
@@ -22125,21 +22281,41 @@ components:
       type: object
       required:
       - count
+      - page
+      - page_size
+      - total_pages
       - results
       properties:
         count:
           type: integer
-          example: 123
+          example: 125
+          description: Общее количество записей.
+        page:
+          type: integer
+          example: 2
+          description: Номер текущей страницы.
+        page_size:
+          type: integer
+          example: 20
+          minimum: 1
+          maximum: 100
+          description: Количество записей на текущей странице.
+        total_pages:
+          type: integer
+          example: 7
+          description: Общее количество страниц.
         next:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=4
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=3&page_size=20
+          description: Ссылка на следующую страницу.
         previous:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=2
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=1&page_size=20
+          description: Ссылка на предыдущую страницу.
         results:
           type: array
           items:
@@ -22148,21 +22324,41 @@ components:
       type: object
       required:
       - count
+      - page
+      - page_size
+      - total_pages
       - results
       properties:
         count:
           type: integer
-          example: 123
+          example: 125
+          description: Общее количество записей.
+        page:
+          type: integer
+          example: 2
+          description: Номер текущей страницы.
+        page_size:
+          type: integer
+          example: 20
+          minimum: 1
+          maximum: 100
+          description: Количество записей на текущей странице.
+        total_pages:
+          type: integer
+          example: 7
+          description: Общее количество страниц.
         next:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=4
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=3&page_size=20
+          description: Ссылка на следующую страницу.
         previous:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=2
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=1&page_size=20
+          description: Ссылка на предыдущую страницу.
         results:
           type: array
           items:
@@ -22171,21 +22367,41 @@ components:
       type: object
       required:
       - count
+      - page
+      - page_size
+      - total_pages
       - results
       properties:
         count:
           type: integer
-          example: 123
+          example: 125
+          description: Общее количество записей.
+        page:
+          type: integer
+          example: 2
+          description: Номер текущей страницы.
+        page_size:
+          type: integer
+          example: 20
+          minimum: 1
+          maximum: 100
+          description: Количество записей на текущей странице.
+        total_pages:
+          type: integer
+          example: 7
+          description: Общее количество страниц.
         next:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=4
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=3&page_size=20
+          description: Ссылка на следующую страницу.
         previous:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=2
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=1&page_size=20
+          description: Ссылка на предыдущую страницу.
         results:
           type: array
           items:
@@ -22194,21 +22410,41 @@ components:
       type: object
       required:
       - count
+      - page
+      - page_size
+      - total_pages
       - results
       properties:
         count:
           type: integer
-          example: 123
+          example: 125
+          description: Общее количество записей.
+        page:
+          type: integer
+          example: 2
+          description: Номер текущей страницы.
+        page_size:
+          type: integer
+          example: 20
+          minimum: 1
+          maximum: 100
+          description: Количество записей на текущей странице.
+        total_pages:
+          type: integer
+          example: 7
+          description: Общее количество страниц.
         next:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=4
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=3&page_size=20
+          description: Ссылка на следующую страницу.
         previous:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=2
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=1&page_size=20
+          description: Ссылка на предыдущую страницу.
         results:
           type: array
           items:
@@ -22217,21 +22453,41 @@ components:
       type: object
       required:
       - count
+      - page
+      - page_size
+      - total_pages
       - results
       properties:
         count:
           type: integer
-          example: 123
+          example: 125
+          description: Общее количество записей.
+        page:
+          type: integer
+          example: 2
+          description: Номер текущей страницы.
+        page_size:
+          type: integer
+          example: 20
+          minimum: 1
+          maximum: 100
+          description: Количество записей на текущей странице.
+        total_pages:
+          type: integer
+          example: 7
+          description: Общее количество страниц.
         next:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=4
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=3&page_size=20
+          description: Ссылка на следующую страницу.
         previous:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=2
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=1&page_size=20
+          description: Ссылка на предыдущую страницу.
         results:
           type: array
           items:
@@ -22240,21 +22496,41 @@ components:
       type: object
       required:
       - count
+      - page
+      - page_size
+      - total_pages
       - results
       properties:
         count:
           type: integer
-          example: 123
+          example: 125
+          description: Общее количество записей.
+        page:
+          type: integer
+          example: 2
+          description: Номер текущей страницы.
+        page_size:
+          type: integer
+          example: 20
+          minimum: 1
+          maximum: 100
+          description: Количество записей на текущей странице.
+        total_pages:
+          type: integer
+          example: 7
+          description: Общее количество страниц.
         next:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=4
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=3&page_size=20
+          description: Ссылка на следующую страницу.
         previous:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=2
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=1&page_size=20
+          description: Ссылка на предыдущую страницу.
         results:
           type: array
           items:
@@ -22263,21 +22539,41 @@ components:
       type: object
       required:
       - count
+      - page
+      - page_size
+      - total_pages
       - results
       properties:
         count:
           type: integer
-          example: 123
+          example: 125
+          description: Общее количество записей.
+        page:
+          type: integer
+          example: 2
+          description: Номер текущей страницы.
+        page_size:
+          type: integer
+          example: 20
+          minimum: 1
+          maximum: 100
+          description: Количество записей на текущей странице.
+        total_pages:
+          type: integer
+          example: 7
+          description: Общее количество страниц.
         next:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=4
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=3&page_size=20
+          description: Ссылка на следующую страницу.
         previous:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=2
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=1&page_size=20
+          description: Ссылка на предыдущую страницу.
         results:
           type: array
           items:
@@ -22286,21 +22582,41 @@ components:
       type: object
       required:
       - count
+      - page
+      - page_size
+      - total_pages
       - results
       properties:
         count:
           type: integer
-          example: 123
+          example: 125
+          description: Общее количество записей.
+        page:
+          type: integer
+          example: 2
+          description: Номер текущей страницы.
+        page_size:
+          type: integer
+          example: 20
+          minimum: 1
+          maximum: 100
+          description: Количество записей на текущей странице.
+        total_pages:
+          type: integer
+          example: 7
+          description: Общее количество страниц.
         next:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=4
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=3&page_size=20
+          description: Ссылка на следующую страницу.
         previous:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=2
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=1&page_size=20
+          description: Ссылка на предыдущую страницу.
         results:
           type: array
           items:
@@ -22309,21 +22625,41 @@ components:
       type: object
       required:
       - count
+      - page
+      - page_size
+      - total_pages
       - results
       properties:
         count:
           type: integer
-          example: 123
+          example: 125
+          description: Общее количество записей.
+        page:
+          type: integer
+          example: 2
+          description: Номер текущей страницы.
+        page_size:
+          type: integer
+          example: 20
+          minimum: 1
+          maximum: 100
+          description: Количество записей на текущей странице.
+        total_pages:
+          type: integer
+          example: 7
+          description: Общее количество страниц.
         next:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=4
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=3&page_size=20
+          description: Ссылка на следующую страницу.
         previous:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=2
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=1&page_size=20
+          description: Ссылка на предыдущую страницу.
         results:
           type: array
           items:
@@ -22332,21 +22668,41 @@ components:
       type: object
       required:
       - count
+      - page
+      - page_size
+      - total_pages
       - results
       properties:
         count:
           type: integer
-          example: 123
+          example: 125
+          description: Общее количество записей.
+        page:
+          type: integer
+          example: 2
+          description: Номер текущей страницы.
+        page_size:
+          type: integer
+          example: 20
+          minimum: 1
+          maximum: 100
+          description: Количество записей на текущей странице.
+        total_pages:
+          type: integer
+          example: 7
+          description: Общее количество страниц.
         next:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=4
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=3&page_size=20
+          description: Ссылка на следующую страницу.
         previous:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=2
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=1&page_size=20
+          description: Ссылка на предыдущую страницу.
         results:
           type: array
           items:
@@ -22355,21 +22711,41 @@ components:
       type: object
       required:
       - count
+      - page
+      - page_size
+      - total_pages
       - results
       properties:
         count:
           type: integer
-          example: 123
+          example: 125
+          description: Общее количество записей.
+        page:
+          type: integer
+          example: 2
+          description: Номер текущей страницы.
+        page_size:
+          type: integer
+          example: 20
+          minimum: 1
+          maximum: 100
+          description: Количество записей на текущей странице.
+        total_pages:
+          type: integer
+          example: 7
+          description: Общее количество страниц.
         next:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=4
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=3&page_size=20
+          description: Ссылка на следующую страницу.
         previous:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=2
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=1&page_size=20
+          description: Ссылка на предыдущую страницу.
         results:
           type: array
           items:
@@ -22378,21 +22754,41 @@ components:
       type: object
       required:
       - count
+      - page
+      - page_size
+      - total_pages
       - results
       properties:
         count:
           type: integer
-          example: 123
+          example: 125
+          description: Общее количество записей.
+        page:
+          type: integer
+          example: 2
+          description: Номер текущей страницы.
+        page_size:
+          type: integer
+          example: 20
+          minimum: 1
+          maximum: 100
+          description: Количество записей на текущей странице.
+        total_pages:
+          type: integer
+          example: 7
+          description: Общее количество страниц.
         next:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=4
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=3&page_size=20
+          description: Ссылка на следующую страницу.
         previous:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=2
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=1&page_size=20
+          description: Ссылка на предыдущую страницу.
         results:
           type: array
           items:
@@ -22401,21 +22797,41 @@ components:
       type: object
       required:
       - count
+      - page
+      - page_size
+      - total_pages
       - results
       properties:
         count:
           type: integer
-          example: 123
+          example: 125
+          description: Общее количество записей.
+        page:
+          type: integer
+          example: 2
+          description: Номер текущей страницы.
+        page_size:
+          type: integer
+          example: 20
+          minimum: 1
+          maximum: 100
+          description: Количество записей на текущей странице.
+        total_pages:
+          type: integer
+          example: 7
+          description: Общее количество страниц.
         next:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=4
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=3&page_size=20
+          description: Ссылка на следующую страницу.
         previous:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=2
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=1&page_size=20
+          description: Ссылка на предыдущую страницу.
         results:
           type: array
           items:
@@ -22424,21 +22840,41 @@ components:
       type: object
       required:
       - count
+      - page
+      - page_size
+      - total_pages
       - results
       properties:
         count:
           type: integer
-          example: 123
+          example: 125
+          description: Общее количество записей.
+        page:
+          type: integer
+          example: 2
+          description: Номер текущей страницы.
+        page_size:
+          type: integer
+          example: 20
+          minimum: 1
+          maximum: 100
+          description: Количество записей на текущей странице.
+        total_pages:
+          type: integer
+          example: 7
+          description: Общее количество страниц.
         next:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=4
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=3&page_size=20
+          description: Ссылка на следующую страницу.
         previous:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=2
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=1&page_size=20
+          description: Ссылка на предыдущую страницу.
         results:
           type: array
           items:
@@ -22447,21 +22883,41 @@ components:
       type: object
       required:
       - count
+      - page
+      - page_size
+      - total_pages
       - results
       properties:
         count:
           type: integer
-          example: 123
+          example: 125
+          description: Общее количество записей.
+        page:
+          type: integer
+          example: 2
+          description: Номер текущей страницы.
+        page_size:
+          type: integer
+          example: 20
+          minimum: 1
+          maximum: 100
+          description: Количество записей на текущей странице.
+        total_pages:
+          type: integer
+          example: 7
+          description: Общее количество страниц.
         next:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=4
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=3&page_size=20
+          description: Ссылка на следующую страницу.
         previous:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=2
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=1&page_size=20
+          description: Ссылка на предыдущую страницу.
         results:
           type: array
           items:
@@ -22470,21 +22926,41 @@ components:
       type: object
       required:
       - count
+      - page
+      - page_size
+      - total_pages
       - results
       properties:
         count:
           type: integer
-          example: 123
+          example: 125
+          description: Общее количество записей.
+        page:
+          type: integer
+          example: 2
+          description: Номер текущей страницы.
+        page_size:
+          type: integer
+          example: 20
+          minimum: 1
+          maximum: 100
+          description: Количество записей на текущей странице.
+        total_pages:
+          type: integer
+          example: 7
+          description: Общее количество страниц.
         next:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=4
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=3&page_size=20
+          description: Ссылка на следующую страницу.
         previous:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=2
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=1&page_size=20
+          description: Ссылка на предыдущую страницу.
         results:
           type: array
           items:
@@ -22493,21 +22969,41 @@ components:
       type: object
       required:
       - count
+      - page
+      - page_size
+      - total_pages
       - results
       properties:
         count:
           type: integer
-          example: 123
+          example: 125
+          description: Общее количество записей.
+        page:
+          type: integer
+          example: 2
+          description: Номер текущей страницы.
+        page_size:
+          type: integer
+          example: 20
+          minimum: 1
+          maximum: 100
+          description: Количество записей на текущей странице.
+        total_pages:
+          type: integer
+          example: 7
+          description: Общее количество страниц.
         next:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=4
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=3&page_size=20
+          description: Ссылка на следующую страницу.
         previous:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=2
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=1&page_size=20
+          description: Ссылка на предыдущую страницу.
         results:
           type: array
           items:
@@ -22516,21 +23012,41 @@ components:
       type: object
       required:
       - count
+      - page
+      - page_size
+      - total_pages
       - results
       properties:
         count:
           type: integer
-          example: 123
+          example: 125
+          description: Общее количество записей.
+        page:
+          type: integer
+          example: 2
+          description: Номер текущей страницы.
+        page_size:
+          type: integer
+          example: 20
+          minimum: 1
+          maximum: 100
+          description: Количество записей на текущей странице.
+        total_pages:
+          type: integer
+          example: 7
+          description: Общее количество страниц.
         next:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=4
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=3&page_size=20
+          description: Ссылка на следующую страницу.
         previous:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=2
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=1&page_size=20
+          description: Ссылка на предыдущую страницу.
         results:
           type: array
           items:
@@ -22539,21 +23055,41 @@ components:
       type: object
       required:
       - count
+      - page
+      - page_size
+      - total_pages
       - results
       properties:
         count:
           type: integer
-          example: 123
+          example: 125
+          description: Общее количество записей.
+        page:
+          type: integer
+          example: 2
+          description: Номер текущей страницы.
+        page_size:
+          type: integer
+          example: 20
+          minimum: 1
+          maximum: 100
+          description: Количество записей на текущей странице.
+        total_pages:
+          type: integer
+          example: 7
+          description: Общее количество страниц.
         next:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=4
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=3&page_size=20
+          description: Ссылка на следующую страницу.
         previous:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=2
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=1&page_size=20
+          description: Ссылка на предыдущую страницу.
         results:
           type: array
           items:
@@ -22562,21 +23098,41 @@ components:
       type: object
       required:
       - count
+      - page
+      - page_size
+      - total_pages
       - results
       properties:
         count:
           type: integer
-          example: 123
+          example: 125
+          description: Общее количество записей.
+        page:
+          type: integer
+          example: 2
+          description: Номер текущей страницы.
+        page_size:
+          type: integer
+          example: 20
+          minimum: 1
+          maximum: 100
+          description: Количество записей на текущей странице.
+        total_pages:
+          type: integer
+          example: 7
+          description: Общее количество страниц.
         next:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=4
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=3&page_size=20
+          description: Ссылка на следующую страницу.
         previous:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=2
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=1&page_size=20
+          description: Ссылка на предыдущую страницу.
         results:
           type: array
           items:
@@ -22585,21 +23141,41 @@ components:
       type: object
       required:
       - count
+      - page
+      - page_size
+      - total_pages
       - results
       properties:
         count:
           type: integer
-          example: 123
+          example: 125
+          description: Общее количество записей.
+        page:
+          type: integer
+          example: 2
+          description: Номер текущей страницы.
+        page_size:
+          type: integer
+          example: 20
+          minimum: 1
+          maximum: 100
+          description: Количество записей на текущей странице.
+        total_pages:
+          type: integer
+          example: 7
+          description: Общее количество страниц.
         next:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=4
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=3&page_size=20
+          description: Ссылка на следующую страницу.
         previous:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=2
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=1&page_size=20
+          description: Ссылка на предыдущую страницу.
         results:
           type: array
           items:
@@ -22608,21 +23184,41 @@ components:
       type: object
       required:
       - count
+      - page
+      - page_size
+      - total_pages
       - results
       properties:
         count:
           type: integer
-          example: 123
+          example: 125
+          description: Общее количество записей.
+        page:
+          type: integer
+          example: 2
+          description: Номер текущей страницы.
+        page_size:
+          type: integer
+          example: 20
+          minimum: 1
+          maximum: 100
+          description: Количество записей на текущей странице.
+        total_pages:
+          type: integer
+          example: 7
+          description: Общее количество страниц.
         next:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=4
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=3&page_size=20
+          description: Ссылка на следующую страницу.
         previous:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=2
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=1&page_size=20
+          description: Ссылка на предыдущую страницу.
         results:
           type: array
           items:
@@ -22631,21 +23227,41 @@ components:
       type: object
       required:
       - count
+      - page
+      - page_size
+      - total_pages
       - results
       properties:
         count:
           type: integer
-          example: 123
+          example: 125
+          description: Общее количество записей.
+        page:
+          type: integer
+          example: 2
+          description: Номер текущей страницы.
+        page_size:
+          type: integer
+          example: 20
+          minimum: 1
+          maximum: 100
+          description: Количество записей на текущей странице.
+        total_pages:
+          type: integer
+          example: 7
+          description: Общее количество страниц.
         next:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=4
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=3&page_size=20
+          description: Ссылка на следующую страницу.
         previous:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=2
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=1&page_size=20
+          description: Ссылка на предыдущую страницу.
         results:
           type: array
           items:
@@ -22654,21 +23270,41 @@ components:
       type: object
       required:
       - count
+      - page
+      - page_size
+      - total_pages
       - results
       properties:
         count:
           type: integer
-          example: 123
+          example: 125
+          description: Общее количество записей.
+        page:
+          type: integer
+          example: 2
+          description: Номер текущей страницы.
+        page_size:
+          type: integer
+          example: 20
+          minimum: 1
+          maximum: 100
+          description: Количество записей на текущей странице.
+        total_pages:
+          type: integer
+          example: 7
+          description: Общее количество страниц.
         next:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=4
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=3&page_size=20
+          description: Ссылка на следующую страницу.
         previous:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=2
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=1&page_size=20
+          description: Ссылка на предыдущую страницу.
         results:
           type: array
           items:
@@ -22677,21 +23313,41 @@ components:
       type: object
       required:
       - count
+      - page
+      - page_size
+      - total_pages
       - results
       properties:
         count:
           type: integer
-          example: 123
+          example: 125
+          description: Общее количество записей.
+        page:
+          type: integer
+          example: 2
+          description: Номер текущей страницы.
+        page_size:
+          type: integer
+          example: 20
+          minimum: 1
+          maximum: 100
+          description: Количество записей на текущей странице.
+        total_pages:
+          type: integer
+          example: 7
+          description: Общее количество страниц.
         next:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=4
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=3&page_size=20
+          description: Ссылка на следующую страницу.
         previous:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=2
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=1&page_size=20
+          description: Ссылка на предыдущую страницу.
         results:
           type: array
           items:
@@ -22700,21 +23356,41 @@ components:
       type: object
       required:
       - count
+      - page
+      - page_size
+      - total_pages
       - results
       properties:
         count:
           type: integer
-          example: 123
+          example: 125
+          description: Общее количество записей.
+        page:
+          type: integer
+          example: 2
+          description: Номер текущей страницы.
+        page_size:
+          type: integer
+          example: 20
+          minimum: 1
+          maximum: 100
+          description: Количество записей на текущей странице.
+        total_pages:
+          type: integer
+          example: 7
+          description: Общее количество страниц.
         next:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=4
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=3&page_size=20
+          description: Ссылка на следующую страницу.
         previous:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=2
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=1&page_size=20
+          description: Ссылка на предыдущую страницу.
         results:
           type: array
           items:
@@ -22723,21 +23399,41 @@ components:
       type: object
       required:
       - count
+      - page
+      - page_size
+      - total_pages
       - results
       properties:
         count:
           type: integer
-          example: 123
+          example: 125
+          description: Общее количество записей.
+        page:
+          type: integer
+          example: 2
+          description: Номер текущей страницы.
+        page_size:
+          type: integer
+          example: 20
+          minimum: 1
+          maximum: 100
+          description: Количество записей на текущей странице.
+        total_pages:
+          type: integer
+          example: 7
+          description: Общее количество страниц.
         next:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=4
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=3&page_size=20
+          description: Ссылка на следующую страницу.
         previous:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=2
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=1&page_size=20
+          description: Ссылка на предыдущую страницу.
         results:
           type: array
           items:
@@ -22746,21 +23442,41 @@ components:
       type: object
       required:
       - count
+      - page
+      - page_size
+      - total_pages
       - results
       properties:
         count:
           type: integer
-          example: 123
+          example: 125
+          description: Общее количество записей.
+        page:
+          type: integer
+          example: 2
+          description: Номер текущей страницы.
+        page_size:
+          type: integer
+          example: 20
+          minimum: 1
+          maximum: 100
+          description: Количество записей на текущей странице.
+        total_pages:
+          type: integer
+          example: 7
+          description: Общее количество страниц.
         next:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=4
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=3&page_size=20
+          description: Ссылка на следующую страницу.
         previous:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=2
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=1&page_size=20
+          description: Ссылка на предыдущую страницу.
         results:
           type: array
           items:
@@ -22769,21 +23485,41 @@ components:
       type: object
       required:
       - count
+      - page
+      - page_size
+      - total_pages
       - results
       properties:
         count:
           type: integer
-          example: 123
+          example: 125
+          description: Общее количество записей.
+        page:
+          type: integer
+          example: 2
+          description: Номер текущей страницы.
+        page_size:
+          type: integer
+          example: 20
+          minimum: 1
+          maximum: 100
+          description: Количество записей на текущей странице.
+        total_pages:
+          type: integer
+          example: 7
+          description: Общее количество страниц.
         next:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=4
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=3&page_size=20
+          description: Ссылка на следующую страницу.
         previous:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=2
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=1&page_size=20
+          description: Ссылка на предыдущую страницу.
         results:
           type: array
           items:
@@ -22792,21 +23528,41 @@ components:
       type: object
       required:
       - count
+      - page
+      - page_size
+      - total_pages
       - results
       properties:
         count:
           type: integer
-          example: 123
+          example: 125
+          description: Общее количество записей.
+        page:
+          type: integer
+          example: 2
+          description: Номер текущей страницы.
+        page_size:
+          type: integer
+          example: 20
+          minimum: 1
+          maximum: 100
+          description: Количество записей на текущей странице.
+        total_pages:
+          type: integer
+          example: 7
+          description: Общее количество страниц.
         next:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=4
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=3&page_size=20
+          description: Ссылка на следующую страницу.
         previous:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=2
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=1&page_size=20
+          description: Ссылка на предыдущую страницу.
         results:
           type: array
           items:
@@ -22815,21 +23571,41 @@ components:
       type: object
       required:
       - count
+      - page
+      - page_size
+      - total_pages
       - results
       properties:
         count:
           type: integer
-          example: 123
+          example: 125
+          description: Общее количество записей.
+        page:
+          type: integer
+          example: 2
+          description: Номер текущей страницы.
+        page_size:
+          type: integer
+          example: 20
+          minimum: 1
+          maximum: 100
+          description: Количество записей на текущей странице.
+        total_pages:
+          type: integer
+          example: 7
+          description: Общее количество страниц.
         next:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=4
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=3&page_size=20
+          description: Ссылка на следующую страницу.
         previous:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=2
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=1&page_size=20
+          description: Ссылка на предыдущую страницу.
         results:
           type: array
           items:
@@ -22838,21 +23614,41 @@ components:
       type: object
       required:
       - count
+      - page
+      - page_size
+      - total_pages
       - results
       properties:
         count:
           type: integer
-          example: 123
+          example: 125
+          description: Общее количество записей.
+        page:
+          type: integer
+          example: 2
+          description: Номер текущей страницы.
+        page_size:
+          type: integer
+          example: 20
+          minimum: 1
+          maximum: 100
+          description: Количество записей на текущей странице.
+        total_pages:
+          type: integer
+          example: 7
+          description: Общее количество страниц.
         next:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=4
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=3&page_size=20
+          description: Ссылка на следующую страницу.
         previous:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=2
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=1&page_size=20
+          description: Ссылка на предыдущую страницу.
         results:
           type: array
           items:
@@ -22861,21 +23657,41 @@ components:
       type: object
       required:
       - count
+      - page
+      - page_size
+      - total_pages
       - results
       properties:
         count:
           type: integer
-          example: 123
+          example: 125
+          description: Общее количество записей.
+        page:
+          type: integer
+          example: 2
+          description: Номер текущей страницы.
+        page_size:
+          type: integer
+          example: 20
+          minimum: 1
+          maximum: 100
+          description: Количество записей на текущей странице.
+        total_pages:
+          type: integer
+          example: 7
+          description: Общее количество страниц.
         next:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=4
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=3&page_size=20
+          description: Ссылка на следующую страницу.
         previous:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=2
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=1&page_size=20
+          description: Ссылка на предыдущую страницу.
         results:
           type: array
           items:
@@ -22884,21 +23700,41 @@ components:
       type: object
       required:
       - count
+      - page
+      - page_size
+      - total_pages
       - results
       properties:
         count:
           type: integer
-          example: 123
+          example: 125
+          description: Общее количество записей.
+        page:
+          type: integer
+          example: 2
+          description: Номер текущей страницы.
+        page_size:
+          type: integer
+          example: 20
+          minimum: 1
+          maximum: 100
+          description: Количество записей на текущей странице.
+        total_pages:
+          type: integer
+          example: 7
+          description: Общее количество страниц.
         next:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=4
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=3&page_size=20
+          description: Ссылка на следующую страницу.
         previous:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=2
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=1&page_size=20
+          description: Ссылка на предыдущую страницу.
         results:
           type: array
           items:
@@ -22907,21 +23743,41 @@ components:
       type: object
       required:
       - count
+      - page
+      - page_size
+      - total_pages
       - results
       properties:
         count:
           type: integer
-          example: 123
+          example: 125
+          description: Общее количество записей.
+        page:
+          type: integer
+          example: 2
+          description: Номер текущей страницы.
+        page_size:
+          type: integer
+          example: 20
+          minimum: 1
+          maximum: 100
+          description: Количество записей на текущей странице.
+        total_pages:
+          type: integer
+          example: 7
+          description: Общее количество страниц.
         next:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=4
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=3&page_size=20
+          description: Ссылка на следующую страницу.
         previous:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=2
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=1&page_size=20
+          description: Ссылка на предыдущую страницу.
         results:
           type: array
           items:
@@ -22930,21 +23786,41 @@ components:
       type: object
       required:
       - count
+      - page
+      - page_size
+      - total_pages
       - results
       properties:
         count:
           type: integer
-          example: 123
+          example: 125
+          description: Общее количество записей.
+        page:
+          type: integer
+          example: 2
+          description: Номер текущей страницы.
+        page_size:
+          type: integer
+          example: 20
+          minimum: 1
+          maximum: 100
+          description: Количество записей на текущей странице.
+        total_pages:
+          type: integer
+          example: 7
+          description: Общее количество страниц.
         next:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=4
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=3&page_size=20
+          description: Ссылка на следующую страницу.
         previous:
           type: string
-          nullable: true
           format: uri
-          example: http://api.example.org/accounts/?page=2
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=1&page_size=20
+          description: Ссылка на предыдущую страницу.
         results:
           type: array
           items:
