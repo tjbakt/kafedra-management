@@ -9,11 +9,19 @@ from apps.organizations.models import (
 
 
 class OrganizationFilterMixin:
-    query = filters.CharFilter(
-        method="filter_query",
-    )
+    """
+    Общая логика текстовой фильтрации.
 
-    def filter_query(self, queryset, name, value):
+    Само декларативное поле query объявляется
+    непосредственно в каждом FilterSet.
+    """
+
+    def filter_query(
+        self,
+        queryset,
+        name,
+        value,
+    ):
         value = value.strip()
 
         if not value:
@@ -23,8 +31,12 @@ class OrganizationFilterMixin:
             Q(code__icontains=value)
             | Q(name_ru__icontains=value)
             | Q(name_uz__icontains=value)
-            | Q(short_name_ru__icontains=value)
-            | Q(short_name_uz__icontains=value)
+            | Q(
+                short_name_ru__icontains=value
+            )
+            | Q(
+                short_name_uz__icontains=value
+            )
         )
 
 
@@ -32,11 +44,21 @@ class UniversityFilter(
     OrganizationFilterMixin,
     filters.FilterSet,
 ):
+    query = filters.CharFilter(
+        method="filter_query",
+        label="Поиск",
+        help_text=(
+            "Поиск по коду, полному "
+            "и сокращённому названию."
+        ),
+    )
+
     is_active = filters.BooleanFilter()
 
     class Meta:
         model = University
         fields = (
+            "query",
             "is_active",
         )
 
@@ -45,17 +67,30 @@ class FacultyFilter(
     OrganizationFilterMixin,
     filters.FilterSet,
 ):
+    query = filters.CharFilter(
+        method="filter_query",
+        label="Поиск",
+        help_text=(
+            "Поиск по коду, полному "
+            "и сокращённому названию."
+        ),
+    )
+
     university = filters.NumberFilter(
         field_name="university_id",
+        min_value=1,
     )
+
     faculty_type = filters.ChoiceFilter(
         choices=Faculty.FacultyType.choices,
     )
+
     is_active = filters.BooleanFilter()
 
     class Meta:
         model = Faculty
         fields = (
+            "query",
             "university",
             "faculty_type",
             "is_active",
@@ -66,17 +101,33 @@ class DepartmentFilter(
     OrganizationFilterMixin,
     filters.FilterSet,
 ):
-    university = filters.NumberFilter(
-        field_name="faculty__university_id",
+    query = filters.CharFilter(
+        method="filter_query",
+        label="Поиск",
+        help_text=(
+            "Поиск по коду, полному "
+            "и сокращённому названию."
+        ),
     )
+
+    university = filters.NumberFilter(
+        field_name=(
+            "faculty__university_id"
+        ),
+        min_value=1,
+    )
+
     faculty = filters.NumberFilter(
         field_name="faculty_id",
+        min_value=1,
     )
+
     is_active = filters.BooleanFilter()
 
     class Meta:
         model = Department
         fields = (
+            "query",
             "university",
             "faculty",
             "is_active",
