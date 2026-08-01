@@ -129,10 +129,16 @@ class UniversitySerializer(
 
 
 class FacultyShortSerializer(serializers.ModelSerializer):
+    display_name = serializers.SerializerMethodField()
 
     class Meta:
         model = Faculty
         fields = (
+            "id",
+            "code",
+            "display_name",
+        )
+        read_only_fields = (
             "id",
             "code",
             "display_name",

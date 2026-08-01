@@ -8,10 +8,14 @@ class ArchiveQuerySet(models.QuerySet):
     """
 
     def active(self):
-        return self.filter(is_archived=False)
+        return self.filter(
+            is_archived=False,
+        )
 
     def archived(self):
-        return self.filter(is_archived=True)
+        return self.filter(
+            is_archived=True,
+        )
 
     def archive(self, user=None):
         return self.update(
@@ -31,7 +35,23 @@ class ArchiveQuerySet(models.QuerySet):
         return super().delete()
 
 
-class ActiveManager(models.Manager):
+class ArchiveManager(
+    models.Manager.from_queryset(
+        ArchiveQuerySet
+    )
+):
+    """
+    Базовый manager, публикующий методы
+    ArchiveQuerySet на уровне manager:
+
+    Model.objects.active()
+    Model.all_objects.archived()
+    """
+
+    pass
+
+
+class ActiveManager(ArchiveManager):
     """
     Менеджер по умолчанию.
 
@@ -39,19 +59,17 @@ class ActiveManager(models.Manager):
     """
 
     def get_queryset(self):
-        return ArchiveQuerySet(
-            self.model,
-            using=self._db,
-        ).filter(is_archived=False)
+        return (
+            super()
+            .get_queryset()
+            .active()
+        )
 
 
-class AllObjectsManager(models.Manager):
+class AllObjectsManager(ArchiveManager):
     """
     Возвращает все записи, включая архивные.
     """
 
     def get_queryset(self):
-        return ArchiveQuerySet(
-            self.model,
-            using=self._db,
-        )
+        return super().get_queryset()
