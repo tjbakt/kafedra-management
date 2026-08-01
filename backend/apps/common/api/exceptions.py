@@ -477,6 +477,9 @@ def resolve_fields(
     """
     Возвращает ошибки конкретных полей.
 
+    Для ValidationError ключ `code` может быть
+    настоящим полем сериализатора и не должен
+    считаться служебным ключом API-контракта.
     """
 
     explicit_fields = getattr(
@@ -484,25 +487,49 @@ def resolve_fields(
         "error_fields",
         None,
     )
-
     if explicit_fields is not None:
         return normalize_error_detail(
             explicit_fields
         )
 
-    if not isinstance(response_data, Mapping,):
+    if not isinstance(
+        response_data,
+        Mapping,
+    ):
         return None
 
+    if isinstance(
+        exc,
+        ValidationError,
+    ):
+        fields = {
+            str(key): value
+            for key, value
+            in response_data.items()
+            if key not in (
+                "detail",
+                "message",
+            )
+        }
+
+        if not fields:
+            return None
+
+        return normalize_error_detail(
+            fields
+        )
+
     if (
-            "code" in response_data
-            or "detail" in response_data
-            or "message" in response_data
+        "code" in response_data
+        or "detail" in response_data
+        or "message" in response_data
     ):
         return None
 
     fields = {
         str(key): value
-        for key, value in response_data.items()
+        for key, value
+        in response_data.items()
         if key not in RESERVED_DETAIL_KEYS
     }
 
