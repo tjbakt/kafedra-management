@@ -46,6 +46,9 @@ class ApiResponseAssertionsMixin:
             "fields",
             error,
         )
+
+        # После шага 21.1 поле details должно
+        # присутствовать во всех ошибках.
         self.assertIn(
             "details",
             error,
