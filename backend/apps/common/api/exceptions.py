@@ -353,6 +353,10 @@ def resolve_error_code(
 ):
     """
     Определяет стабильный верхнеуровневый код.
+
+    Для DRF ValidationError ключ `code` может быть
+    обычным полем сериализатора, поэтому сначала
+    проверяется тип исключения.
     """
 
     explicit_code = getattr(
@@ -363,16 +367,31 @@ def resolve_error_code(
     if explicit_code:
         return str(explicit_code)
 
-    if isinstance(response_data, Mapping):
-        supplied_code = first_plain_value(
-            response_data.get("code")
+    if isinstance(
+        exc,
+        ValidationError,
+    ):
+        return "validation_error"
+
+    if isinstance(
+        response_data,
+        Mapping,
+    ):
+        supplied_code = response_data.get(
+            "code"
         )
 
-        if supplied_code:
+        # Верхнеуровневый служебный code должен быть
+        # простым скалярным значением. Список ошибок
+        # означает поле сериализатора с именем code.
+        if isinstance(
+            supplied_code,
+            (
+                str,
+                ErrorDetail,
+            ),
+        ):
             return str(supplied_code)
-
-    if isinstance(exc, ValidationError):
-        return "validation_error"
 
     if isinstance(exc, ParseError):
         return "parse_error"
@@ -406,7 +425,6 @@ def resolve_error_code(
             "error",
         )
     )
-
 
 def resolve_message(
     exc,
