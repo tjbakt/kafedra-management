@@ -8836,6 +8836,11 @@ paths:
         description: Number of results to return per page.
         schema:
           type: integer
+      - in: query
+        name: query
+        schema:
+          type: string
+        description: Поиск по коду, полному и сокращённому названию.
       - name: search
         required: false
         in: query
@@ -9231,6 +9236,11 @@ paths:
         description: Number of results to return per page.
         schema:
           type: integer
+      - in: query
+        name: query
+        schema:
+          type: string
+        description: Поиск по коду, полному и сокращённому названию.
       - name: search
         required: false
         in: query
@@ -9615,6 +9625,11 @@ paths:
         description: Number of results to return per page.
         schema:
           type: integer
+      - in: query
+        name: query
+        schema:
+          type: string
+        description: Поиск по коду, полному и сокращённому названию.
       - name: search
         required: false
         in: query

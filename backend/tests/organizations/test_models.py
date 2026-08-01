@@ -95,6 +95,55 @@ class UniversityModelTests(TestCase):
             ).exists()
         )
 
+    def test_all_objects_manager_exposes_archived(
+            self,
+    ):
+        active = UniversityFactory()
+        archived = UniversityFactory()
+        archived.archive()
+
+        archived_ids = set(
+            University.all_objects
+            .archived()
+            .values_list(
+                "id",
+                flat=True,
+            )
+        )
+
+        self.assertIn(
+            archived.pk,
+            archived_ids,
+        )
+        self.assertNotIn(
+            active.pk,
+            archived_ids,
+        )
+
+    def test_all_objects_manager_exposes_active(
+            self,
+    ):
+        active = UniversityFactory()
+        archived = UniversityFactory()
+        archived.archive()
+
+        active_ids = set(
+            University.all_objects
+            .active()
+            .values_list(
+                "id",
+                flat=True,
+            )
+        )
+
+        self.assertIn(
+            active.pk,
+            active_ids,
+        )
+        self.assertNotIn(
+            archived.pk,
+            active_ids,
+        )
 
 class FacultyModelTests(TestCase):
     def test_string_representation(self):
