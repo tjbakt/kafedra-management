@@ -288,3 +288,48 @@ class UserRoleAssignmentFactory(
             updated_by=user,
             **kwargs,
         )
+
+    @classmethod
+    def self_role(
+        cls,
+        *,
+        user=None,
+        role_code=SystemRole.Code.TEACHER,
+        staff_member=None,
+        **kwargs,
+    ):
+        from tests.factories.staff import (
+            StaffMemberFactory,
+        )
+
+        user = user or UserFactory()
+
+        if staff_member is None:
+            staff_member = StaffMemberFactory(
+                user=user,
+                created_by=user,
+                updated_by=user,
+            )
+
+        role = SystemRoleFactory(
+            code=role_code,
+            created_by=user,
+            updated_by=user,
+        )
+
+        return cls(
+            user=user,
+            role=role,
+            scope_type=(
+                UserRoleAssignment
+                .ScopeType
+                .SELF
+            ),
+            university=None,
+            faculty=None,
+            department=None,
+            staff_member=staff_member,
+            created_by=user,
+            updated_by=user,
+            **kwargs,
+        )

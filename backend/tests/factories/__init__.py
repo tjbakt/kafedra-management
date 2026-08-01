@@ -12,6 +12,9 @@ from tests.factories.organizations import (
     FacultyFactory,
     UniversityFactory,
 )
+from tests.factories.staff import (
+    StaffMemberFactory,
+)
 
 
 __all__ = (
@@ -23,4 +26,5 @@ __all__ = (
     "DepartmentFactory",
     "SystemRoleFactory",
     "UserRoleAssignmentFactory",
+    "StaffMemberFactory",
 )

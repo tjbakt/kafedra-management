@@ -242,6 +242,28 @@ class UserRoleAssignmentSerializer(
             "staff_member": staff_member,
         }
 
+        if (
+            scope_type
+            == UserRoleAssignment.ScopeType.GLOBAL
+            and any(
+                (
+                    university,
+                    faculty,
+                    department,
+                    staff_member,
+                )
+            )
+        ):
+            raise serializers.ValidationError(
+                {
+                    "scope_type": (
+                        "Для глобальной роли нельзя "
+                        "указывать организационную "
+                        "или персональную область."
+                    )
+                }
+            )
+
         for field_name in required_fields.get(
             scope_type,
             (),
@@ -274,6 +296,24 @@ class UserRoleAssignmentSerializer(
                         "department": (
                             "Кафедра не относится "
                             "к выбранному факультету."
+                        )
+                    }
+                )
+
+        if department and university:
+            department_university_id = (
+                department.faculty.university_id
+            )
+
+            if (
+                department_university_id
+                != university.id
+            ):
+                raise serializers.ValidationError(
+                    {
+                        "department": (
+                            "Кафедра не относится "
+                            "к выбранному университету."
                         )
                     }
                 )
@@ -319,6 +359,53 @@ class UserRoleAssignmentSerializer(
                     "scope_type": (
                         "Для заведующего кафедрой необходимо "
                         "выбрать кафедральную область."
+                    )
+                }
+            )
+
+        allowed_scope_fields = {
+            UserRoleAssignment.ScopeType.GLOBAL: set(),
+            UserRoleAssignment.ScopeType.UNIVERSITY: {
+                "university",
+            },
+            UserRoleAssignment.ScopeType.FACULTY: {
+                "faculty",
+            },
+            UserRoleAssignment.ScopeType.DEPARTMENT: {
+                "department",
+            },
+            UserRoleAssignment.ScopeType.SELF: {
+                "staff_member",
+            },
+        }
+
+        selected_scope_fields = {
+            field_name
+            for field_name, value
+            in values.items()
+            if value is not None
+        }
+
+        unexpected_scope_fields = (
+            selected_scope_fields
+            - allowed_scope_fields.get(
+                scope_type,
+                set(),
+            )
+        )
+
+        if unexpected_scope_fields:
+            raise serializers.ValidationError(
+                {
+                    "scope_type": (
+                        "Для выбранной области действия "
+                        "указаны лишние связанные поля: "
+                        + ", ".join(
+                            sorted(
+                                unexpected_scope_fields
+                            )
+                        )
+                        + "."
                     )
                 }
             )
