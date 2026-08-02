@@ -13948,6 +13948,35 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginatedPlannedWorkloadList'
           description: ''
+    post:
+      operationId: teaching_planned_workloads_create
+      description: |-
+        Обратная совместимость.
+
+        Django ValidationError теперь обрабатывается
+        глобальным custom_exception_handler.
+      tags:
+      - teaching
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlannedWorkloadRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PlannedWorkloadRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PlannedWorkloadRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlannedWorkload'
+          description: ''
   /api/v1/teaching/planned-workloads/{id}/:
     get:
       operationId: teaching_planned_workloads_retrieve
@@ -14031,6 +14060,101 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/v1/teaching/planned-workloads/{id}/restore/:
+    post:
+      operationId: teaching_planned_workloads_restore_create
+      description: Восстанавливает объект из архива. Операция может быть запрещена
+        правами доступа или состоянием учебного года.
+      summary: Восстановить запись
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Плановая нагрузка.
+        required: true
+      tags:
+      - teaching
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestoreResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                ОшибкаВалидации:
+                  value:
+                    success: false
+                    status_code: 400
+                    error:
+                      code: validation_error
+                      message: Ошибка проверки данных.
+                      fields:
+                        name:
+                        - message: Это поле обязательно.
+                          code: required
+                      details: null
+                  summary: Ошибка валидации
+          description: Ошибка проверки данных.
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                ТребуетсяАутентификация:
+                  value:
+                    success: false
+                    status_code: 401
+                    error:
+                      code: authentication_required
+                      message: Учетные данные не были предоставлены.
+                      fields: null
+                      details: null
+                  summary: Требуется аутентификация
+          description: Требуется аутентификация.
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                НедостаточноПрав:
+                  value:
+                    success: false
+                    status_code: 403
+                    error:
+                      code: permission_denied
+                      message: Доступ запрещён.
+                      fields: null
+                      details: null
+                  summary: Недостаточно прав
+          description: Недостаточно прав.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                ОбъектНеНайден:
+                  value:
+                    success: false
+                    status_code: 404
+                    error:
+                      code: not_found
+                      message: Запрашиваемый ресурс не найден.
+                      fields: null
+                      details: null
+                  summary: Объект не найден
+          description: Ресурс не найден.
   /api/v1/teaching/planned-workloads/archived/:
     get:
       operationId: teaching_planned_workloads_archived_retrieve
@@ -25286,6 +25410,17 @@ components:
           type: string
           nullable: true
           readOnly: true
+    PlannedWorkloadRequest:
+      type: object
+      description: Базовый сериализатор для моделей с полями аудита.
+      properties:
+        status:
+          allOf:
+          - $ref: '#/components/schemas/PlannedWorkloadStatusEnum'
+          title: Статус
+        notes:
+          type: string
+          title: Примечание
     PlannedWorkloadStatusEnum:
       enum:
       - calculated

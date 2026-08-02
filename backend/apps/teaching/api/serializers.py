@@ -116,6 +116,37 @@ class GroupCurriculumAssignmentSerializer(
                     }
                 )
 
+        start_academic_year = attrs.get(
+            "start_academic_year",
+            getattr(
+                instance,
+                "start_academic_year",
+                None,
+            ),
+        )
+        end_academic_year = attrs.get(
+            "end_academic_year",
+            getattr(
+                instance,
+                "end_academic_year",
+                None,
+            ),
+        )
+
+        if (
+            start_academic_year
+            and end_academic_year
+            and end_academic_year.start_year
+            < start_academic_year.start_year
+        ):
+            raise serializers.ValidationError(
+                {
+                    "end_academic_year": (
+                        "Учебный год окончания не может "
+                        "быть раньше учебного года начала."
+                    )
+                }
+            )
         return attrs
 
 class GroupSemesterSerializer(AuditFieldsSerializer):
@@ -505,6 +536,22 @@ class TeachingStreamSerializer(AuditFieldsSerializer):
             "teaching_department",
             getattr(instance, "teaching_department", None),
         )
+        academic_year = attrs.get(
+            "academic_year",
+            getattr(
+                instance,
+                "academic_year",
+                None,
+            ),
+        )
+        academic_semester = attrs.get(
+            "academic_semester",
+            getattr(
+                instance,
+                "academic_semester",
+                None,
+            ),
+        )
 
         if (
             discipline
@@ -536,6 +583,40 @@ class TeachingStreamSerializer(AuditFieldsSerializer):
                 }
             )
 
+        if (
+            academic_year
+            and academic_semester
+            and academic_semester.academic_year_id
+            != academic_year.id
+        ):
+            raise serializers.ValidationError(
+                {
+                    "academic_semester": (
+                        "Семестр должен относиться "
+                        "к выбранному учебному году."
+                    )
+                }
+            )
+
+        if discipline and academic_semester:
+            expected_season = (
+                "autumn"
+                if discipline.semester_number % 2
+                else "spring"
+            )
+
+            if (
+                academic_semester.season
+                != expected_season
+            ):
+                raise serializers.ValidationError(
+                    {
+                        "academic_semester": (
+                            "Сезон потока не соответствует "
+                            "номеру семестра дисциплины."
+                        )
+                    }
+                )
         return attrs
 
 class PlannedWorkloadSerializer(AuditFieldsSerializer):

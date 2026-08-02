@@ -37,6 +37,13 @@ from tests.factories.curriculum import (
     DisciplineFactory,
     WorkloadTypeFactory,
 )
+from tests.factories.teaching import (
+    GroupCurriculumAssignmentFactory,
+    GroupSemesterFactory,
+    PlannedWorkloadFactory,
+    TeachingStreamFactory,
+    TeachingStreamGroupFactory,
+)
 
 
 __all__ = (
@@ -67,4 +74,9 @@ __all__ = (
     "CurriculumFactory",
     "CurriculumDisciplineFactory",
     "CurriculumWorkloadFactory",
+    "GroupCurriculumAssignmentFactory",
+    "GroupSemesterFactory",
+    "TeachingStreamFactory",
+    "TeachingStreamGroupFactory",
+    "PlannedWorkloadFactory",
 )

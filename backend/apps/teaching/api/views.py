@@ -7,6 +7,9 @@ from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.exceptions import (
+    MethodNotAllowed,
+)
 
 from apps.common.api.viewsets import BaseArchiveModelViewSet
 from apps.common.api.mixins import (
@@ -310,6 +313,7 @@ class PlannedWorkloadViewSet(
     filterset_class = PlannedWorkloadFilter
     http_method_names = (
         "get",
+        "post",
         "patch",
         "delete",
         "head",
@@ -333,6 +337,19 @@ class PlannedWorkloadViewSet(
         "teaching_stream__code",
     )
 
+    def create(
+            self,
+            request,
+            *args,
+            **kwargs,
+    ):
+        raise MethodNotAllowed(
+            method=request.method,
+            detail=(
+                "Плановая нагрузка создаётся только "
+                "через расчёт учебного потока."
+            ),
+        )
     def get_queryset(self):
         return PlannedWorkload.objects.select_related(
             "teaching_stream",
