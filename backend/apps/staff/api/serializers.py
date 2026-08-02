@@ -750,10 +750,79 @@ class WorkloadNormSerializer(AuditFieldsSerializer):
             "archived_by",
         )
 
-class RecommendedWorkloadSerializer(serializers.Serializer):
-    academic_year = serializers.IntegerField()
-    employment = serializers.IntegerField()
+class RecommendedWorkloadQuerySerializer(
+    serializers.Serializer
+):
+    academic_year = (
+        serializers.PrimaryKeyRelatedField(
+            queryset=AcademicYear.objects.filter(
+                is_archived=False,
+            ),
+        )
+    )
 
+
+class RecommendedWorkloadSerializer(
+    serializers.Serializer
+):
+    employment = serializers.IntegerField()
+    academic_year = serializers.IntegerField()
+    academic_year_name = serializers.CharField()
+
+    academic_year_record = (
+        serializers.IntegerField(
+            required=False,
+        )
+    )
+    academic_year_record_found = (
+        serializers.BooleanField()
+    )
+
+    rate = serializers.DecimalField(
+        max_digits=4,
+        decimal_places=2,
+        allow_null=True,
+    )
+
+    academic_degree = serializers.IntegerField(
+        allow_null=True,
+    )
+    academic_degree_name = serializers.CharField(
+        allow_null=True,
+        required=False,
+    )
+    academic_title = serializers.IntegerField(
+        allow_null=True,
+    )
+    academic_title_name = serializers.CharField(
+        allow_null=True,
+        required=False,
+    )
+
+    has_academic_degree = (
+        serializers.BooleanField(
+            allow_null=True,
+        )
+    )
+    has_academic_title = (
+        serializers.BooleanField(
+            allow_null=True,
+        )
+    )
+
+    annual_hours = serializers.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        allow_null=True,
+    )
+
+    norm_id = serializers.IntegerField(
+        required=False,
+    )
+    norm_found = serializers.BooleanField()
+    message = serializers.CharField(
+        required=False,
+    )
 class CreateAcademicYearStaffRecordsSerializer(
     serializers.Serializer
 ):

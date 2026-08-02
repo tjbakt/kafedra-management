@@ -29,6 +29,8 @@ from apps.staff.api.serializers import (
     WorkloadNormSerializer,
     AcademicYearStaffRecordsResultSerializer,
     CreateAcademicYearStaffRecordsSerializer,
+    RecommendedWorkloadQuerySerializer,
+    RecommendedWorkloadSerializer,
 )
 from apps.staff.models import (
     AcademicDegree,
@@ -237,11 +239,26 @@ class StaffEmploymentViewSet(BaseArchiveModelViewSet):
         methods=["get"],
         url_path="recommended-workload",
     )
-    def recommended_workload(self, request, pk=None):
+    def recommended_workload(
+            self,
+            request,
+            pk=None,
+    ):
         employment = self.get_object()
 
-        academic_year = request.query_params.get(
-            "academic_year"
+        query_serializer = (
+            RecommendedWorkloadQuerySerializer(
+                data=request.query_params
+            )
+        )
+        query_serializer.is_valid(
+            raise_exception=True
+        )
+
+        academic_year = (
+            query_serializer.validated_data[
+                "academic_year"
+            ]
         )
 
         academic_year_record = (
@@ -251,77 +268,105 @@ class StaffEmploymentViewSet(BaseArchiveModelViewSet):
         )
 
         if academic_year_record is None:
-            return Response(
-                {
-                    "employment": employment.id,
-                    "academic_year": academic_year.id,
-                    "academic_year_name": academic_year.name,
-                    "rate": None,
-                    "academic_degree": None,
-                    "academic_title": None,
-                    "has_academic_degree": None,
-                    "has_academic_title": None,
-                    "annual_hours": None,
-                    "norm_found": False,
-                    "academic_year_record_found": False,
-                    "message": (
-                        "Для назначения не заполнены кадровые "
-                        "данные на выбранный учебный год."
-                    ),
-                },
-                status=status.HTTP_200_OK,
-            )
-
-        norm = academic_year_record.get_workload_norm()
-
-        response_data = {
-            "employment": employment.id,
-            "academic_year": academic_year.id,
-            "academic_year_name": academic_year.name,
-            "academic_year_record": (
-                academic_year_record.id
-            ),
-            "academic_year_record_found": True,
-            "rate": academic_year_record.rate,
-            "academic_degree": (
-                academic_year_record.academic_degree_id
-            ),
-            "academic_degree_name": (
-                str(academic_year_record.academic_degree)
-                if academic_year_record.academic_degree_id
-                else None
-            ),
-            "academic_title": (
-                academic_year_record.academic_title_id
-            ),
-            "academic_title_name": (
-                str(academic_year_record.academic_title)
-                if academic_year_record.academic_title_id
-                else None
-            ),
-            "has_academic_degree": (
-                academic_year_record.has_academic_degree
-            ),
-            "has_academic_title": (
-                academic_year_record.has_academic_title
-            ),
-            "annual_hours": (
-                norm.annual_hours
-                if norm is not None
-                else None
-            ),
-            "norm_found": norm is not None,
-        }
-
-        if norm is not None:
-            response_data["norm_id"] = norm.id
+            response_data = {
+                "employment": employment.id,
+                "academic_year": academic_year.id,
+                "academic_year_name": (
+                    academic_year.name
+                ),
+                "rate": None,
+                "academic_degree": None,
+                "academic_title": None,
+                "has_academic_degree": None,
+                "has_academic_title": None,
+                "annual_hours": None,
+                "norm_found": False,
+                "academic_year_record_found": False,
+                "message": (
+                    "Для назначения не заполнены "
+                    "кадровые данные на выбранный "
+                    "учебный год."
+                ),
+            }
         else:
-            response_data["message"] = (
-                "Подходящая норма нагрузки не установлена."
+            norm = (
+                academic_year_record
+                .get_workload_norm()
             )
+
+            response_data = {
+                "employment": employment.id,
+                "academic_year": academic_year.id,
+                "academic_year_name": (
+                    academic_year.name
+                ),
+                "academic_year_record": (
+                    academic_year_record.id
+                ),
+                "academic_year_record_found": True,
+                "rate": academic_year_record.rate,
+                "academic_degree": (
+                    academic_year_record
+                    .academic_degree_id
+                ),
+                "academic_degree_name": (
+                    str(
+                        academic_year_record
+                        .academic_degree
+                    )
+                    if (
+                        academic_year_record
+                        .academic_degree_id
+                    )
+                    else None
+                ),
+                "academic_title": (
+                    academic_year_record
+                    .academic_title_id
+                ),
+                "academic_title_name": (
+                    str(
+                        academic_year_record
+                        .academic_title
+                    )
+                    if (
+                        academic_year_record
+                        .academic_title_id
+                    )
+                    else None
+                ),
+                "has_academic_degree": (
+                    academic_year_record
+                    .has_academic_degree
+                ),
+                "has_academic_title": (
+                    academic_year_record
+                    .has_academic_title
+                ),
+                "annual_hours": (
+                    norm.annual_hours
+                    if norm is not None
+                    else None
+                ),
+                "norm_found": norm is not None,
+            }
+
+            if norm is not None:
+                response_data["norm_id"] = norm.id
+            else:
+                response_data["message"] = (
+                    "Подходящая норма нагрузки "
+                    "не установлена."
+                )
+
+        output_serializer = (
+            RecommendedWorkloadSerializer(
+                response_data
+            )
+        )
 
         return Response(
-            response_data,
+            output_serializer.data,
             status=status.HTTP_200_OK,
         )
 

@@ -428,7 +428,9 @@ class EducationDurationSerializer(AuditFieldsSerializer):
         return attrs
 
 
-class AcademicSemesterSerializer(AuditFieldsSerializer):
+class AcademicSemesterSerializer(
+    AuditFieldsSerializer
+):
     academic_year_name = serializers.CharField(
         source="academic_year.name",
         read_only=True,
@@ -471,6 +473,91 @@ class AcademicSemesterSerializer(AuditFieldsSerializer):
             "archived_at",
             "archived_by",
         )
+
+    def validate(self, attrs):
+        instance = self.instance
+
+        academic_year = attrs.get(
+            "academic_year",
+            getattr(
+                instance,
+                "academic_year",
+                None,
+            ),
+        )
+        season = attrs.get(
+            "season",
+            getattr(
+                instance,
+                "season",
+                None,
+            ),
+        )
+        start_date = attrs.get(
+            "start_date",
+            getattr(
+                instance,
+                "start_date",
+                None,
+            ),
+        )
+        end_date = attrs.get(
+            "end_date",
+            getattr(
+                instance,
+                "end_date",
+                None,
+            ),
+        )
+
+        if (
+            start_date
+            and end_date
+            and end_date <= start_date
+        ):
+            raise serializers.ValidationError(
+                {
+                    "end_date": (
+                        "Дата окончания должна быть "
+                        "позже даты начала."
+                    )
+                }
+            )
+
+        if academic_year and start_date:
+            if (
+                season
+                == AcademicSemester.Season.AUTUMN
+                and start_date.year
+                != academic_year.start_year
+            ):
+                raise serializers.ValidationError(
+                    {
+                        "start_date": (
+                            "Осенний семестр должен "
+                            "начинаться в году начала "
+                            "учебного года."
+                        )
+                    }
+                )
+
+            if (
+                season
+                == AcademicSemester.Season.SPRING
+                and start_date.year
+                != academic_year.end_year
+            ):
+                raise serializers.ValidationError(
+                    {
+                        "start_date": (
+                            "Весенний семестр должен "
+                            "начинаться в году окончания "
+                            "учебного года."
+                        )
+                    }
+                )
+
+        return attrs
 
 
 class StudyProgramSerializer(

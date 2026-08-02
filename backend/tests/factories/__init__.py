@@ -7,14 +7,6 @@ from tests.factories.access_control import (
     SystemRoleFactory,
     UserRoleAssignmentFactory,
 )
-from tests.factories.organizations import (
-    DepartmentFactory,
-    FacultyFactory,
-    UniversityFactory,
-)
-from tests.factories.staff import (
-    StaffMemberFactory,
-)
 from tests.factories.academics import (
     AcademicSemesterFactory,
     AcademicYearFactory,
@@ -23,6 +15,20 @@ from tests.factories.academics import (
     StudentGroupFactory,
     StudyFormFactory,
     StudyProgramFactory,
+)
+from tests.factories.organizations import (
+    DepartmentFactory,
+    FacultyFactory,
+    UniversityFactory,
+)
+from tests.factories.staff import (
+    AcademicDegreeFactory,
+    AcademicTitleFactory,
+    StaffEmploymentAcademicYearFactory,
+    StaffEmploymentFactory,
+    StaffMemberFactory,
+    StaffPositionFactory,
+    WorkloadNormFactory,
 )
 
 
@@ -35,7 +41,6 @@ __all__ = (
     "DepartmentFactory",
     "SystemRoleFactory",
     "UserRoleAssignmentFactory",
-    "StaffMemberFactory",
     "AcademicYearFactory",
     "AcademicSemesterFactory",
     "EducationLevelFactory",
@@ -43,4 +48,11 @@ __all__ = (
     "EducationDurationFactory",
     "StudyProgramFactory",
     "StudentGroupFactory",
+    "StaffPositionFactory",
+    "AcademicDegreeFactory",
+    "AcademicTitleFactory",
+    "StaffMemberFactory",
+    "StaffEmploymentFactory",
+    "StaffEmploymentAcademicYearFactory",
+    "WorkloadNormFactory",
 )
