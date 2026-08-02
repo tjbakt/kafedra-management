@@ -30,6 +30,13 @@ from tests.factories.staff import (
     StaffPositionFactory,
     WorkloadNormFactory,
 )
+from tests.factories.curriculum import (
+    CurriculumDisciplineFactory,
+    CurriculumFactory,
+    CurriculumWorkloadFactory,
+    DisciplineFactory,
+    WorkloadTypeFactory,
+)
 
 
 __all__ = (
@@ -55,4 +62,9 @@ __all__ = (
     "StaffEmploymentFactory",
     "StaffEmploymentAcademicYearFactory",
     "WorkloadNormFactory",
+    "DisciplineFactory",
+    "WorkloadTypeFactory",
+    "CurriculumFactory",
+    "CurriculumDisciplineFactory",
+    "CurriculumWorkloadFactory",
 )

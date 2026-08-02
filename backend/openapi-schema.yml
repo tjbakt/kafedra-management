@@ -19958,9 +19958,7 @@ components:
           type: string
           readOnly: true
         calculation_mode:
-          allOf:
-          - $ref: '#/components/schemas/CalculationModeEnum'
-          title: Способ расчёта
+          $ref: '#/components/schemas/CalculationModeEnum'
         calculation_mode_name:
           type: string
           readOnly: true
@@ -20031,7 +20029,6 @@ components:
           readOnly: true
       required:
       - base_hours
-      - calculation_mode
       - curriculum_discipline
       - workload_type
     CurriculumWorkloadRequest:
@@ -20045,9 +20042,7 @@ components:
           type: integer
           title: Вид учебной работы
         calculation_mode:
-          allOf:
-          - $ref: '#/components/schemas/CalculationModeEnum'
-          title: Способ расчёта
+          $ref: '#/components/schemas/CalculationModeEnum'
         base_hours:
           type: string
           format: decimal
@@ -20068,7 +20063,6 @@ components:
           title: Примечание
       required:
       - base_hours
-      - calculation_mode
       - curriculum_discipline
       - workload_type
     CustomTokenObtainPairRequest:
@@ -24061,9 +24055,7 @@ components:
           type: integer
           title: Вид учебной работы
         calculation_mode:
-          allOf:
-          - $ref: '#/components/schemas/CalculationModeEnum'
-          title: Способ расчёта
+          $ref: '#/components/schemas/CalculationModeEnum'
         base_hours:
           type: string
           format: decimal
@@ -25113,6 +25105,10 @@ components:
           allOf:
           - $ref: '#/components/schemas/CalculationModeEnum'
           title: Способ расчёта по умолчанию
+        report_category:
+          allOf:
+          - $ref: '#/components/schemas/ReportCategoryEnum'
+          title: Категория для отчётов
         is_classroom:
           type: boolean
           title: Аудиторная работа
@@ -25316,6 +25312,38 @@ components:
         * `normal` - Обычный
         * `high` - Высокий
         * `urgent` - Срочный
+    ReportCategoryEnum:
+      enum:
+      - lecture
+      - practice
+      - laboratory
+      - course_work_supervision
+      - course_project_supervision
+      - course_work_project_defense
+      - scientific_practice
+      - qualification_practice
+      - master_dissertation_supervision
+      - master_dissertation_defense
+      - graduation_work_supervision
+      - graduation_work_defense
+      - rating
+      - other
+      type: string
+      description: |-
+        * `lecture` - Лекции
+        * `practice` - Практические занятия
+        * `laboratory` - Лабораторные занятия
+        * `course_work_supervision` - Руководство курсовой работой
+        * `course_project_supervision` - Руководство курсовым проектом
+        * `course_work_project_defense` - Защита курсовой работы/проекта
+        * `scientific_practice` - Научная практика
+        * `qualification_practice` - Квалификационная практика
+        * `master_dissertation_supervision` - Руководство магистерской диссертацией
+        * `master_dissertation_defense` - Защита магистерской диссертации
+        * `graduation_work_supervision` - Руководство выпускной квалификационной работой
+        * `graduation_work_defense` - Защита выпускной квалификационной работы
+        * `rating` - Рейтинг
+        * `other` - Другое
     RestoreDistributionRequest:
       type: object
       properties:
@@ -28459,6 +28487,13 @@ components:
         calculation_mode_name:
           type: string
           readOnly: true
+        report_category:
+          allOf:
+          - $ref: '#/components/schemas/ReportCategoryEnum'
+          title: Категория для отчётов
+        report_category_name:
+          type: string
+          readOnly: true
         is_classroom:
           type: boolean
           title: Аудиторная работа
@@ -28572,6 +28607,10 @@ components:
           allOf:
           - $ref: '#/components/schemas/CalculationModeEnum'
           title: Способ расчёта по умолчанию
+        report_category:
+          allOf:
+          - $ref: '#/components/schemas/ReportCategoryEnum'
+          title: Категория для отчётов
         is_classroom:
           type: boolean
           title: Аудиторная работа

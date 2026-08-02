@@ -97,6 +97,10 @@ class WorkloadTypeSerializer(
         source="get_calculation_mode_display",
         read_only=True,
     )
+    report_category_name = serializers.CharField(
+        source="get_report_category_display",
+        read_only=True,
+    )
 
     class Meta:
         model = WorkloadType
@@ -108,6 +112,8 @@ class WorkloadTypeSerializer(
             "display_name",
             "calculation_mode",
             "calculation_mode_name",
+            "report_category",
+            "report_category_name",
             "is_classroom",
             "is_teaching_load",
             "is_active",
@@ -136,6 +142,14 @@ class WorkloadTypeSerializer(
         )
 
 class CurriculumWorkloadSerializer(AuditFieldsSerializer):
+    calculation_mode = serializers.ChoiceField(
+        choices=(
+            WorkloadType
+            .CalculationMode
+            .choices
+        ),
+        required=False,
+    )
     workload_type_name = serializers.CharField(
         source="workload_type.name_ru",
         read_only=True,
@@ -171,6 +185,8 @@ class CurriculumWorkloadSerializer(AuditFieldsSerializer):
         )
         read_only_fields = (
             "id",
+            "workload_type_name",
+            "calculation_mode_name",
             "created_at",
             "updated_at",
             "created_by",
@@ -181,15 +197,56 @@ class CurriculumWorkloadSerializer(AuditFieldsSerializer):
         )
 
     def validate(self, attrs):
+        instance = self.instance
+
         workload_type = attrs.get(
             "workload_type",
-            getattr(self.instance, "workload_type", None),
+            getattr(
+                instance,
+                "workload_type",
+                None,
+            ),
         )
-        calculation_mode = attrs.get("calculation_mode")
 
-        if workload_type and calculation_mode is None:
-            attrs["calculation_mode"] = (
+        calculation_mode = attrs.get(
+            "calculation_mode",
+            getattr(
+                instance,
+                "calculation_mode",
+                None,
+            ),
+        )
+
+        base_hours = attrs.get(
+            "base_hours",
+            getattr(
+                instance,
+                "base_hours",
+                Decimal("0.00"),
+            ),
+        )
+
+        if workload_type and not calculation_mode:
+            calculation_mode = (
                 workload_type.calculation_mode
+            )
+            attrs["calculation_mode"] = (
+                calculation_mode
+            )
+
+        if (
+                calculation_mode
+                == WorkloadType.CalculationMode.PER_STUDENT
+                and base_hours <= 0
+        ):
+            raise serializers.ValidationError(
+                {
+                    "base_hours": (
+                        "Для расчёта на одного студента "
+                        "количество часов должно быть "
+                        "больше нуля."
+                    )
+                }
             )
 
         return attrs
