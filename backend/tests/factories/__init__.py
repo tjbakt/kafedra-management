@@ -15,6 +15,15 @@ from tests.factories.organizations import (
 from tests.factories.staff import (
     StaffMemberFactory,
 )
+from tests.factories.academics import (
+    AcademicSemesterFactory,
+    AcademicYearFactory,
+    EducationDurationFactory,
+    EducationLevelFactory,
+    StudentGroupFactory,
+    StudyFormFactory,
+    StudyProgramFactory,
+)
 
 
 __all__ = (
@@ -27,4 +36,11 @@ __all__ = (
     "SystemRoleFactory",
     "UserRoleAssignmentFactory",
     "StaffMemberFactory",
+    "AcademicYearFactory",
+    "AcademicSemesterFactory",
+    "EducationLevelFactory",
+    "StudyFormFactory",
+    "EducationDurationFactory",
+    "StudyProgramFactory",
+    "StudentGroupFactory",
 )
