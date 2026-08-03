@@ -44,6 +44,9 @@ from tests.factories.teaching import (
     TeachingStreamFactory,
     TeachingStreamGroupFactory,
 )
+from tests.factories.workload import (
+    WorkloadDistributionFactory,
+)
 
 
 __all__ = (
@@ -79,4 +82,5 @@ __all__ = (
     "TeachingStreamFactory",
     "TeachingStreamGroupFactory",
     "PlannedWorkloadFactory",
+    "WorkloadDistributionFactory",
 )

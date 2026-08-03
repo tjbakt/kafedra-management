@@ -1,5 +1,6 @@
 from decimal import Decimal
 from rest_framework import serializers
+from django.db.models import Sum
 
 from apps.common.api.serializers import AuditFieldsSerializer
 from apps.workload.models import WorkloadDistribution
@@ -12,8 +13,216 @@ from drf_spectacular.utils import (
 )
 
 
+class WorkloadDistributionValidationMixin:
+    """
+    Общая бизнес-валидация создания и изменения
+    распределения учебной нагрузки.
+    """
+
+    def validate_distribution_status(
+        self,
+        attrs,
+    ):
+        instance = self.instance
+
+        if instance is None:
+            return
+
+        if (
+            instance.status
+            == WorkloadDistribution.Status.APPROVED
+        ):
+            raise serializers.ValidationError(
+                {
+                    "detail": (
+                        "Утверждённое распределение "
+                        "нельзя изменять. Сначала "
+                        "верните его в черновик."
+                    )
+                }
+            )
+
+        if (
+            instance.status
+            == WorkloadDistribution.Status.CANCELLED
+        ):
+            raise serializers.ValidationError(
+                {
+                    "detail": (
+                        "Отменённое распределение "
+                        "нельзя изменять."
+                    )
+                }
+            )
+
+    def validate_distribution_data(
+        self,
+        attrs,
+    ):
+        instance = self.instance
+
+        planned_workload = attrs.get(
+            "planned_workload",
+            getattr(
+                instance,
+                "planned_workload",
+                None,
+            ),
+        )
+        staff_employment = attrs.get(
+            "staff_employment",
+            getattr(
+                instance,
+                "staff_employment",
+                None,
+            ),
+        )
+        allocated_hours = attrs.get(
+            "allocated_hours",
+            getattr(
+                instance,
+                "allocated_hours",
+                None,
+            ),
+        )
+
+        if planned_workload and staff_employment:
+            if (
+                planned_workload
+                .teaching_department_id
+                != staff_employment.department_id
+            ):
+                raise serializers.ValidationError(
+                    {
+                        "staff_employment": (
+                            "Трудовое назначение "
+                            "преподавателя должно "
+                            "относиться к обеспечивающей "
+                            "кафедре."
+                        )
+                    }
+                )
+
+            if (
+                staff_employment.is_archived
+                or not staff_employment.is_active
+            ):
+                raise serializers.ValidationError(
+                    {
+                        "staff_employment": (
+                            "Трудовое назначение "
+                            "неактивно или архивировано."
+                        )
+                    }
+                )
+
+            if not (
+                staff_employment
+                .position
+                .is_teaching_position
+            ):
+                raise serializers.ValidationError(
+                    {
+                        "staff_employment": (
+                            "Должность сотрудника "
+                            "не участвует в учебной "
+                            "нагрузке."
+                        )
+                    }
+                )
+
+            academic_year_record = (
+                staff_employment
+                .get_academic_year_record(
+                    planned_workload.academic_year
+                )
+            )
+
+            if (
+                academic_year_record is None
+                or not academic_year_record.is_active
+                or academic_year_record.is_archived
+            ):
+                raise serializers.ValidationError(
+                    {
+                        "staff_employment": (
+                            "Для трудового назначения "
+                            "отсутствует активная "
+                            "кадровая запись на выбранный "
+                            "учебный год."
+                        )
+                    }
+                )
+
+        if (
+            planned_workload
+            and allocated_hours is not None
+        ):
+            distributions = (
+                WorkloadDistribution.objects
+                .filter(
+                    planned_workload=(
+                        planned_workload
+                    ),
+                    status__in=(
+                        WorkloadDistribution
+                        .Status
+                        .DRAFT,
+                        WorkloadDistribution
+                        .Status
+                        .APPROVED,
+                    ),
+                    is_archived=False,
+                )
+            )
+
+            if instance is not None:
+                distributions = (
+                    distributions.exclude(
+                        pk=instance.pk
+                    )
+                )
+
+            distributed_hours = (
+                distributions.aggregate(
+                    total=Sum(
+                        "allocated_hours"
+                    )
+                )["total"]
+                or Decimal("0.00")
+            )
+
+            remaining_hours = (
+                planned_workload.total_hours
+                - distributed_hours
+            )
+
+            if allocated_hours > remaining_hours:
+                raise serializers.ValidationError(
+                    {
+                        "allocated_hours": (
+                            "Доступный остаток "
+                            "нагрузки: "
+                            f"{remaining_hours} часов."
+                        )
+                    }
+                )
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+
+        self.validate_distribution_status(
+            attrs
+        )
+        self.validate_distribution_data(
+            attrs
+        )
+
+        return attrs
+
 class WorkloadDistributionSerializer(
-    AuditFieldsSerializer
+    AuditFieldsSerializer,
+    WorkloadDistributionValidationMixin,
 ):
     teacher = serializers.IntegerField(
         source="staff_employment.staff_member_id",
@@ -156,51 +365,8 @@ class WorkloadDistributionSerializer(
 
         return str(obj.approved_by)
 
-    def validate(self, attrs):
-        instance = self.instance
-
-        if (
-                instance
-                and instance.status
-                == WorkloadDistribution.Status.APPROVED
-        ):
-            changed_fields = {
-                field
-                for field in (
-                    "planned_workload",
-                    "staff_employment",
-                    "allocated_hours",
-                )
-                if field in attrs
-                   and attrs[field] != getattr(instance, field)
-            }
-
-            if changed_fields:
-                raise serializers.ValidationError(
-                    {
-                        "detail": (
-                            "Утверждённое распределение нельзя "
-                            "изменять. Сначала отмените утверждение."
-                        )
-                    }
-                )
-
-        if (
-                instance
-                and instance.status
-                == WorkloadDistribution.Status.CANCELLED
-        ):
-            raise serializers.ValidationError(
-                {
-                    "detail": (
-                        "Отменённое распределение нельзя изменять."
-                    )
-                }
-            )
-
-        return attrs
-
 class WorkloadDistributionCreateSerializer(
+    WorkloadDistributionValidationMixin,
     serializers.ModelSerializer
 ):
     """
@@ -248,6 +414,7 @@ class WorkloadDistributionCreateSerializer(
 
 
 class WorkloadDistributionUpdateSerializer(
+    WorkloadDistributionValidationMixin,
     serializers.ModelSerializer
 ):
     """
@@ -289,6 +456,7 @@ class WorkloadDistributionUpdateSerializer(
 
 
 class WorkloadDistributionPartialUpdateSerializer(
+    WorkloadDistributionValidationMixin,
     serializers.ModelSerializer
 ):
     """
