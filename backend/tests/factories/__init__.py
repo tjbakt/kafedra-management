@@ -54,6 +54,13 @@ from tests.factories.individual_plan import (
     IndividualPlanSectionFactory,
     IndividualPlanTeachingWorkloadFactory,
 )
+from tests.factories.audit import (
+    AuditEventFactory,
+)
+from tests.factories.notifications import (
+    NotificationFactory,
+    UserTaskFactory,
+)
 
 __all__ = (
     "UserFactory",
@@ -94,4 +101,7 @@ __all__ = (
     "IndividualPlanFactory",
     "IndividualPlanItemFactory",
     "IndividualPlanTeachingWorkloadFactory",
+    "NotificationFactory",
+    "UserTaskFactory",
+    "AuditEventFactory",
 )
