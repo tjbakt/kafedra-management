@@ -61,6 +61,10 @@ from tests.factories.notifications import (
     NotificationFactory,
     UserTaskFactory,
 )
+from tests.factories.reports import (
+    ExcelReportTemplateFactory,
+    create_xlsx_file,
+)
 
 __all__ = (
     "UserFactory",
@@ -104,4 +108,6 @@ __all__ = (
     "NotificationFactory",
     "UserTaskFactory",
     "AuditEventFactory",
+    "ExcelReportTemplateFactory",
+    "create_xlsx_file",
 )

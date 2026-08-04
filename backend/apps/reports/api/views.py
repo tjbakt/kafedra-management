@@ -152,11 +152,13 @@ class TeacherWorkloadExcelView(
                 description="ID учебного года.",
             ),
             OpenApiParameter(
-                name="teacher",
+                name="staff_employment",
                 type=OpenApiTypes.INT,
                 location=OpenApiParameter.QUERY,
                 required=True,
-                description="ID преподавателя.",
+                description=(
+                        "ID трудового назначения преподавателя."
+                ),
             ),
         ],
         request=None,

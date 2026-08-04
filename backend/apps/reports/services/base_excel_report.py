@@ -11,6 +11,11 @@ from openpyxl.utils import get_column_letter
 from apps.reports.models import ExcelReportTemplate
 
 from openpyxl.utils.exceptions import InvalidFileException
+from zipfile import BadZipFile
+
+from openpyxl.utils.exceptions import (
+    InvalidFileException,
+)
 
 
 class BaseExcelReportService:
@@ -66,53 +71,46 @@ class BaseExcelReportService:
 
         return template
 
-    @staticmethod
-    def load_template_workbook(template):
-        """
-        Открывает загруженный Excel-шаблон.
-
-        Исходный файл шаблона не изменяется.
-        """
-
+    @classmethod
+    def load_template_workbook(
+            cls,
+            template,
+    ):
         try:
             template.file.open("rb")
 
-            try:
-                workbook = load_workbook(
-                    filename=template.file,
-                    data_only=False,
-                )
-            finally:
-                template.file.close()
-
+            workbook = load_workbook(
+                filename=template.file,
+                data_only=False,
+            )
         except (
+                BadZipFile,
                 InvalidFileException,
                 OSError,
                 ValueError,
         ) as exc:
             raise ReportGenerationError(
-                "Не удалось открыть Excel-шаблон отчёта. "
-                "Проверьте формат и целостность файла."
+                "Не удалось открыть XLSX-шаблон отчёта. "
+                "Файл повреждён или имеет неверный формат."
             ) from exc
+        finally:
+            try:
+                template.file.close()
+            except Exception:
+                pass
 
-        if template.sheet_name:
-            if template.sheet_name not in workbook.sheetnames:
-                workbook.close()
+        if template.sheet_name not in workbook.sheetnames:
+            workbook.close()
 
-                raise ReportGenerationError(
-                    (
-                        "В Excel-шаблоне отсутствует лист "
-                        f"«{template.sheet_name}»."
-                    )
-                )
+            raise ReportGenerationError(
+                "В XLSX-шаблоне отсутствует лист "
+                f"«{template.sheet_name}»."
+            )
 
-            worksheet = workbook[
-                template.sheet_name
-            ]
-        else:
-            worksheet = workbook.active
-
-        return workbook, worksheet
+        return (
+            workbook,
+            workbook[template.sheet_name],
+        )
 
     @staticmethod
     def replace_placeholders(

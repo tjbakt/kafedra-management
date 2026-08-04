@@ -10090,10 +10090,10 @@ paths:
         description: ID учебного года.
         required: true
       - in: query
-        name: teacher
+        name: staff_employment
         schema:
           type: integer
-        description: ID преподавателя.
+        description: ID трудового назначения преподавателя.
         required: true
       tags:
       - Отчёты

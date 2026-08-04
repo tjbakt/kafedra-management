@@ -222,10 +222,29 @@ class TeacherWorkloadExcelService(
                 "planned_workload__teaching_stream__curriculum_discipline__curriculum__study_program",
             )
             .prefetch_related(
-                "planned_workload__teaching_stream__stream_groups",
-                "planned_workload__teaching_stream__stream_groups__group_semester",
-                "planned_workload__teaching_stream__stream_groups__group_semester__student_group",
-                "planned_workload__teaching_stream__stream_groups__group_semester__student_group__faculty",
+                (
+                    "planned_workload__teaching_stream__"
+                    "stream_groups"
+                ),
+                (
+                    "planned_workload__teaching_stream__"
+                    "stream_groups__group_semester"
+                ),
+                (
+                    "planned_workload__teaching_stream__"
+                    "stream_groups__group_semester__"
+                    "group_curriculum"
+                ),
+                (
+                    "planned_workload__teaching_stream__"
+                    "stream_groups__group_semester__"
+                    "group_curriculum__student_group"
+                ),
+                (
+                    "planned_workload__teaching_stream__"
+                    "stream_groups__group_semester__"
+                    "group_curriculum__student_group__faculty"
+                ),
             )
             .order_by(
                 "planned_workload__teaching_stream__curriculum_discipline__semester_number",
@@ -292,7 +311,7 @@ class TeacherWorkloadExcelService(
                     stream_group.group_semester
                 )
                 student_group = (
-                    group_semester.student_group
+                    group_semester.group_curriculum.student_group
                 )
 
                 group_names.append(
