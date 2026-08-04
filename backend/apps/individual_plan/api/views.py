@@ -472,11 +472,13 @@ class IndividualPlanViewSet(BaseArchiveModelViewSet):
                 False,
         ):
             return IndividualPlan.objects.none()
+
         queryset = (
             IndividualPlan.objects
             .select_related(
                 "staff_employment",
                 "staff_employment__staff_member",
+                "staff_employment__staff_member__user",
                 "staff_employment__position",
                 "staff_employment__department",
                 "academic_year",
@@ -487,24 +489,12 @@ class IndividualPlanViewSet(BaseArchiveModelViewSet):
                 "items__section",
                 "items__activity_type",
                 "items__academic_semester",
-            ),
-
-            IndividualPlanItem.objects
-            .select_related(
-                "individual_plan",
-                "individual_plan__academic_year",
-                "individual_plan__staff_employment",
-                "individual_plan__staff_employment__staff_member",
-                "individual_plan__staff_employment__department",
-                "section",
-                "activity_type",
-                "academic_semester",
-                "confirmed_by",
+                "items__teaching_workload_link",
+                (
+                    "items__teaching_workload_link__"
+                    "workload_distribution"
+                ),
             )
-            .select_related(
-                "teaching_workload_link",
-                "teaching_workload_link__workload_distribution",
-            ),
         )
 
         user = self.request.user
@@ -529,21 +519,35 @@ class IndividualPlanViewSet(BaseArchiveModelViewSet):
         )
 
         own_staff_ids = (
-            AccessService.accessible_staff_member_ids(user)
+            AccessService.accessible_staff_member_ids(
+                user
+            )
         )
 
-        if department_ids is None or own_staff_ids is None:
+        access_filter = Q(pk__in=[])
+
+        if department_ids is None:
             return queryset
 
+        if department_ids:
+            access_filter |= Q(
+                staff_employment__department_id__in=(
+                    department_ids
+                )
+            )
+
+        if own_staff_ids is None:
+            return queryset
+
+        if own_staff_ids:
+            access_filter |= Q(
+                staff_employment__staff_member_id__in=(
+                    own_staff_ids
+                )
+            )
+
         return queryset.filter(
-            Q(
-                individual_plan__staff_employment__,
-                department_id__in = department_ids
-            )
-            | Q(
-                individual_plan__staff_employment__,
-                staff_member_id__in = own_staff_ids
-            )
+            access_filter
         ).distinct()
 
     @action(

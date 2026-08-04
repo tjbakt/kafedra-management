@@ -250,11 +250,11 @@ class IndividualPlanService:
                 }
             )
 
+        old_status = plan.status
         plan.status = IndividualPlan.Status.SUBMITTED
         plan.submitted_at = timezone.now()
         plan.updated_by = user
 
-        old_status = plan.status
 
         plan.save(
             update_fields=(
@@ -339,12 +339,12 @@ class IndividualPlanService:
                 }
             )
 
+        old_status = plan.status
         plan.status = IndividualPlan.Status.APPROVED
         plan.approved_at = timezone.now()
         plan.approved_by = user
         plan.updated_by = user
 
-        old_status = plan.status
 
         plan.save(
             update_fields=(
@@ -410,11 +410,11 @@ class IndividualPlanService:
                 }
             )
 
+        old_status = plan.status
         plan.status = IndividualPlan.Status.RETURNED
         plan.reviewer_notes = reviewer_notes
         plan.updated_by = user
 
-        old_status = plan.status
 
         plan.save(
             update_fields=(

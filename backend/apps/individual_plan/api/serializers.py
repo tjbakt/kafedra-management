@@ -259,6 +259,109 @@ class IndividualPlanItemSerializer(
                     }
                 )
 
+        planned_start_date = attrs.get(
+            "planned_start_date",
+            getattr(
+                instance,
+                "planned_start_date",
+                None,
+            ),
+        )
+        planned_end_date = attrs.get(
+            "planned_end_date",
+            getattr(
+                instance,
+                "planned_end_date",
+                None,
+            ),
+        )
+        actual_completion_date = attrs.get(
+            "actual_completion_date",
+            getattr(
+                instance,
+                "actual_completion_date",
+                None,
+            ),
+        )
+        status_value = attrs.get(
+            "status",
+            getattr(
+                instance,
+                "status",
+                IndividualPlanItem.Status.PLANNED,
+            ),
+        )
+        evidence_url = attrs.get(
+            "evidence_url",
+            getattr(
+                instance,
+                "evidence_url",
+                "",
+            ),
+        )
+        evidence_document = attrs.get(
+            "evidence_document",
+            getattr(
+                instance,
+                "evidence_document",
+                "",
+            ),
+        )
+
+        if (
+                planned_start_date
+                and planned_end_date
+                and planned_end_date < planned_start_date
+        ):
+            raise serializers.ValidationError(
+                {
+                    "planned_end_date": (
+                        "Дата окончания не может быть "
+                        "раньше даты начала."
+                    )
+                }
+            )
+
+        if (
+                status_value
+                in (
+                IndividualPlanItem.Status.COMPLETED,
+                IndividualPlanItem.Status.CONFIRMED,
+        )
+                and not actual_completion_date
+        ):
+            raise serializers.ValidationError(
+                {
+                    "actual_completion_date": (
+                        "Для выполненного пункта "
+                        "необходимо указать дату выполнения."
+                    )
+                }
+            )
+
+        requires_evidence = (
+                activity_type
+                and activity_type.requires_evidence
+        )
+
+        if (
+                requires_evidence
+                and status_value
+                in (
+                IndividualPlanItem.Status.COMPLETED,
+                IndividualPlanItem.Status.CONFIRMED,
+        )
+                and not evidence_url
+                and not evidence_document
+        ):
+            raise serializers.ValidationError(
+                {
+                    "evidence_document": (
+                        "Для этого вида работы требуется "
+                        "подтверждающий документ или ссылка."
+                    )
+                }
+            )
         return attrs
 
 class IndividualPlanSerializer(AuditFieldsSerializer):
@@ -372,3 +475,85 @@ class IndividualPlanSerializer(AuditFieldsSerializer):
             "archived_at",
             "archived_by",
         )
+
+    def validate(self, attrs):
+        instance = self.instance
+
+        staff_employment = attrs.get(
+            "staff_employment",
+            getattr(
+                instance,
+                "staff_employment",
+                None,
+            ),
+        )
+
+        academic_year = attrs.get(
+            "academic_year",
+            getattr(
+                instance,
+                "academic_year",
+                None,
+            ),
+        )
+
+        if staff_employment:
+            if staff_employment.is_archived:
+                raise serializers.ValidationError(
+                    {
+                        "staff_employment": (
+                            "Нельзя создать индивидуальный "
+                            "план для архивного назначения."
+                        )
+                    }
+                )
+
+            if not staff_employment.is_active:
+                raise serializers.ValidationError(
+                    {
+                        "staff_employment": (
+                            "Трудовое назначение неактивно."
+                        )
+                    }
+                )
+
+            if not (
+                    staff_employment
+                            .position
+                            .is_teaching_position
+            ):
+                raise serializers.ValidationError(
+                    {
+                        "staff_employment": (
+                            "Индивидуальный план доступен "
+                            "только для преподавательских "
+                            "должностей."
+                        )
+                    }
+                )
+
+        if (
+                instance
+                and instance.status
+                not in (
+                IndividualPlan.Status.DRAFT,
+                IndividualPlan.Status.RETURNED,
+        )
+        ):
+            editable_fields = {
+                "staff_employment",
+                "academic_year",
+                "teacher_notes",
+            }
+
+            if editable_fields.intersection(attrs):
+                raise serializers.ValidationError(
+                    {
+                        "detail": (
+                            "Изменять можно только черновой "
+                            "или возвращённый план."
+                        )
+                    }
+                )
+
+        return attrs

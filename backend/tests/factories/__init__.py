@@ -47,7 +47,13 @@ from tests.factories.teaching import (
 from tests.factories.workload import (
     WorkloadDistributionFactory,
 )
-
+from tests.factories.individual_plan import (
+    IndividualActivityTypeFactory,
+    IndividualPlanFactory,
+    IndividualPlanItemFactory,
+    IndividualPlanSectionFactory,
+    IndividualPlanTeachingWorkloadFactory,
+)
 
 __all__ = (
     "UserFactory",
@@ -83,4 +89,9 @@ __all__ = (
     "TeachingStreamGroupFactory",
     "PlannedWorkloadFactory",
     "WorkloadDistributionFactory",
+    "IndividualPlanSectionFactory",
+    "IndividualActivityTypeFactory",
+    "IndividualPlanFactory",
+    "IndividualPlanItemFactory",
+    "IndividualPlanTeachingWorkloadFactory",
 )
