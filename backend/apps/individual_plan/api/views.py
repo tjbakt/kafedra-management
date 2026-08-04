@@ -172,6 +172,19 @@ class IndividualPlanItemViewSet(
             "",
         )
 
+        old_values = {
+            "status": item.status,
+            "actual_hours": item.actual_hours,
+            "actual_result": item.actual_result,
+            "actual_completion_date": (
+                item.actual_completion_date
+            ),
+            "evidence_url": item.evidence_url,
+            "evidence_document": (
+                item.evidence_document
+            ),
+        }
+
         item.actual_hours = actual_hours
         item.actual_result = actual_result
         item.evidence_url = evidence_url
@@ -182,15 +195,6 @@ class IndividualPlanItemViewSet(
         )
         item.status = IndividualPlanItem.Status.COMPLETED
         item.updated_by = request.user
-
-        old_values = {
-            "status": item.status,
-            "actual_hours": item.actual_hours,
-            "actual_result": item.actual_result,
-            "actual_completion_date": (
-                item.actual_completion_date
-            ),
-        }
 
         try:
             item.full_clean()
@@ -281,6 +285,8 @@ class IndividualPlanItemViewSet(
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        old_status = item.status
+
         item.status = IndividualPlanItem.Status.CONFIRMED
         item.confirmed_at = timezone.now()
         item.confirmed_by = request.user
@@ -289,8 +295,6 @@ class IndividualPlanItemViewSet(
             "",
         )
         item.updated_by = request.user
-
-        old_status = item.status
 
         try:
             item.full_clean()

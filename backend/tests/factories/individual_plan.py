@@ -13,9 +13,7 @@ from apps.individual_plan.models import (
 from apps.workload.models import (
     WorkloadDistribution,
 )
-from tests.factories.academics import (
-    AcademicSemesterFactory,
-)
+
 from tests.factories.staff import (
     StaffEmploymentAcademicYearFactory,
     StaffEmploymentFactory,
@@ -166,16 +164,72 @@ class IndividualPlanItemFactory(
         IndividualPlanSectionFactory,
     )
 
-    activity_type = factory.SubFactory(
-        IndividualActivityTypeFactory,
-    )
+    # Не создаём activity_type автоматически:
+    # его раздел должен совпадать с section.
+    activity_type = None
 
+    # Семестр необязателен. В нужных тестах
+    # он передаётся явно.
     academic_semester = None
 
+    title = factory.Sequence(
+        lambda number: (
+            f"Пункт индивидуального плана {number}"
+        )
+    )
+    description = ""
+
     planned_hours = Decimal("20.00")
+    actual_hours = Decimal("0.00")
+
+    planned_start_date = None
+    planned_end_date = None
+    actual_completion_date = None
+
+    expected_result = ""
+    actual_result = ""
+
+    evidence_url = ""
+    evidence_document = ""
 
     status = IndividualPlanItem.Status.PLANNED
 
+    confirmed_at = None
+    confirmed_by = None
+
+    teacher_comment = ""
+    reviewer_comment = ""
+
+    sort_order = 0
+
+    created_by = factory.SelfAttribute(
+        "individual_plan.created_by"
+    )
+    updated_by = factory.SelfAttribute(
+        "individual_plan.updated_by"
+    )
+
+    @classmethod
+    def completed(
+        cls,
+        *,
+        actual_hours=Decimal("20.00"),
+        actual_completion_date=None,
+        **kwargs,
+    ):
+        return cls(
+            status=(
+                IndividualPlanItem
+                .Status
+                .COMPLETED
+            ),
+            actual_hours=actual_hours,
+            actual_completion_date=(
+                actual_completion_date
+                or date.today()
+            ),
+            **kwargs,
+        )
 
 class IndividualPlanTeachingWorkloadFactory(
     factory.django.DjangoModelFactory
