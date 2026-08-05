@@ -1,0 +1,40 @@
+[run]
+branch = True
+source =
+    apps
+parallel = False
+
+omit =
+    */migrations/*
+    */admin.py
+    */apps.py
+    */__init__.py
+    */manage.py
+    */config/*
+    */tests/*
+    */test_*
+    */.venv/*
+    */venv/*
+
+[report]
+fail_under = 70
+show_missing = True
+skip_covered = True
+precision = 2
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    def __str__
+    if self\.debug
+    if settings\.DEBUG
+    raise AssertionError
+    raise NotImplementedError
+    if __name__ == .__main__.:
+    @abstractmethod
+
+[html]
+directory = htmlcov
+title = Kafedra Backend Coverage
+
+[xml]
+output = coverage.xml
