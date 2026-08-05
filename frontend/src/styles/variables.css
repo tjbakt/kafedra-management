@@ -1,0 +1,63 @@
+:root {
+  --app-primary: #2563eb;
+  --app-primary-hover: #1d4ed8;
+
+  --app-success: #16a34a;
+  --app-info: #0284c7;
+  --app-warning: #d97706;
+  --app-danger: #dc2626;
+
+  --app-background: #f5f7fb;
+  --app-surface: #ffffff;
+  --app-surface-soft: #f8fafc;
+  --app-hover-bg: #f1f5f9;
+
+  --app-text: #172033;
+  --app-text-muted: #64748b;
+  --app-text-soft: #94a3b8;
+  --app-border-color: #e2e8f0;
+
+  --app-sidebar-bg: #111827;
+  --app-sidebar-text: #e5e7eb;
+  --app-sidebar-text-muted: #94a3b8;
+  --app-sidebar-border: rgb(255 255 255 / 8%);
+  --app-sidebar-hover: rgb(255 255 255 / 7%);
+  --app-sidebar-active: #2563eb;
+
+  --app-header-height: 4.25rem;
+  --app-footer-height: 3.5rem;
+  --app-sidebar-width: 17rem;
+  --app-sidebar-collapsed-width: 4.75rem;
+
+  --app-radius: 0.65rem;
+  --app-radius-lg: 0.9rem;
+
+  --app-shadow-sm: 0 1px 2px rgb(15 23 42 / 4%);
+  --app-shadow: 0 10px 20px rgb(15 23 42 / 6%), 0 2px 6px rgb(15 23 42 / 4%);
+  --app-shadow-lg: 0 24px 50px rgb(15 23 42 / 12%), 0 8px 18px rgb(15 23 42 / 6%);
+
+  --app-transition: 180ms ease;
+
+  --app-z-header: 900;
+  --app-z-sidebar: 1000;
+}
+
+html.app-dark {
+  --app-background: #0f172a;
+  --app-surface: #172033;
+  --app-surface-soft: #1e293b;
+  --app-hover-bg: #243147;
+
+  --app-text: #e5e7eb;
+  --app-text-muted: #9ca3af;
+  --app-text-soft: #64748b;
+  --app-border-color: #2d3a50;
+
+  --app-sidebar-bg: #0b1120;
+  --app-sidebar-border: rgb(255 255 255 / 7%);
+  --app-sidebar-hover: rgb(255 255 255 / 6%);
+
+  --app-shadow-sm: 0 1px 2px rgb(0 0 0 / 20%);
+  --app-shadow: 0 10px 20px rgb(0 0 0 / 18%), 0 2px 6px rgb(0 0 0 / 12%);
+  --app-shadow-lg: 0 24px 50px rgb(0 0 0 / 28%), 0 8px 18px rgb(0 0 0 / 18%);
+}
