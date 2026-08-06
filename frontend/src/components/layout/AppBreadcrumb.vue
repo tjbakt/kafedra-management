@@ -2,31 +2,39 @@
 import Breadcrumb from 'primevue/breadcrumb'
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 
 const route = useRoute()
 const router = useRouter()
+const { t } = useI18n()
 
-const home = {
+const home = computed(() => ({
   icon: 'pi pi-home',
+  label: t('navigation.dashboard'),
   command: () => router.push('/'),
-}
+}))
 
 const items = computed(() => {
-  const breadcrumbs = route.meta.breadcrumb
+  const breadcrumbKeys =
+    route.meta.breadcrumbKeys
 
-  if (!Array.isArray(breadcrumbs)) {
+  if (!Array.isArray(breadcrumbKeys)) {
     return []
   }
 
-  return breadcrumbs.map((item) => ({
-    ...item,
-    command: item.route ? () => router.push(item.route) : undefined,
+  return breadcrumbKeys.map((key) => ({
+    label: t(String(key)),
   }))
 })
 </script>
 
 <template>
-  <Breadcrumb v-if="items.length" :home="home" :model="items" class="app-breadcrumb" />
+  <Breadcrumb
+    v-if="items.length"
+    :home="home"
+    :model="items"
+    class="app-breadcrumb"
+  />
 </template>
 
 <style scoped>

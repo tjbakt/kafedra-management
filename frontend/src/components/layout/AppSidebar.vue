@@ -1,86 +1,107 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import Badge from 'primevue/badge'
 
 import { useLayoutStore } from '@/stores/layout'
 import type { SidebarItem } from '@/types/layout'
 
+interface TranslatedSidebarItem extends SidebarItem {
+  labelKey: string
+  children?: TranslatedSidebarItem[]
+}
+
 const route = useRoute()
 const router = useRouter()
 const layoutStore = useLayoutStore()
+const { t } = useI18n()
 
-const menuItems: SidebarItem[] = [
+const menuDefinitions: TranslatedSidebarItem[] = [
   {
-    label: 'Главная',
+    label: '',
+    labelKey: 'navigation.dashboard',
     icon: 'pi pi-home',
     route: '/',
   },
   {
-    label: 'Организационная структура',
+    label: '',
+    labelKey: 'navigation.organizationalStructure',
     icon: 'pi pi-sitemap',
     children: [
       {
-        label: 'Кафедры',
+        label: '',
+        labelKey: 'navigation.departments',
         icon: 'pi pi-building',
         route: '/departments',
       },
       {
-        label: 'Преподаватели',
+        label: '',
+        labelKey: 'navigation.teachers',
         icon: 'pi pi-users',
         route: '/teachers',
       },
       {
-        label: 'Студенческие группы',
+        label: '',
+        labelKey: 'navigation.studentGroups',
         icon: 'pi pi-id-card',
         route: '/students',
       },
     ],
   },
   {
-    label: 'Учебный процесс',
+    label: '',
+    labelKey: 'navigation.educationalProcess',
     icon: 'pi pi-book',
     children: [
       {
-        label: 'Дисциплины',
+        label: '',
+        labelKey: 'navigation.disciplines',
         icon: 'pi pi-bookmark',
         route: '/disciplines',
       },
       {
-        label: 'Учебные планы',
+        label: '',
+        labelKey: 'navigation.curricula',
         icon: 'pi pi-list-check',
         route: '/curriculum',
       },
       {
-        label: 'Учебная нагрузка',
+        label: '',
+        labelKey: 'navigation.workload',
         icon: 'pi pi-chart-bar',
         route: '/workload',
-        badge: 'Важно',
+        badge: '!',
       },
       {
-        label: 'Расписание',
+        label: '',
+        labelKey: 'navigation.schedules',
         icon: 'pi pi-calendar',
         route: '/schedules',
       },
     ],
   },
   {
-    label: 'Аналитика',
+    label: '',
+    labelKey: 'navigation.analytics',
     icon: 'pi pi-chart-line',
     children: [
       {
-        label: 'Отчёты',
+        label: '',
+        labelKey: 'navigation.reports',
         icon: 'pi pi-file-export',
         route: '/reports',
       },
     ],
   },
   {
-    label: 'Система',
+    label: '',
+    labelKey: 'navigation.system',
     icon: 'pi pi-cog',
     children: [
       {
-        label: 'Настройки',
+        label: '',
+        labelKey: 'navigation.settings',
         icon: 'pi pi-sliders-h',
         route: '/settings',
       },
@@ -88,14 +109,30 @@ const menuItems: SidebarItem[] = [
   },
 ]
 
+const menuItems = computed<TranslatedSidebarItem[]>(() =>
+  menuDefinitions.map((item) => ({
+    ...item,
+    label: t(item.labelKey),
+    children: item.children?.map((child) => ({
+      ...child,
+      label: t(child.labelKey),
+    })),
+  })),
+)
+
 const sidebarClass = computed(() => ({
   'app-sidebar--collapsed': layoutStore.sidebarCollapsed,
-  'app-sidebar--mobile-visible': layoutStore.mobileSidebarVisible,
+  'app-sidebar--mobile-visible':
+    layoutStore.mobileSidebarVisible,
 }))
 
 function isActive(item: SidebarItem): boolean {
   if (!item.route) {
-    return item.children?.some((child) => route.path.startsWith(child.route ?? '')) ?? false
+    return (
+      item.children?.some((child) =>
+        route.path.startsWith(child.route ?? ''),
+      ) ?? false
+    )
   }
 
   if (item.route === '/') {
@@ -182,8 +219,12 @@ async function navigate(item: SidebarItem): Promise<void> {
         <i class="pi pi-code" />
 
         <span>
-          <strong>Версия 0.1.0</strong>
-          <small>Frontend layout</small>
+          <strong>
+            {{ t('app.version', {version: '0.2.0'}) }}
+          </strong>
+          <small>
+            {{ t('app.frontendLayout') }}
+          </small>
         </span>
       </div>
     </div>

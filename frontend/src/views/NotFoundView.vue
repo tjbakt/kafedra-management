@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import Button from 'primevue/button'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 </script>
 
 <template>
@@ -10,11 +13,18 @@ import Button from 'primevue/button'
       <i class="pi pi-search" />
     </span>
 
-    <h1>Страница не найдена</h1>
+    <h1>{{ t('errors.notFoundTitle') }}</h1>
 
-    <p>Запрошенная страница не существует, была перемещена или удалена.</p>
+    <p>
+      {{ t('errors.notFoundDescription') }}
+    </p>
 
-    <Button label="Вернуться на главную" icon="pi pi-home" as="router-link" to="/" />
+    <Button
+      :label="t('modules.returnHome')"
+      icon="pi pi-home"
+      as="router-link"
+      to="/"
+    />
   </div>
 </template>
 
@@ -29,7 +39,11 @@ import Button from 'primevue/button'
 }
 
 .not-found__code {
-  color: color-mix(in srgb, var(--app-primary) 10%, transparent);
+  color: color-mix(
+    in srgb,
+    var(--app-primary) 10%,
+    transparent
+  );
   font-size: clamp(7rem, 24vw, 14rem);
   font-weight: 800;
   line-height: 0.8;

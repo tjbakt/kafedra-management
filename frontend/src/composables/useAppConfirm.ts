@@ -1,4 +1,5 @@
 import { useConfirm } from 'primevue/useconfirm'
+import { useI18n } from 'vue-i18n'
 
 interface ConfirmDeleteOptions {
   message?: string
@@ -9,39 +10,55 @@ interface ConfirmDeleteOptions {
 
 export function useAppConfirm() {
   const confirm = useConfirm()
+  const { t } = useI18n()
 
-  function confirmDelete(options: ConfirmDeleteOptions = {}): void {
+  function confirmDelete(
+    options: ConfirmDeleteOptions = {},
+  ): void {
     confirm.require({
-      header: options.header ?? 'Подтверждение удаления',
+      header:
+        options.header ??
+        t('confirm.deleteHeader'),
+
       message:
         options.message ??
-        'Вы действительно хотите удалить выбранную запись? Это действие нельзя отменить.',
+        t('confirm.deleteMessage'),
+
       icon: 'pi pi-exclamation-triangle',
-      rejectLabel: 'Отмена',
-      acceptLabel: 'Удалить',
+
+      rejectLabel: t('common.cancel'),
+      acceptLabel: t('confirm.deleteAccept'),
+
       rejectProps: {
         severity: 'secondary',
         outlined: true,
       },
+
       acceptProps: {
         severity: 'danger',
       },
+
       accept: options.accept,
       reject: options.reject,
     })
   }
 
-  function confirmAction(message: string, accept: () => void | Promise<void>): void {
+  function confirmAction(
+    message: string,
+    accept: () => void | Promise<void>,
+  ): void {
     confirm.require({
-      header: 'Подтверждение действия',
+      header: t('confirm.actionHeader'),
       message,
       icon: 'pi pi-question-circle',
-      rejectLabel: 'Отмена',
-      acceptLabel: 'Подтвердить',
+      rejectLabel: t('common.cancel'),
+      acceptLabel: t('common.confirm'),
+
       rejectProps: {
         severity: 'secondary',
         outlined: true,
       },
+
       accept,
     })
   }

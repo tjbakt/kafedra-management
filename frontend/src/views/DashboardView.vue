@@ -8,90 +8,107 @@ import BasePageHeader from '@/components/base/BasePageHeader.vue'
 import { useAppConfirm } from '@/composables/useAppConfirm'
 import { useAppToast } from '@/composables/useAppToast'
 
+import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+
 const toast = useAppToast()
 const { confirmAction } = useAppConfirm()
 
-const statistics = [
+const { t } = useI18n()
+
+const statistics = computed(() => [
   {
-    title: 'Преподаватели',
+    title: t('dashboard.teachers'),
     value: 42,
-    change: '+3 за месяц',
+    change: t('dashboard.teachersChange'),
     icon: 'pi pi-users',
     route: '/teachers',
   },
   {
-    title: 'Дисциплины',
+    title: t('dashboard.disciplines'),
     value: 86,
-    change: '12 активных планов',
+    change: t('dashboard.activePlans'),
     icon: 'pi pi-book',
     route: '/disciplines',
   },
   {
-    title: 'Учебные группы',
+    title: t('dashboard.groups'),
     value: 28,
-    change: '824 студента',
+    change: t('dashboard.studentsCount'),
     icon: 'pi pi-id-card',
     route: '/students',
   },
   {
-    title: 'Общая нагрузка',
+    title: t('dashboard.totalWorkload'),
     value: '18 640',
-    suffix: 'часов',
-    change: 'На текущий учебный год',
+    suffix: t('dashboard.hours'),
+    change: t('dashboard.currentYear'),
     icon: 'pi pi-chart-bar',
     route: '/workload',
   },
-]
+])
 
-const workloadItems = [
+const workloadItems = computed(() => [
   {
-    title: 'Распределено',
+    title: t('dashboard.distributed'),
     value: 82,
-    status: 'Выполняется',
+    status: t('dashboard.inProgress'),
     severity: 'info' as const,
   },
   {
-    title: 'Проверено',
+    title: t('dashboard.checked'),
     value: 64,
-    status: 'Требуется проверка',
+    status: t('dashboard.requiresCheck'),
     severity: 'warn' as const,
   },
   {
-    title: 'Утверждено',
+    title: t('dashboard.approved'),
     value: 48,
-    status: 'В процессе',
+    status: t('dashboard.processing'),
     severity: 'success' as const,
   },
-]
+])
 
 function showSuccess(): void {
-  toast.success('Интерфейс работает', 'Глобальная система Toast успешно подключена.')
+  toast.success(
+    t('dashboard.interfaceWorks'),
+    t('dashboard.toastConnected'),
+  )
 }
 
 function showConfirmation(): void {
-  confirmAction('Подтвердить выполнение демонстрационного действия?', () => {
-    toast.success('Действие подтверждено')
-  })
+  confirmAction(
+    t('dashboard.confirmDemoAction'),
+    () => {
+      toast.success(
+        t('dashboard.actionConfirmed'),
+      )
+    },
+  )
 }
 </script>
 
 <template>
   <div class="dashboard">
     <BasePageHeader
-      title="Панель управления"
-      description="Общая информация о состоянии учебного процесса и распределении нагрузки."
+      :title="t('dashboard.title')"
+      :description="t('dashboard.description')"
       icon="pi pi-home"
     >
       <template #actions>
         <Button
-          label="Показать Toast"
+          :label="t('dashboard.showToast')"
           icon="pi pi-bell"
           severity="secondary"
           outlined
           @click="showSuccess"
         />
 
-        <Button label="Проверить Dialog" icon="pi pi-check-circle" @click="showConfirmation" />
+        <Button
+          :label="t('dashboard.checkDialog')"
+          icon="pi pi-check-circle"
+          @click="showConfirmation"
+        />
       </template>
     </BasePageHeader>
 
@@ -122,12 +139,14 @@ function showConfirmation(): void {
 
     <div class="dashboard-grid">
       <BaseCard
-        title="Распределение учебной нагрузки"
-        subtitle="Состояние подготовки нагрузки на текущий учебный год"
+        :title="t('dashboard.workloadDistribution')"
+        :subtitle="
+          t('dashboard.workloadDistributionDescription')
+        "
       >
         <template #actions>
           <Button
-            label="Открыть модуль"
+            :label="t('dashboard.openModule')"
             icon="pi pi-arrow-right"
             icon-pos="right"
             size="small"
@@ -153,13 +172,13 @@ function showConfirmation(): void {
         </div>
       </BaseCard>
 
-      <BaseCard title="Быстрые действия" subtitle="Наиболее часто используемые разделы">
+      <BaseCard :title="t('dashboard.quickActions')" :subtitle="t('dashboard.quickActionsDescription')">
         <div class="quick-actions">
           <RouterLink to="/teachers" class="quick-action">
             <i class="pi pi-user-plus" />
             <span>
-              <strong>Преподаватели</strong>
-              <small>Управление сотрудниками</small>
+              <strong>{{ t('dashboard.teachers') }}</strong>
+              <small>{{t('dashboard.teachersChange')}}</small>
             </span>
             <i class="pi pi-chevron-right" />
           </RouterLink>
@@ -167,8 +186,8 @@ function showConfirmation(): void {
           <RouterLink to="/curriculum" class="quick-action">
             <i class="pi pi-list-check" />
             <span>
-              <strong>Учебные планы</strong>
-              <small>Просмотр и редактирование</small>
+              <strong>{{t('dashboard.disciplines')}}</strong>
+              <small>{{t('dashboard.activePlans')}}</small>
             </span>
             <i class="pi pi-chevron-right" />
           </RouterLink>
@@ -176,8 +195,8 @@ function showConfirmation(): void {
           <RouterLink to="/workload" class="quick-action">
             <i class="pi pi-chart-bar" />
             <span>
-              <strong>Учебная нагрузка</strong>
-              <small>Распределение часов</small>
+              <strong>{{ t('dashboard.totalWorkload') }}</strong>
+              <small>{{t('dashboard.currentYear')}}</small>
             </span>
             <i class="pi pi-chevron-right" />
           </RouterLink>
@@ -185,8 +204,8 @@ function showConfirmation(): void {
           <RouterLink to="/reports" class="quick-action">
             <i class="pi pi-file-export" />
             <span>
-              <strong>Отчёты</strong>
-              <small>PDF и Excel</small>
+              <strong>{{ t('navigation.reports') }}</strong>
+              <small>{{t('dashboard.pdfAndExcel')}}</small>
             </span>
             <i class="pi pi-chevron-right" />
           </RouterLink>

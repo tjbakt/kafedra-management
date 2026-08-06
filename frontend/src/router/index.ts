@@ -1,103 +1,145 @@
-import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
+import {
+  createRouter,
+  createWebHistory,
+  type RouteRecordRaw,
+} from 'vue-router'
+
+import i18n from '@/i18n'
 
 const moduleRoutes: RouteRecordRaw[] = [
   {
     path: 'departments',
     name: 'departments',
-    component: () => import('@/views/ModulePlaceholderView.vue'),
+    component: () =>
+      import('@/views/ModulePlaceholderView.vue'),
     meta: {
-      title: 'Кафедры',
-      description: 'Управление кафедрами и организационной структурой.',
+      titleKey: 'navigation.departments',
+      descriptionKey:
+        'modules.departmentsDescription',
       icon: 'pi pi-building',
-      breadcrumb: [{ label: 'Кафедры' }],
+      breadcrumbKeys: [
+        'navigation.departments',
+      ],
     },
   },
   {
     path: 'teachers',
     name: 'teachers',
-    component: () => import('@/views/ModulePlaceholderView.vue'),
+    component: () =>
+      import('@/views/ModulePlaceholderView.vue'),
     meta: {
-      title: 'Преподаватели',
-      description: 'Справочник преподавателей, ставок, степеней и учёных званий.',
+      titleKey: 'navigation.teachers',
+      descriptionKey:
+        'modules.teachersDescription',
       icon: 'pi pi-users',
-      breadcrumb: [{ label: 'Преподаватели' }],
+      breadcrumbKeys: [
+        'navigation.teachers',
+      ],
     },
   },
   {
     path: 'students',
     name: 'students',
-    component: () => import('@/views/ModulePlaceholderView.vue'),
+    component: () =>
+      import('@/views/ModulePlaceholderView.vue'),
     meta: {
-      title: 'Студенческие группы',
-      description: 'Управление академическими группами и контингентом.',
+      titleKey: 'navigation.studentGroups',
+      descriptionKey:
+        'modules.studentsDescription',
       icon: 'pi pi-id-card',
-      breadcrumb: [{ label: 'Студенческие группы' }],
+      breadcrumbKeys: [
+        'navigation.studentGroups',
+      ],
     },
   },
   {
     path: 'disciplines',
     name: 'disciplines',
-    component: () => import('@/views/ModulePlaceholderView.vue'),
+    component: () =>
+      import('@/views/ModulePlaceholderView.vue'),
     meta: {
-      title: 'Дисциплины',
-      description: 'Справочник учебных дисциплин.',
+      titleKey: 'navigation.disciplines',
+      descriptionKey:
+        'modules.disciplinesDescription',
       icon: 'pi pi-bookmark',
-      breadcrumb: [{ label: 'Дисциплины' }],
+      breadcrumbKeys: [
+        'navigation.disciplines',
+      ],
     },
   },
   {
     path: 'curriculum',
     name: 'curriculum',
-    component: () => import('@/views/ModulePlaceholderView.vue'),
+    component: () =>
+      import('@/views/ModulePlaceholderView.vue'),
     meta: {
-      title: 'Учебные планы',
-      description: 'Формирование и сопровождение учебных планов образовательных программ.',
+      titleKey: 'navigation.curricula',
+      descriptionKey:
+        'modules.curriculaDescription',
       icon: 'pi pi-list-check',
-      breadcrumb: [{ label: 'Учебные планы' }],
+      breadcrumbKeys: [
+        'navigation.curricula',
+      ],
     },
   },
   {
     path: 'workload',
     name: 'workload',
-    component: () => import('@/views/ModulePlaceholderView.vue'),
+    component: () =>
+      import('@/views/ModulePlaceholderView.vue'),
     meta: {
-      title: 'Учебная нагрузка',
-      description: 'Расчёт и распределение учебной нагрузки между преподавателями.',
+      titleKey: 'navigation.workload',
+      descriptionKey:
+        'modules.workloadDescription',
       icon: 'pi pi-chart-bar',
-      breadcrumb: [{ label: 'Учебная нагрузка' }],
+      breadcrumbKeys: [
+        'navigation.workload',
+      ],
     },
   },
   {
     path: 'schedules',
     name: 'schedules',
-    component: () => import('@/views/ModulePlaceholderView.vue'),
+    component: () =>
+      import('@/views/ModulePlaceholderView.vue'),
     meta: {
-      title: 'Расписание',
-      description: 'Планирование и просмотр расписания занятий.',
+      titleKey: 'navigation.schedules',
+      descriptionKey:
+        'modules.schedulesDescription',
       icon: 'pi pi-calendar',
-      breadcrumb: [{ label: 'Расписание' }],
+      breadcrumbKeys: [
+        'navigation.schedules',
+      ],
     },
   },
   {
     path: 'reports',
     name: 'reports',
-    component: () => import('@/views/ModulePlaceholderView.vue'),
+    component: () =>
+      import('@/views/ModulePlaceholderView.vue'),
     meta: {
-      title: 'Отчёты',
-      description: 'Формирование аналитических отчётов, PDF и Excel.',
+      titleKey: 'navigation.reports',
+      descriptionKey:
+        'modules.reportsDescription',
       icon: 'pi pi-file-export',
-      breadcrumb: [{ label: 'Отчёты' }],
+      breadcrumbKeys: [
+        'navigation.reports',
+      ],
     },
   },
   {
     path: 'settings',
     name: 'settings',
-    component: () => import('@/views/ModulePlaceholderView.vue'),
+    component: () =>
+      import('@/views/ModulePlaceholderView.vue'),
     meta: {
-      title: 'Настройки',
-      description: 'Пользователи, роли, права доступа и параметры системы.',
+      titleKey: 'navigation.settings',
+      descriptionKey:
+        'modules.settingsDescription',
       icon: 'pi pi-cog',
-      breadcrumb: [{ label: 'Настройки' }],
+      breadcrumbKeys: [
+        'navigation.settings',
+      ],
     },
   },
 ]
@@ -105,44 +147,59 @@ const moduleRoutes: RouteRecordRaw[] = [
 const routes: RouteRecordRaw[] = [
   {
     path: '/',
-    component: () => import('@/layouts/DefaultLayout.vue'),
+    component: () =>
+      import('@/layouts/DefaultLayout.vue'),
+
     children: [
       {
         path: '',
         name: 'dashboard',
-        component: () => import('@/views/DashboardView.vue'),
+        component: () =>
+          import('@/views/DashboardView.vue'),
+
         meta: {
-          title: 'Панель управления',
+          titleKey: 'dashboard.title',
         },
       },
+
       ...moduleRoutes,
     ],
   },
+
   {
     path: '/login',
-    component: () => import('@/layouts/AuthLayout.vue'),
+    component: () =>
+      import('@/layouts/AuthLayout.vue'),
+
     children: [
       {
         path: '',
         name: 'login',
-        component: () => import('@/views/LoginView.vue'),
+        component: () =>
+          import('@/views/LoginView.vue'),
+
         meta: {
-          title: 'Вход в систему',
+          titleKey: 'auth.loginTitle',
           guestOnly: true,
         },
       },
     ],
   },
+
   {
     path: '/:pathMatch(.*)*',
-    component: () => import('@/layouts/EmptyLayout.vue'),
+    component: () =>
+      import('@/layouts/EmptyLayout.vue'),
+
     children: [
       {
         path: '',
         name: 'not-found',
-        component: () => import('@/views/NotFoundView.vue'),
+        component: () =>
+          import('@/views/NotFoundView.vue'),
+
         meta: {
-          title: 'Страница не найдена',
+          titleKey: 'errors.notFoundTitle',
         },
       },
     ],
@@ -150,7 +207,10 @@ const routes: RouteRecordRaw[] = [
 ]
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  history: createWebHistory(
+    import.meta.env.BASE_URL,
+  ),
+
   routes,
 
   scrollBehavior() {
@@ -161,13 +221,33 @@ const router = createRouter({
   },
 })
 
-router.beforeEach((to) => {
-  const appName = import.meta.env.VITE_APP_NAME || 'Kafedra Management'
-  const pageTitle = String(to.meta.title || '')
+function updateDocumentTitle(
+  titleKey?: unknown,
+): void {
+  const appName =
+    import.meta.env.VITE_APP_NAME ||
+    'Kafedra Management'
 
-  document.title = pageTitle ? `${pageTitle} — ${appName}` : appName
+  const pageTitle =
+    typeof titleKey === 'string'
+      ? i18n.global.t(titleKey)
+      : ''
+
+  document.title = pageTitle
+    ? `${pageTitle} — ${appName}`
+    : appName
+}
+
+router.beforeEach((to) => {
+  updateDocumentTitle(to.meta.titleKey)
 
   return true
 })
+
+export function refreshDocumentTitle(): void {
+  updateDocumentTitle(
+    router.currentRoute.value.meta.titleKey,
+  )
+}
 
 export default router

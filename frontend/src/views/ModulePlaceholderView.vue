@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import Button from 'primevue/button'
 
 import BaseCard from '@/components/base/BaseCard.vue'
@@ -10,29 +11,49 @@ import { useAppToast } from '@/composables/useAppToast'
 
 const route = useRoute()
 const toast = useAppToast()
+const { t } = useI18n()
 
-const title = computed(() => String(route.meta.title || 'Раздел'))
-const description = computed(() =>
-  String(
-    route.meta.description || 'Интерфейс данного раздела будет реализован на следующих этапах.',
-  ),
+const title = computed(() => {
+  const titleKey = route.meta.titleKey
+
+  return typeof titleKey === 'string'
+    ? t(titleKey)
+    : ''
+})
+
+const description = computed(() => {
+  const descriptionKey =
+    route.meta.descriptionKey
+
+  return typeof descriptionKey === 'string'
+    ? t(descriptionKey)
+    : t('modules.preparedDescription')
+})
+
+const icon = computed(() =>
+  String(route.meta.icon || 'pi pi-folder'),
 )
-const icon = computed(() => String(route.meta.icon || 'pi pi-folder'))
+
+function showCreateMessage(): void {
+  toast.info(
+    t('modules.demoMode'),
+    t('modules.createLater'),
+  )
+}
 </script>
 
 <template>
   <div>
-    <BasePageHeader :title="title" :description="description" :icon="icon">
+    <BasePageHeader
+      :title="title"
+      :description="description"
+      :icon="icon"
+    >
       <template #actions>
         <Button
-          label="Создать"
+          :label="t('common.create')"
           icon="pi pi-plus"
-          @click="
-            toast.info(
-              'Демонстрационный режим',
-              'Форма создания будет добавлена на этапе реализации CRUD.',
-            )
-          "
+          @click="showCreateMessage"
         />
       </template>
     </BasePageHeader>
@@ -40,12 +61,14 @@ const icon = computed(() => String(route.meta.icon || 'pi pi-folder'))
     <BaseCard>
       <BaseEmptyState
         :icon="icon"
-        title="Модуль подготовлен"
-        description="Маршрут, layout и базовые компоненты подключены. CRUD-интерфейс будет реализован на соответствующем этапе."
+        :title="t('modules.prepared')"
+        :description="
+          t('modules.preparedDescription')
+        "
       >
         <template #actions>
           <Button
-            label="Вернуться на главную"
+            :label="t('modules.returnHome')"
             icon="pi pi-home"
             severity="secondary"
             outlined

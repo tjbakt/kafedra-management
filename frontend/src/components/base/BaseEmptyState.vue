@@ -1,5 +1,8 @@
 <script setup lang="ts">
-withDefaults(
+import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const props = withDefaults(
   defineProps<{
     icon?: string
     title?: string
@@ -7,9 +10,21 @@ withDefaults(
   }>(),
   {
     icon: 'pi pi-inbox',
-    title: 'Данные отсутствуют',
-    description: 'Для отображения пока нет доступных данных.',
+    title: '',
+    description: '',
   },
+)
+
+const { t } = useI18n()
+
+const resolvedTitle = computed(
+  () => props.title || t('emptyState.title'),
+)
+
+const resolvedDescription = computed(
+  () =>
+    props.description ||
+    t('emptyState.description'),
 )
 </script>
 
@@ -19,10 +34,13 @@ withDefaults(
       <i :class="icon" />
     </span>
 
-    <h3>{{ title }}</h3>
-    <p>{{ description }}</p>
+    <h3>{{ resolvedTitle }}</h3>
+    <p>{{ resolvedDescription }}</p>
 
-    <div v-if="$slots.actions" class="empty-state__actions">
+    <div
+      v-if="$slots.actions"
+      class="empty-state__actions"
+    >
       <slot name="actions" />
     </div>
   </div>

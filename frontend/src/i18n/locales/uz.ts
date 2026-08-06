@@ -1,0 +1,222 @@
+const uz = {
+  app: {
+    name: 'Kafedra Management',
+    title: 'O‘quv jarayonini boshqarish',
+    subtitle: 'Kafedra axborot tizimi',
+    version: 'Versiya {version}',
+    frontendLayout: 'Frontend layout',
+    allRightsReserved: 'Barcha huquqlar himoyalangan.',
+    systemWorking: 'Tizim ishlamoqda',
+  },
+
+  common: {
+    create: 'Yaratish',
+    add: 'Qo‘shish',
+    edit: 'Tahrirlash',
+    delete: 'O‘chirish',
+    save: 'Saqlash',
+    cancel: 'Bekor qilish',
+    close: 'Yopish',
+    confirm: 'Tasdiqlash',
+    back: 'Orqaga',
+    next: 'Keyingi',
+    search: 'Qidirish',
+    filter: 'Filtr',
+    reset: 'Tiklash',
+    clear: 'Tozalash',
+    refresh: 'Yangilash',
+    export: 'Eksport',
+    import: 'Import',
+    print: 'Chop etish',
+    download: 'Yuklab olish',
+    upload: 'Yuklash',
+    view: 'Ko‘rish',
+    actions: 'Amallar',
+    yes: 'Ha',
+    no: 'Yo‘q',
+    loading: 'Yuklanmoqda...',
+    saving: 'Saqlanmoqda...',
+    noData: 'Ma’lumotlar mavjud emas',
+    required: 'Majburiy maydon',
+    success: 'Muvaffaqiyatli',
+    information: 'Ma’lumot',
+    warning: 'Ogohlantirish',
+    error: 'Xato',
+    important: 'Muhim',
+    status: 'Holat',
+    language: 'Til',
+    lightTheme: 'Yorug‘ mavzu',
+    darkTheme: 'Qorong‘i mavzu',
+    openMenu: 'Menyuni ochish yoki yig‘ish',
+    openNotifications: 'Bildirishnomalarni ochish',
+  },
+
+  languages: {
+    ru: 'Русский',
+    uz: 'O‘zbekcha',
+    select: 'Tilni tanlang',
+    changed: 'Interfeys tili o‘zgartirildi',
+    saved: 'Asosiy interfeys tili saqlandi',
+    saveError: 'Tanlangan tilni saqlab bo‘lmadi',
+  },
+
+  navigation: {
+    dashboard: 'Bosh sahifa',
+    organizationalStructure: 'Tashkiliy tuzilma',
+    departments: 'Kafedralar',
+    teachers: 'O‘qituvchilar',
+    studentGroups: 'Talabalar guruhlari',
+    educationalProcess: 'O‘quv jarayoni',
+    disciplines: 'Fanlar',
+    curricula: 'O‘quv rejalari',
+    workload: 'O‘quv yuklamasi',
+    schedules: 'Dars jadvali',
+    analytics: 'Tahlil',
+    reports: 'Hisobotlar',
+    system: 'Tizim',
+    settings: 'Sozlamalar',
+  },
+
+  profile: {
+    profile: 'Profil',
+    settings: 'Sozlamalar',
+    logout: 'Chiqish',
+    administrator: 'Administrator',
+    systemAdministrator: 'Tizim administratori',
+  },
+
+  notifications: {
+    title: 'Bildirishnomalar',
+    unread:
+      'O‘qilmagan bildirishnoma yo‘q | {count} ta o‘qilmagan bildirishnoma',
+    markAllAsRead: 'Barchasini o‘qilgan deb belgilash',
+    empty: 'Bildirishnomalar mavjud emas',
+    clear: 'Tozalash',
+    systemReady: 'Tizim tayyor',
+    frontendConnected: 'Frontend karkasi muvaffaqiyatli ulandi.',
+    workloadTitle: 'O‘quv yuklamasi',
+    workloadCheck: 'Soatlar taqsimotini tekshirish kerak.',
+    directoryUpdated: 'Ma’lumotnoma yangilandi',
+    departmentsUpdated: 'Kafedralar ma’lumotlari yangilandi.',
+    justNow: 'Hozirgina',
+    minutesAgo: '{count} daqiqa oldin',
+    hourAgo: '1 soat oldin',
+  },
+
+  dashboard: {
+    title: 'Boshqaruv paneli',
+    description:
+      'O‘quv jarayoni va yuklama taqsimoti holati haqida umumiy ma’lumot.',
+
+    teachers: 'O‘qituvchilar',
+    disciplines: 'Fanlar',
+    groups: 'O‘quv guruhlari',
+    totalWorkload: 'Umumiy yuklama',
+    hours: 'soat',
+
+    teachersChange: 'Oy davomida +3',
+    activePlans: '12 ta faol reja',
+    studentsCount: '824 talaba',
+    currentYear: 'Joriy o‘quv yili uchun',
+
+    workloadDistribution: 'O‘quv yuklamasini taqsimlash',
+    workloadDistributionDescription:
+      'Joriy o‘quv yili yuklamasini tayyorlash holati',
+    openModule: 'Modulni ochish',
+
+    distributed: 'Taqsimlangan',
+    checked: 'Tekshirilgan',
+    approved: 'Tasdiqlangan',
+    inProgress: 'Bajarilmoqda',
+    requiresCheck: 'Tekshirish kerak',
+    processing: 'Jarayonda',
+
+    quickActions: 'Tezkor amallar',
+    quickActionsDescription: 'Eng ko‘p foydalaniladigan bo‘limlar',
+    manageEmployees: 'Xodimlarni boshqarish',
+    viewAndEdit: 'Ko‘rish va tahrirlash',
+    distributeHours: 'Soatlarni taqsimlash',
+    pdfAndExcel: 'PDF va Excel',
+
+    showToast: 'Toast ko‘rsatish',
+    checkDialog: 'Dialogni tekshirish',
+    interfaceWorks: 'Interfeys ishlamoqda',
+    toastConnected: 'Global Toast tizimi muvaffaqiyatli ulandi.',
+    confirmDemoAction: 'Namoyish amalini bajarishni tasdiqlaysizmi?',
+    actionConfirmed: 'Amal tasdiqlandi',
+  },
+
+  auth: {
+    loginTitle: 'Tizimga kirish',
+    loginDescription: 'Hisob ma’lumotlaringizni kiriting.',
+    username: 'Foydalanuvchi nomi',
+    usernamePlaceholder: 'Foydalanuvchi nomini kiriting',
+    password: 'Parol',
+    passwordPlaceholder: 'Parolni kiriting',
+    rememberMe: 'Meni eslab qolish',
+    forgotPassword: 'Parolni unutdingizmi?',
+    login: 'Kirish',
+    loginSuccess: 'Kirish bajarildi',
+    demoLoginSuccess: 'Namoyish avtorizatsiyasi muvaffaqiyatli yakunlandi.',
+    demoCredentials:
+      'Hozirgi bosqichda istalgan bo‘sh bo‘lmagan ma’lumotlardan foydalanish mumkin.',
+    usernameRequired: 'Foydalanuvchi nomini kiriting',
+    passwordRequired: 'Parolni kiriting',
+    passwordMinLength: 'Parol kamida 4 ta belgidan iborat bo‘lishi kerak',
+    passwordRecovery: 'Parolni tiklash',
+    passwordRecoveryLater:
+      'Funksiya avtorizatsiya amalga oshirilgandan so‘ng ulanadi.',
+  },
+
+  modules: {
+    prepared: 'Modul tayyorlandi',
+    preparedDescription:
+      'Marshrut, layout va asosiy komponentlar ulandi. CRUD interfeysi tegishli bosqichda amalga oshiriladi.',
+    demoMode: 'Namoyish rejimi',
+    createLater:
+      'Yaratish formasi CRUD bosqichida qo‘shiladi.',
+    returnHome: 'Bosh sahifaga qaytish',
+
+    departmentsDescription:
+      'Kafedralar va tashkiliy tuzilmani boshqarish.',
+    teachersDescription:
+      'O‘qituvchilar, stavkalar, ilmiy darajalar va unvonlar ma’lumotnomasi.',
+    studentsDescription:
+      'Akademik guruhlar va talabalar kontingentini boshqarish.',
+    disciplinesDescription: 'O‘quv fanlari ma’lumotnomasi.',
+    curriculaDescription:
+      'Ta’lim dasturlari o‘quv rejalarini shakllantirish va yuritish.',
+    workloadDescription:
+      'O‘quv yuklamasini hisoblash va o‘qituvchilar o‘rtasida taqsimlash.',
+    schedulesDescription:
+      'Dars jadvalini rejalashtirish va ko‘rish.',
+    reportsDescription:
+      'Tahliliy hisobotlar, PDF va Excel hujjatlarini shakllantirish.',
+    settingsDescription:
+      'Foydalanuvchilar, rollar, huquqlar va tizim parametrlarini boshqarish.',
+  },
+
+  errors: {
+    notFoundTitle: 'Sahifa topilmadi',
+    notFoundDescription:
+      'So‘ralgan sahifa mavjud emas, ko‘chirilgan yoki o‘chirilgan.',
+    unexpected: 'Kutilmagan xatolik yuz berdi',
+    serverUnavailable: 'Serverga ulanib bo‘lmadi',
+    timeout: 'Server javobini kutish vaqti tugadi',
+  },
+
+  confirm: {
+    deleteHeader: 'O‘chirishni tasdiqlash',
+    deleteMessage:
+      'Tanlangan yozuvni o‘chirishni xohlaysizmi? Bu amalni bekor qilib bo‘lmaydi.',
+    deleteAccept: 'O‘chirish',
+    actionHeader: 'Amalni tasdiqlash',
+  },
+
+  emptyState: {
+    title: 'Ma’lumotlar mavjud emas',
+    description: 'Ko‘rsatish uchun ma’lumotlar mavjud emas.',
+  },
+}
+
+export default uz

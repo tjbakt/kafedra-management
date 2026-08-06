@@ -1,14 +1,20 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
+
 const currentYear = new Date().getFullYear()
+const { t } = useI18n()
 </script>
 
 <template>
   <footer class="app-footer">
-    <span> © {{ currentYear }} Kafedra Management. Все права защищены. </span>
+    <span>
+      © {{ currentYear }} Kafedra Management.
+      {{ t('app.allRightsReserved') }}
+    </span>
 
     <span class="app-footer__status">
       <i class="pi pi-circle-fill" />
-      Система работает
+      {{ t('app.systemWorking') }}
     </span>
   </footer>
 </template>

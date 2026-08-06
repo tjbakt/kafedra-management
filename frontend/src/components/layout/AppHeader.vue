@@ -2,9 +2,11 @@
 import Button from 'primevue/button'
 import Avatar from 'primevue/avatar'
 import Menu from 'primevue/menu'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 
+import AppLanguageSwitcher from '@/components/layout/AppLanguageSwitcher.vue'
 import AppNotifications from '@/components/feedback/AppNotifications.vue'
 import { useLayoutStore } from '@/stores/layout'
 import { useAppToast } from '@/composables/useAppToast'
@@ -12,16 +14,22 @@ import { useAppToast } from '@/composables/useAppToast'
 const router = useRouter()
 const layoutStore = useLayoutStore()
 const toast = useAppToast()
+const { t } = useI18n()
+
 const profileMenu = ref<InstanceType<typeof Menu> | null>(null)
 
-const profileItems = [
+const profileItems = computed(() => [
   {
-    label: 'Профиль',
+    label: t('profile.profile'),
     icon: 'pi pi-user',
-    command: () => toast.info('Профиль', 'Раздел будет реализован позже'),
+    command: () =>
+      toast.info(
+        t('profile.profile'),
+        t('modules.preparedDescription'),
+      ),
   },
   {
-    label: 'Настройки',
+    label: t('profile.settings'),
     icon: 'pi pi-cog',
     command: () => router.push('/settings'),
   },
@@ -29,11 +37,11 @@ const profileItems = [
     separator: true,
   },
   {
-    label: 'Выйти',
+    label: t('profile.logout'),
     icon: 'pi pi-sign-out',
     command: () => router.push('/login'),
   },
-]
+])
 
 function toggleProfileMenu(event: Event): void {
   profileMenu.value?.toggle(event)
@@ -44,29 +52,43 @@ function toggleProfileMenu(event: Event): void {
   <header class="app-header">
     <div class="app-header__left">
       <Button
-        v-tooltip.bottom="'Открыть или свернуть меню'"
+        v-tooltip.bottom="t('common.openMenu')"
         icon="pi pi-bars"
         severity="secondary"
         text
         rounded
-        aria-label="Открыть или свернуть боковое меню"
+        :aria-label="t('common.openMenu')"
         @click="layoutStore.toggleSidebar"
       />
 
       <div class="app-header__title">
-        <strong>Управление учебным процессом</strong>
-        <span>Информационная система кафедры</span>
+        <strong>{{ t('app.title') }}</strong>
+        <span>{{ t('app.subtitle') }}</span>
       </div>
     </div>
 
     <div class="app-header__right">
+      <AppLanguageSwitcher />
+
       <Button
-        v-tooltip.bottom="layoutStore.darkMode ? 'Светлая тема' : 'Тёмная тема'"
-        :icon="layoutStore.darkMode ? 'pi pi-sun' : 'pi pi-moon'"
+        v-tooltip.bottom="
+          layoutStore.darkMode
+            ? t('common.lightTheme')
+            : t('common.darkTheme')
+        "
+        :icon="
+          layoutStore.darkMode
+            ? 'pi pi-sun'
+            : 'pi pi-moon'
+        "
         severity="secondary"
         text
         rounded
-        aria-label="Переключить цветовую тему"
+        :aria-label="
+          layoutStore.darkMode
+            ? t('common.lightTheme')
+            : t('common.darkTheme')
+        "
         @click="layoutStore.toggleTheme"
       />
 
@@ -75,20 +97,26 @@ function toggleProfileMenu(event: Event): void {
       <button
         type="button"
         class="profile-button"
-        aria-label="Открыть меню пользователя"
+        :aria-label="t('profile.profile')"
         @click="toggleProfileMenu"
       >
         <Avatar label="АД" shape="circle" />
 
         <span class="profile-button__info">
-          <strong>Администратор</strong>
-          <small>Системный администратор</small>
+          <strong>{{ t('profile.administrator') }}</strong>
+          <small>
+            {{ t('profile.systemAdministrator') }}
+          </small>
         </span>
 
         <i class="pi pi-chevron-down" />
       </button>
 
-      <Menu ref="profileMenu" :model="profileItems" popup />
+      <Menu
+        ref="profileMenu"
+        :model="profileItems"
+        popup
+      />
     </div>
   </header>
 </template>
@@ -107,7 +135,11 @@ function toggleProfileMenu(event: Event): void {
   gap: 1rem;
   padding: 0 1.5rem;
   border-bottom: 1px solid var(--app-border-color);
-  background: color-mix(in srgb, var(--app-surface) 92%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--app-surface) 92%,
+    transparent
+  );
   backdrop-filter: blur(16px);
   transition: left var(--app-transition);
 }
@@ -182,12 +214,16 @@ function toggleProfileMenu(event: Event): void {
 }
 
 @media (max-width: 575px) {
-  .app-header__title span {
+  .app-header {
+    gap: 0.4rem;
+  }
+
+  .app-header__title {
     display: none;
   }
 
-  .app-header__title strong {
-    font-size: 0.82rem;
+  .app-header__right {
+    gap: 0.15rem;
   }
 }
 </style>

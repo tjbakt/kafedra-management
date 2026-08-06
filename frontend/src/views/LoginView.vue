@@ -9,7 +9,10 @@ import Password from 'primevue/password'
 import BaseFormField from '@/components/base/BaseFormField.vue'
 import { useAppToast } from '@/composables/useAppToast'
 
+import { useI18n } from 'vue-i18n'
+
 const router = useRouter()
+const { t } = useI18n()
 const toast = useAppToast()
 
 const loading = ref(false)
@@ -30,13 +33,16 @@ function validate(): boolean {
   errors.password = ''
 
   if (!form.username.trim()) {
-    errors.username = 'Введите имя пользователя'
+    errors.username =
+      t('auth.usernameRequired')
   }
 
   if (!form.password) {
-    errors.password = 'Введите пароль'
+    errors.password =
+      t('auth.passwordRequired')
   } else if (form.password.length < 4) {
-    errors.password = 'Пароль должен содержать минимум 4 символа'
+    errors.password =
+      t('auth.passwordMinLength')
   }
 
   return !errors.username && !errors.password
@@ -54,7 +60,10 @@ async function submit(): Promise<void> {
 
     localStorage.setItem('access_token', 'demo-access-token')
 
-    toast.success('Вход выполнен', 'Демонстрационная авторизация успешно завершена.')
+    toast.success(
+      t('auth.loginSuccess'),
+      t('auth.demoLoginSuccess'),
+    )
 
     await router.push('/')
   } finally {
@@ -72,29 +81,41 @@ async function submit(): Promise<void> {
         </span>
 
         <div>
-          <strong>Kafedra Management</strong>
-          <span>Управление учебным процессом</span>
+          <strong>{{ t('app.name') }}</strong>
+          <span>{{ t('app.title') }}</span>
         </div>
       </div>
 
       <div class="login-card__heading">
-        <h1>Вход в систему</h1>
-        <p>Введите данные своей учётной записи.</p>
+        <h1>{{ t('auth.loginTitle') }}</h1>
+        <p>{{ t('auth.loginDescription') }}</p>
       </div>
 
       <form class="login-form" novalidate @submit.prevent="submit">
-        <BaseFormField label="Имя пользователя" name="username" required :error="errors.username">
+        <BaseFormField
+          :label="t('auth.username')"
+          name="username"
+          required
+          :error="errors.username"
+        >
           <InputText
             id="username"
             v-model="form.username"
             class="w-full"
             :invalid="Boolean(errors.username)"
             autocomplete="username"
-            placeholder="Введите имя пользователя"
+            :placeholder="
+              t('auth.usernamePlaceholder')
+            "
           />
         </BaseFormField>
 
-        <BaseFormField label="Пароль" name="password" required :error="errors.password">
+        <BaseFormField
+          :label="t('auth.password')"
+          name="password"
+          required
+          :error="errors.password"
+        >
           <Password
             input-id="password"
             v-model="form.password"
@@ -102,7 +123,9 @@ async function submit(): Promise<void> {
             input-class="w-full"
             :invalid="Boolean(errors.password)"
             autocomplete="current-password"
-            placeholder="Введите пароль"
+            :placeholder="
+              t('auth.passwordPlaceholder')
+            "
             :feedback="false"
             toggle-mask
           />
@@ -111,7 +134,7 @@ async function submit(): Promise<void> {
         <div class="login-form__options">
           <label class="remember-control">
             <Checkbox v-model="form.remember" input-id="remember" binary />
-            <span>Запомнить меня</span>
+            <span>{{ t('auth.rememberMe') }}</span>
           </label>
 
           <button
@@ -119,7 +142,7 @@ async function submit(): Promise<void> {
             class="login-form__link"
             @click="
               toast.info(
-                'Восстановление пароля',
+                '{{ t(\'auth.forgotPassword\') }}',
                 'Функция будет подключена после реализации авторизации.',
               )
             "
@@ -130,14 +153,14 @@ async function submit(): Promise<void> {
 
         <Button
           type="submit"
-          label="Войти"
+          :label="t('auth.login')"
           icon="pi pi-sign-in"
           class="w-full"
           :loading="loading"
         />
       </form>
 
-      <p class="login-card__demo">На данном этапе можно использовать любые непустые данные.</p>
+      <p class="login-card__demo">{{ t('auth.demoCredentials') }}</p>
     </section>
   </div>
 </template>
