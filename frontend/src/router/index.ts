@@ -169,6 +169,30 @@ const routes: RouteRecordRaw[] = [
           titleKey: 'dashboard.title',
         },
       },
+
+      {
+        path: 'crud-demo',
+
+        name: 'crud-demo',
+
+        component: () =>
+          import(
+            '@/views/CrudDemoView.vue'
+            ),
+
+        meta: {
+          requiresAuth: true,
+          staffOnly: true,
+
+          titleKey:
+            'crud.infrastructureTitle',
+
+          breadcrumbKeys: [
+            'crud.infrastructureTitle',
+          ],
+        },
+      },
+
       {
         path: 'access-debug',
         name: 'access-debug',

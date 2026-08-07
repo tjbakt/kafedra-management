@@ -121,6 +121,21 @@ const menuDefinitions: TranslatedSidebarItem[] = [
 
         staffOnly: true,
       },
+
+      {
+        label: '',
+        labelKey:
+          'crud.infrastructureTitle',
+
+        icon:
+          'pi pi-database',
+
+        route:
+          '/crud-demo',
+
+        staffOnly: true,
+      },
+
     ],
   },
 ]

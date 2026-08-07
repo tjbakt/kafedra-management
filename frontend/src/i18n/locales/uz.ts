@@ -268,6 +268,62 @@ const uz = {
     noPermissionsDescription:
       'Foydalanuvchi uchun alohida ruxsatlar qaytarilmadi.',
   },
+
+  crud: {
+    emptyTitle:
+      'Yozuvlar topilmadi',
+
+    emptyDescription:
+      'Berilgan shartlar bo‘yicha yozuvlar mavjud emas.',
+
+    paginationReport:
+      '{first}–{last} / {totalRecords} ta ko‘rsatildi',
+
+    validationFailed:
+      'Kiritilgan ma’lumotlarni tekshiring',
+
+    createTitle:
+      'Yozuv yaratish',
+
+    editTitle:
+      'Yozuvni tahrirlash',
+
+    viewTitle:
+      'Yozuvni ko‘rish',
+
+    deleteTitle:
+      'Yozuvni o‘chirish',
+
+    created:
+      'Yozuv muvaffaqiyatli yaratildi',
+
+    updated:
+      'Yozuv muvaffaqiyatli yangilandi',
+
+    deleted:
+      'Yozuv muvaffaqiyatli o‘chirildi',
+
+    loadError:
+      'Ma’lumotlarni yuklab bo‘lmadi',
+
+    saveError:
+      'Ma’lumotlarni saqlab bo‘lmadi',
+
+    deleteError:
+      'Yozuvni o‘chirib bo‘lmadi',
+
+    filters:
+      'Filtrlar',
+
+    clearFilters:
+      'Filtrlarni tozalash',
+
+    rowsPerPage:
+      'Sahifadagi yozuvlar',
+
+    infrastructureTitle:
+      'CRUD infratuzilmasi',
+  },
 }
 
 export default uz

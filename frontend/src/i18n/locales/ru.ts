@@ -263,6 +263,62 @@ const ru = {
     noPermissionsDescription:
       'Для пользователя не возвращены отдельные разрешения.',
   },
+
+  crud: {
+    emptyTitle:
+      'Записи не найдены',
+
+    emptyDescription:
+      'По заданным условиям записи отсутствуют.',
+
+    paginationReport:
+      'Показано {first}–{last} из {totalRecords}',
+
+    validationFailed:
+      'Проверьте введённые данные',
+
+    createTitle:
+      'Создание записи',
+
+    editTitle:
+      'Редактирование записи',
+
+    viewTitle:
+      'Просмотр записи',
+
+    deleteTitle:
+      'Удаление записи',
+
+    created:
+      'Запись успешно создана',
+
+    updated:
+      'Запись успешно обновлена',
+
+    deleted:
+      'Запись успешно удалена',
+
+    loadError:
+      'Не удалось загрузить данные',
+
+    saveError:
+      'Не удалось сохранить данные',
+
+    deleteError:
+      'Не удалось удалить запись',
+
+    filters:
+      'Фильтры',
+
+    clearFilters:
+      'Очистить фильтры',
+
+    rowsPerPage:
+      'Записей на странице',
+
+    infrastructureTitle:
+      'CRUD-инфраструктура',
+  },
 }
 
 export default ru
