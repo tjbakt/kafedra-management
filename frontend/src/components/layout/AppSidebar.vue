@@ -6,6 +6,8 @@ import Badge from 'primevue/badge'
 
 import { useLayoutStore } from '@/stores/layout'
 import type { SidebarItem } from '@/types/layout'
+import { usePermissions } from '@/composables/usePermissions'
+
 
 interface TranslatedSidebarItem extends SidebarItem {
   labelKey: string
@@ -16,6 +18,7 @@ const route = useRoute()
 const router = useRouter()
 const layoutStore = useLayoutStore()
 const { t } = useI18n()
+const { hasAccess } = usePermissions()
 
 const menuDefinitions: TranslatedSidebarItem[] = [
   {
@@ -105,20 +108,60 @@ const menuDefinitions: TranslatedSidebarItem[] = [
         icon: 'pi pi-sliders-h',
         route: '/settings',
       },
+      {
+        label: '',
+        labelKey:
+          'access.debugTitle',
+
+        icon:
+          'pi pi-shield',
+
+        route:
+          '/access-debug',
+
+        staffOnly: true,
+      },
     ],
   },
 ]
 
-const menuItems = computed<TranslatedSidebarItem[]>(() =>
-  menuDefinitions.map((item) => ({
-    ...item,
-    label: t(item.labelKey),
-    children: item.children?.map((child) => ({
-      ...child,
-      label: t(child.labelKey),
-    })),
-  })),
-)
+const menuItems =
+  computed<TranslatedSidebarItem[]>(
+    () => {
+      return menuDefinitions
+        .map((item) => {
+          const children =
+            item.children
+              ?.map((child) => ({
+                ...child,
+                label:
+                  t(child.labelKey),
+              }))
+              .filter(canShowItem)
+
+          return {
+            ...item,
+            label:
+              t(item.labelKey),
+            children,
+          }
+        })
+        .filter((item) => {
+          if (!canShowItem(item)) {
+            return false
+          }
+
+          if (
+            item.children &&
+            item.children.length === 0
+          ) {
+            return false
+          }
+
+          return true
+        })
+    },
+  )
 
 const sidebarClass = computed(() => ({
   'app-sidebar--collapsed': layoutStore.sidebarCollapsed,
@@ -149,6 +192,27 @@ async function navigate(item: SidebarItem): Promise<void> {
 
   await router.push(item.route)
   layoutStore.closeMobileSidebar()
+}
+
+function canShowItem(
+  item: TranslatedSidebarItem,
+): boolean {
+  return hasAccess({
+    permissions:
+      item.permissions,
+
+    permissionMode:
+      item.permissionMode,
+
+    groups:
+      item.groups,
+
+    groupMode:
+      item.groupMode,
+
+    staffOnly:
+      item.staffOnly,
+  })
 }
 </script>
 

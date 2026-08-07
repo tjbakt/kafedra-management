@@ -169,6 +169,27 @@ const routes: RouteRecordRaw[] = [
           titleKey: 'dashboard.title',
         },
       },
+      {
+        path: 'access-debug',
+        name: 'access-debug',
+
+        component: () =>
+          import(
+            '@/views/AccessDebugView.vue'
+            ),
+
+        meta: {
+          requiresAuth: true,
+          staffOnly: true,
+
+          titleKey:
+            'access.debugTitle',
+
+          breadcrumbKeys: [
+            'access.debugTitle',
+          ],
+        },
+      },
       ...moduleRoutes,
     ],
   },
@@ -196,6 +217,28 @@ const routes: RouteRecordRaw[] = [
           ),
         meta: {
           titleKey: 'auth.changePassword',
+          requiresAuth: true,
+        },
+      },
+    ],
+  },
+  {
+    path: '/403',
+    component: () =>
+      import('@/layouts/EmptyLayout.vue'),
+
+    children: [
+      {
+        path: '',
+        name: 'forbidden',
+        component: () =>
+          import(
+            '@/views/ForbiddenView.vue'
+            ),
+
+        meta: {
+          titleKey:
+            'errors.forbiddenTitle',
           requiresAuth: true,
         },
       },
@@ -303,6 +346,59 @@ router.beforeEach(async (to) => {
   ) {
     return {
       name: 'dashboard',
+    }
+  }
+  if (
+    authStore.isAuthenticated &&
+    to.name !== 'forbidden'
+  ) {
+    if (
+      to.meta.staffOnly &&
+      !authStore.user?.is_staff
+    ) {
+      return {
+        name: 'forbidden',
+      }
+    }
+
+    const requiredPermissions =
+      to.meta.requiredPermissions ?? []
+
+    if (requiredPermissions.length) {
+      const hasPermissions =
+        to.meta.permissionMode === 'any'
+          ? authStore.hasAnyPermission(
+            [...requiredPermissions],
+          )
+          : authStore.hasAllPermissions(
+            requiredPermissions,
+          )
+
+      if (!hasPermissions) {
+        return {
+          name: 'forbidden',
+        }
+      }
+    }
+
+    const requiredGroups =
+      to.meta.requiredGroups ?? []
+
+    if (requiredGroups.length) {
+      const hasGroups =
+        to.meta.groupMode === 'all'
+          ? authStore.hasAllGroups(
+            requiredGroups,
+          )
+          : authStore.hasAnyGroup(
+            requiredGroups,
+          )
+
+      if (!hasGroups) {
+        return {
+          name: 'forbidden',
+        }
+      }
     }
   }
 

@@ -221,6 +221,10 @@ const uz = {
     unexpected: 'Kutilmagan xatolik yuz berdi',
     serverUnavailable: 'Serverga ulanib bo‘lmadi',
     timeout: 'Server javobini kutish vaqti tugadi',
+    forbiddenTitle: 'Kirish taqiqlangan',
+
+    forbiddenDescription:
+      'Sizning hisobingiz ushbu bo‘limni ko‘rish uchun yetarli huquqlarga ega emas.',
   },
 
   confirm: {
@@ -234,6 +238,35 @@ const uz = {
   emptyState: {
     title: 'Ma’lumotlar mavjud emas',
     description: 'Ko‘rsatish uchun ma’lumotlar mavjud emas.',
+  },
+
+  access: {
+    debugTitle:
+      'Kirish huquqlari',
+
+    debugDescription:
+      'Joriy foydalanuvchining guruhlari va ruxsatlari haqidagi diagnostika ma’lumotlari.',
+
+    userInformation:
+      'Foydalanuvchi',
+
+    groups:
+      'Guruhlar',
+
+    permissions:
+      'Ruxsatlar',
+
+    noGroups:
+      'Guruhlar mavjud emas',
+
+    noGroupsDescription:
+      'Foydalanuvchi hech qanday guruhga kiritilmagan.',
+
+    noPermissions:
+      'Ruxsatlar mavjud emas',
+
+    noPermissionsDescription:
+      'Foydalanuvchi uchun alohida ruxsatlar qaytarilmadi.',
   },
 }
 

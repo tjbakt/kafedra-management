@@ -1,10 +1,10 @@
-import { computed, ref } from 'vue'
-import { defineStore } from 'pinia'
+import {computed, ref} from 'vue'
+import {defineStore} from 'pinia'
 
-import { getApiErrorMessage } from '@/api/http'
-import { authService } from '@/services/auth.service'
-import { tokenStorageService } from '@/services/token-storage.service'
-import { useLocaleStore } from '@/stores/locale'
+import {getApiErrorMessage} from '@/api/http'
+import {authService} from '@/services/auth.service'
+import {tokenStorageService} from '@/services/token-storage.service'
+import {useLocaleStore} from '@/stores/locale'
 import type {
   AuthUser,
   ChangePasswordPayload,
@@ -214,6 +214,61 @@ export const useAuthStore = defineStore(
       )
     }
 
+    function hasAllPermissions(
+      permissions: readonly string[],
+    ): boolean {
+      if (!user.value) {
+        return false
+      }
+
+      if (user.value.is_staff) {
+        return true
+      }
+
+      return permissions.every(
+        (permission) =>
+          user.value?.permissions.includes(
+            permission,
+          ) ?? false,
+      )
+    }
+
+    function hasAnyGroup(
+      groups: readonly string[],
+    ): boolean {
+      if (!user.value) {
+        return false
+      }
+
+      if (user.value.is_staff) {
+        return true
+      }
+
+      return groups.some(
+        (group) =>
+          user.value?.groups.includes(group) ??
+          false,
+      )
+    }
+
+    function hasAllGroups(
+      groups: readonly string[],
+    ): boolean {
+      if (!user.value) {
+        return false
+      }
+
+      if (user.value.is_staff) {
+        return true
+      }
+
+      return groups.every(
+        (group) =>
+          user.value?.groups.includes(group) ??
+          false,
+      )
+    }
+
     function hasGroup(group: string): boolean {
       return (
         user.value?.groups.includes(group) ?? false
@@ -241,7 +296,10 @@ export const useAuthStore = defineStore(
       changePassword,
       hasPermission,
       hasAnyPermission,
+      hasAllPermissions,
       hasGroup,
+      hasAnyGroup,
+      hasAllGroups,
       clearLoginError,
     }
   },

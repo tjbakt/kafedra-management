@@ -18,6 +18,7 @@ import router from './router'
 
 import { primeVueLocales } from '@/i18n/primevue-locales'
 import { useLocaleStore } from '@/stores/locale'
+import { createCanDirective } from '@/directives/can'
 
 const app = createApp(App)
 const pinia = createPinia()
@@ -53,6 +54,9 @@ app.use(ToastService)
 app.use(ConfirmationService)
 
 app.directive('tooltip', Tooltip)
+app.directive('can',
+  createCanDirective(pinia),
+)
 
 app.use(router)
 
