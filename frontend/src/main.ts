@@ -1,20 +1,21 @@
-import { createApp } from 'vue'
 import { createPinia } from 'pinia'
+import { createApp } from 'vue'
 
+import Aura from '@primeuix/themes/aura'
+import ConfirmationService from 'primevue/confirmationservice'
 import PrimeVue from 'primevue/config'
 import ToastService from 'primevue/toastservice'
-import ConfirmationService from 'primevue/confirmationservice'
 import Tooltip from 'primevue/tooltip'
-import Aura from '@primeuix/themes/aura'
 
 import 'primeicons/primeicons.css'
 import '@/styles/main.css'
 
 import App from './App.vue'
+import i18n, {
+  DEFAULT_LOCALE,
+} from './i18n'
 import router from './router'
-import i18n from './i18n'
 
-import { DEFAULT_LOCALE } from '@/i18n'
 import { primeVueLocales } from '@/i18n/primevue-locales'
 import { useLocaleStore } from '@/stores/locale'
 
@@ -23,7 +24,6 @@ const pinia = createPinia()
 
 app.use(pinia)
 app.use(i18n)
-app.use(router)
 
 const localeStore = useLocaleStore(pinia)
 localeStore.initialize()
@@ -37,14 +37,16 @@ app.use(PrimeVue, {
       darkModeSelector: '.app-dark',
       cssLayer: {
         name: 'primevue',
-        order: 'theme, base, primevue, utilities',
+        order:
+          'theme, base, primevue, utilities',
       },
     },
   },
 
-  locale: primeVueLocales[
-    localeStore.locale ?? DEFAULT_LOCALE
-  ],
+  locale:
+    primeVueLocales[
+      localeStore.locale ?? DEFAULT_LOCALE
+    ],
 })
 
 app.use(ToastService)
@@ -52,4 +54,8 @@ app.use(ConfirmationService)
 
 app.directive('tooltip', Tooltip)
 
-app.mount('#app')
+app.use(router)
+
+router.isReady().then(() => {
+  app.mount('#app')
+})

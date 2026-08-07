@@ -1,18 +1,16 @@
 import http from '@/api/http'
+import { LOCALE_STORAGE_KEY } from '@/i18n'
+import type { AppLocale } from '@/types/locale'
 
-import {
-  LOCALE_STORAGE_KEY,
-} from '@/i18n'
-import type {
-  AppLocale,
-  UserLocalePreference,
-} from '@/types/locale'
-
-const USER_PREFERENCE_ENDPOINT = '/users/me/preferences/'
+interface UserLocaleResponse {
+  interface_language: AppLocale
+}
 
 export const localeService = {
   getLocalLocale(): AppLocale | null {
-    const locale = localStorage.getItem(LOCALE_STORAGE_KEY)
+    const locale = localStorage.getItem(
+      LOCALE_STORAGE_KEY,
+    )
 
     if (locale === 'ru' || locale === 'uz') {
       return locale
@@ -22,31 +20,38 @@ export const localeService = {
   },
 
   saveLocalLocale(locale: AppLocale): void {
-    localStorage.setItem(LOCALE_STORAGE_KEY, locale)
+    localStorage.setItem(
+      LOCALE_STORAGE_KEY,
+      locale,
+    )
   },
 
   removeLocalLocale(): void {
-    localStorage.removeItem(LOCALE_STORAGE_KEY)
+    localStorage.removeItem(
+      LOCALE_STORAGE_KEY,
+    )
   },
 
   async getUserLocale(): Promise<AppLocale | null> {
-    const response = await http.get<UserLocalePreference>(
-      USER_PREFERENCE_ENDPOINT,
-    )
+    const response =
+      await http.get<UserLocaleResponse>(
+        '/auth/me/',
+      )
 
-    const language = response.data.language
+    const language =
+      response.data.interface_language
 
-    return language === 'ru' || language === 'uz'
+    return language === 'ru' ||
+      language === 'uz'
       ? language
       : null
   },
 
-  async saveUserLocale(locale: AppLocale): Promise<void> {
-    await http.patch<UserLocalePreference>(
-      USER_PREFERENCE_ENDPOINT,
-      {
-        language: locale,
-      },
-    )
+  async saveUserLocale(
+    locale: AppLocale,
+  ): Promise<void> {
+    await http.patch('/auth/me/', {
+      interface_language: locale,
+    })
   },
 }

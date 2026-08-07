@@ -1,25 +1,27 @@
 <script setup lang="ts">
-import Menu from 'primevue/menu'
 import Button from 'primevue/button'
+import Menu from 'primevue/menu'
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-import { useLocaleStore } from '@/stores/locale'
 import { useAppToast } from '@/composables/useAppToast'
+import { useLocaleStore } from '@/stores/locale'
 import type { AppLocale } from '@/types/locale'
 
 const { t } = useI18n()
 const localeStore = useLocaleStore()
 const toast = useAppToast()
 
-const menu = ref<InstanceType<typeof Menu> | null>(null)
+const menu =
+  ref<InstanceType<typeof Menu> | null>(null)
 
 const menuItems = computed(() =>
   localeStore.localeOptions.map((option) => ({
     label: option.label,
-    icon: option.code === localeStore.locale
-      ? 'pi pi-check'
-      : 'pi pi-language',
+    icon:
+      option.code === localeStore.locale
+        ? 'pi pi-check'
+        : 'pi pi-language',
     command: () => changeLocale(option.code),
   })),
 )
@@ -28,17 +30,26 @@ function toggle(event: Event): void {
   menu.value?.toggle(event)
 }
 
-function changeLocale(locale: AppLocale): void {
+async function changeLocale(
+  locale: AppLocale,
+): Promise<void> {
   if (locale === localeStore.locale) {
     return
   }
 
-  localeStore.setLocale(locale)
+  try {
+    await localeStore.changeLocale(locale)
 
-  toast.success(
-    t('languages.changed'),
-    t('languages.saved'),
-  )
+    toast.success(
+      t('languages.changed'),
+      t('languages.saved'),
+    )
+  } catch {
+    toast.warning(
+      t('languages.changed'),
+      t('languages.saveError'),
+    )
+  }
 }
 </script>
 
@@ -54,9 +65,17 @@ function changeLocale(locale: AppLocale): void {
       @click="toggle"
     >
       <span class="language-switcher__button">
-        <span>{{ localeStore.currentLocaleOption.flag }}</span>
+        <span>
+          {{
+            localeStore.currentLocaleOption.flag
+          }}
+        </span>
+
         <strong>
-          {{ localeStore.currentLocaleOption.shortLabel }}
+          {{
+            localeStore.currentLocaleOption
+              .shortLabel
+          }}
         </strong>
       </span>
     </Button>

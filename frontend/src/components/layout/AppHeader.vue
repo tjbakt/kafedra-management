@@ -1,22 +1,32 @@
 <script setup lang="ts">
-import Button from 'primevue/button'
 import Avatar from 'primevue/avatar'
+import Button from 'primevue/button'
 import Menu from 'primevue/menu'
-import { computed, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import {
+  computed,
+  ref,
+} from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
 
-import AppLanguageSwitcher from '@/components/layout/AppLanguageSwitcher.vue'
 import AppNotifications from '@/components/feedback/AppNotifications.vue'
-import { useLayoutStore } from '@/stores/layout'
+import AppLanguageSwitcher from '@/components/layout/AppLanguageSwitcher.vue'
 import { useAppToast } from '@/composables/useAppToast'
+import { useAuthStore } from '@/stores/auth'
+import { useLayoutStore } from '@/stores/layout'
 
 const router = useRouter()
 const layoutStore = useLayoutStore()
+const authStore = useAuthStore()
 const toast = useAppToast()
 const { t } = useI18n()
 
-const profileMenu = ref<InstanceType<typeof Menu> | null>(null)
+const profileMenu =
+  ref<InstanceType<typeof Menu> | null>(null)
+
+const avatarUrl = computed(
+  () => authStore.user?.avatar || undefined,
+)
 
 const profileItems = computed(() => [
   {
@@ -39,12 +49,27 @@ const profileItems = computed(() => [
   {
     label: t('profile.logout'),
     icon: 'pi pi-sign-out',
-    command: () => router.push('/login'),
+    command: logout,
   },
 ])
 
 function toggleProfileMenu(event: Event): void {
   profileMenu.value?.toggle(event)
+}
+
+async function logout(): Promise<void> {
+  profileMenu.value?.hide()
+
+  await authStore.logout()
+
+  toast.success(
+    t('auth.logoutSuccess'),
+    t('auth.logoutSuccessDescription'),
+  )
+
+  await router.replace({
+    name: 'login',
+  })
 }
 </script>
 
@@ -84,11 +109,6 @@ function toggleProfileMenu(event: Event): void {
         severity="secondary"
         text
         rounded
-        :aria-label="
-          layoutStore.darkMode
-            ? t('common.lightTheme')
-            : t('common.darkTheme')
-        "
         @click="layoutStore.toggleTheme"
       />
 
@@ -100,12 +120,26 @@ function toggleProfileMenu(event: Event): void {
         :aria-label="t('profile.profile')"
         @click="toggleProfileMenu"
       >
-        <Avatar label="АД" shape="circle" />
+        <Avatar
+          :image="avatarUrl"
+          :label="
+            avatarUrl
+              ? undefined
+              : authStore.initials
+          "
+          shape="circle"
+        />
 
         <span class="profile-button__info">
-          <strong>{{ t('profile.administrator') }}</strong>
+          <strong>
+            {{ authStore.displayName }}
+          </strong>
+
           <small>
-            {{ t('profile.systemAdministrator') }}
+            {{
+              authStore.primaryGroup ||
+              authStore.user?.username
+            }}
           </small>
         </span>
 

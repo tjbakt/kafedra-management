@@ -148,24 +148,42 @@ const uz = {
 
   auth: {
     loginTitle: 'Tizimga kirish',
-    loginDescription: 'Hisob ma’lumotlaringizni kiriting.',
+    loginDescription:
+      'Hisob ma’lumotlaringizni kiriting.',
     username: 'Foydalanuvchi nomi',
-    usernamePlaceholder: 'Foydalanuvchi nomini kiriting',
+    usernamePlaceholder:
+      'Foydalanuvchi nomini kiriting',
     password: 'Parol',
     passwordPlaceholder: 'Parolni kiriting',
     rememberMe: 'Meni eslab qolish',
     forgotPassword: 'Parolni unutdingizmi?',
     login: 'Kirish',
+    loggingIn: 'Kirilmoqda...',
     loginSuccess: 'Kirish bajarildi',
-    demoLoginSuccess: 'Namoyish avtorizatsiyasi muvaffaqiyatli yakunlandi.',
-    demoCredentials:
-      'Hozirgi bosqichda istalgan bo‘sh bo‘lmagan ma’lumotlardan foydalanish mumkin.',
-    usernameRequired: 'Foydalanuvchi nomini kiriting',
+    welcome: 'Xush kelibsiz, {name}!',
+    loginFailed: 'Tizimga kirib bo‘lmadi',
+    invalidCredentials:
+      'Foydalanuvchi nomi yoki parol noto‘g‘ri.',
+    sessionExpired: 'Sessiya yakunlandi',
+    sessionExpiredDescription:
+      'Tizimga qayta kiring.',
+    logoutSuccess: 'Chiqish bajarildi',
+    logoutSuccessDescription:
+      'Siz tizimdan muvaffaqiyatli chiqdingiz.',
+    usernameRequired:
+      'Foydalanuvchi nomini kiriting',
     passwordRequired: 'Parolni kiriting',
-    passwordMinLength: 'Parol kamida 4 ta belgidan iborat bo‘lishi kerak',
+    passwordMinLength:
+      'Parol kamida 4 ta belgidan iborat bo‘lishi kerak',
     passwordRecovery: 'Parolni tiklash',
     passwordRecoveryLater:
-      'Funksiya avtorizatsiya amalga oshirilgandan so‘ng ulanadi.',
+      'Funksiya keyinroq ulanadi.',
+    changePassword: 'Parolni o‘zgartirish',
+    passwordChangeRequired:
+      'Vaqtinchalik parolni o‘zgartirish kerak.',
+    currentPassword: 'Joriy parol',
+    newPassword: 'Yangi parol',
+    confirmPassword: 'Parolni tasdiqlash',
   },
 
   modules: {

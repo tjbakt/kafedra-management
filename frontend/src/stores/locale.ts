@@ -7,6 +7,7 @@ import i18n, {
 import { primeVueLocales } from '@/i18n/primevue-locales'
 import { refreshDocumentTitle } from '@/router'
 import { localeService } from '@/services/locale.service'
+import { tokenStorageService } from '@/services/token-storage.service'
 import type {
   AppLocale,
   LocaleOption,
@@ -16,7 +17,7 @@ const DEFAULT_LOCALE_OPTION: LocaleOption = {
   code: 'ru',
   label: 'Русский',
   shortLabel: 'RU',
-  flag: ' ',
+  flag: 'RU',
 }
 
 const LOCALE_OPTIONS: readonly LocaleOption[] = [
@@ -25,7 +26,7 @@ const LOCALE_OPTIONS: readonly LocaleOption[] = [
     code: 'uz',
     label: 'O‘zbekcha',
     shortLabel: 'UZ',
-    flag: ' ',
+    flag: 'UZ',
   },
 ]
 
@@ -89,13 +90,34 @@ export const useLocaleStore = defineStore(
       locale.value = value
 
       localeService.saveLocalLocale(value)
-
       applyI18nLocale(value)
       applyDocumentLocale(value)
       refreshDocumentTitle()
     }
 
+    async function changeLocale(
+      value: AppLocale,
+    ): Promise<void> {
+      setLocale(value)
+
+      if (!tokenStorageService.hasTokens()) {
+        return
+      }
+
+      synchronizing.value = true
+
+      try {
+        await localeService.saveUserLocale(value)
+      } finally {
+        synchronizing.value = false
+      }
+    }
+
     async function loadUserLocale(): Promise<void> {
+      if (!tokenStorageService.hasTokens()) {
+        return
+      }
+
       synchronizing.value = true
 
       try {
@@ -110,22 +132,6 @@ export const useLocaleStore = defineStore(
       }
     }
 
-    async function saveUserLocale(
-      value: AppLocale,
-    ): Promise<void> {
-      setLocale(value)
-
-      synchronizing.value = true
-
-      try {
-        await localeService.saveUserLocale(
-          value,
-        )
-      } finally {
-        synchronizing.value = false
-      }
-    }
-
     return {
       locale,
       initialized,
@@ -134,8 +140,8 @@ export const useLocaleStore = defineStore(
       currentLocaleOption,
       initialize,
       setLocale,
+      changeLocale,
       loadUserLocale,
-      saveUserLocale,
       getPrimeVueLocale,
     }
   },

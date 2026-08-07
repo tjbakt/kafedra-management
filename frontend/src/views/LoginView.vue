@@ -1,26 +1,30 @@
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
-import { useRouter } from 'vue-router'
 import Button from 'primevue/button'
 import Checkbox from 'primevue/checkbox'
 import InputText from 'primevue/inputtext'
+import Message from 'primevue/message'
 import Password from 'primevue/password'
+import { reactive } from 'vue'
+import { useI18n } from 'vue-i18n'
+import {
+  useRoute,
+  useRouter,
+} from 'vue-router'
 
 import BaseFormField from '@/components/base/BaseFormField.vue'
 import { useAppToast } from '@/composables/useAppToast'
-
-import { useI18n } from 'vue-i18n'
+import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
-const { t } = useI18n()
+const route = useRoute()
+const authStore = useAuthStore()
 const toast = useAppToast()
-
-const loading = ref(false)
+const { t } = useI18n()
 
 const form = reactive({
   username: '',
   password: '',
-  remember: false,
+  remember: true,
 })
 
 const errors = reactive({
@@ -40,34 +44,48 @@ function validate(): boolean {
   if (!form.password) {
     errors.password =
       t('auth.passwordRequired')
-  } else if (form.password.length < 4) {
-    errors.password =
-      t('auth.passwordMinLength')
   }
 
   return !errors.username && !errors.password
 }
 
 async function submit(): Promise<void> {
+  authStore.clearLoginError()
+
   if (!validate()) {
     return
   }
 
-  loading.value = true
-
   try {
-    await new Promise((resolve) => window.setTimeout(resolve, 600))
-
-    localStorage.setItem('access_token', 'demo-access-token')
+    const user = await authStore.login({
+      username: form.username.trim(),
+      password: form.password,
+    })
 
     toast.success(
       t('auth.loginSuccess'),
-      t('auth.demoLoginSuccess'),
+      t('auth.welcome', {
+        name:
+          user.full_name || user.username,
+      }),
     )
 
-    await router.push('/')
-  } finally {
-    loading.value = false
+    if (user.must_change_password) {
+      await router.replace({
+        name: 'change-password',
+      })
+
+      return
+    }
+
+    const redirect =
+      typeof route.query.redirect === 'string'
+        ? route.query.redirect
+        : '/'
+
+    await router.replace(redirect)
+  } catch {
+    // Ошибка уже сохранена в authStore.
   }
 }
 </script>
@@ -88,10 +106,25 @@ async function submit(): Promise<void> {
 
       <div class="login-card__heading">
         <h1>{{ t('auth.loginTitle') }}</h1>
-        <p>{{ t('auth.loginDescription') }}</p>
+        <p>
+          {{ t('auth.loginDescription') }}
+        </p>
       </div>
 
-      <form class="login-form" novalidate @submit.prevent="submit">
+      <Message
+        v-if="authStore.loginError"
+        severity="error"
+        :closable="false"
+        class="login-card__message"
+      >
+        {{ authStore.loginError }}
+      </Message>
+
+      <form
+        class="login-form"
+        novalidate
+        @submit.prevent="submit"
+      >
         <BaseFormField
           :label="t('auth.username')"
           name="username"
@@ -104,6 +137,7 @@ async function submit(): Promise<void> {
             class="w-full"
             :invalid="Boolean(errors.username)"
             autocomplete="username"
+            :disabled="authStore.loading"
             :placeholder="
               t('auth.usernamePlaceholder')
             "
@@ -126,6 +160,7 @@ async function submit(): Promise<void> {
             :placeholder="
               t('auth.passwordPlaceholder')
             "
+            :disabled="authStore.loading"
             :feedback="false"
             toggle-mask
           />
@@ -133,34 +168,45 @@ async function submit(): Promise<void> {
 
         <div class="login-form__options">
           <label class="remember-control">
-            <Checkbox v-model="form.remember" input-id="remember" binary />
-            <span>{{ t('auth.rememberMe') }}</span>
+            <Checkbox
+              v-model="form.remember"
+              input-id="remember"
+              binary
+              :disabled="authStore.loading"
+            />
+
+            <span>
+              {{ t('auth.rememberMe') }}
+            </span>
           </label>
 
           <button
             type="button"
             class="login-form__link"
+            :disabled="authStore.loading"
             @click="
               toast.info(
-                '{{ t(\'auth.forgotPassword\') }}',
-                'Функция будет подключена после реализации авторизации.',
+                t('auth.passwordRecovery'),
+                t('auth.passwordRecoveryLater'),
               )
             "
           >
-            Забыли пароль?
+            {{ t('auth.forgotPassword') }}
           </button>
         </div>
 
         <Button
           type="submit"
-          :label="t('auth.login')"
+          :label="
+            authStore.loading
+              ? t('auth.loggingIn')
+              : t('auth.login')
+          "
           icon="pi pi-sign-in"
           class="w-full"
-          :loading="loading"
+          :loading="authStore.loading"
         />
       </form>
-
-      <p class="login-card__demo">{{ t('auth.demoCredentials') }}</p>
     </section>
   </div>
 </template>
@@ -176,7 +222,11 @@ async function submit(): Promise<void> {
   padding: clamp(1.5rem, 5vw, 2.3rem);
   border: 1px solid var(--app-border-color);
   border-radius: 1.25rem;
-  background: color-mix(in srgb, var(--app-surface) 94%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--app-surface) 94%,
+    transparent
+  );
   box-shadow: var(--app-shadow-lg);
   backdrop-filter: blur(18px);
 }
@@ -230,6 +280,10 @@ async function submit(): Promise<void> {
   font-size: 0.82rem;
 }
 
+.login-card__message {
+  margin-bottom: 1rem;
+}
+
 .login-form {
   display: grid;
   gap: 1.15rem;
@@ -259,11 +313,8 @@ async function submit(): Promise<void> {
   cursor: pointer;
 }
 
-.login-card__demo {
-  margin: 1.25rem 0 0;
-  color: var(--app-text-muted);
-  font-size: 0.72rem;
-  line-height: 1.5;
-  text-align: center;
+.login-form__link:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 </style>

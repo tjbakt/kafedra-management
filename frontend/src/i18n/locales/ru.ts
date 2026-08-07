@@ -155,15 +155,31 @@ const ru = {
     rememberMe: 'Запомнить меня',
     forgotPassword: 'Забыли пароль?',
     login: 'Войти',
+    loggingIn: 'Выполняется вход...',
     loginSuccess: 'Вход выполнен',
-    demoLoginSuccess: 'Демонстрационная авторизация успешно завершена.',
-    demoCredentials: 'На данном этапе можно использовать любые непустые данные.',
+    welcome: 'Добро пожаловать, {name}!',
+    loginFailed: 'Не удалось выполнить вход',
+    invalidCredentials:
+      'Неверное имя пользователя или пароль.',
+    sessionExpired: 'Сессия завершена',
+    sessionExpiredDescription:
+      'Войдите в систему повторно.',
+    logoutSuccess: 'Выход выполнен',
+    logoutSuccessDescription:
+      'Вы успешно вышли из системы.',
     usernameRequired: 'Введите имя пользователя',
     passwordRequired: 'Введите пароль',
-    passwordMinLength: 'Пароль должен содержать минимум 4 символа',
+    passwordMinLength:
+      'Пароль должен содержать минимум 4 символа',
     passwordRecovery: 'Восстановление пароля',
     passwordRecoveryLater:
-      'Функция будет подключена после реализации авторизации.',
+      'Функция будет подключена позже.',
+    changePassword: 'Смена пароля',
+    passwordChangeRequired:
+      'Необходимо изменить временный пароль.',
+    currentPassword: 'Текущий пароль',
+    newPassword: 'Новый пароль',
+    confirmPassword: 'Подтверждение пароля',
   },
 
   modules: {

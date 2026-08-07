@@ -5,6 +5,7 @@ import {
 } from 'vue-router'
 
 import i18n from '@/i18n'
+import { useAuthStore } from '@/stores/auth'
 
 const moduleRoutes: RouteRecordRaw[] = [
   {
@@ -13,6 +14,7 @@ const moduleRoutes: RouteRecordRaw[] = [
     component: () =>
       import('@/views/ModulePlaceholderView.vue'),
     meta: {
+      requiresAuth: true,
       titleKey: 'navigation.departments',
       descriptionKey:
         'modules.departmentsDescription',
@@ -28,13 +30,12 @@ const moduleRoutes: RouteRecordRaw[] = [
     component: () =>
       import('@/views/ModulePlaceholderView.vue'),
     meta: {
+      requiresAuth: true,
       titleKey: 'navigation.teachers',
       descriptionKey:
         'modules.teachersDescription',
       icon: 'pi pi-users',
-      breadcrumbKeys: [
-        'navigation.teachers',
-      ],
+      breadcrumbKeys: ['navigation.teachers'],
     },
   },
   {
@@ -43,6 +44,7 @@ const moduleRoutes: RouteRecordRaw[] = [
     component: () =>
       import('@/views/ModulePlaceholderView.vue'),
     meta: {
+      requiresAuth: true,
       titleKey: 'navigation.studentGroups',
       descriptionKey:
         'modules.studentsDescription',
@@ -58,6 +60,7 @@ const moduleRoutes: RouteRecordRaw[] = [
     component: () =>
       import('@/views/ModulePlaceholderView.vue'),
     meta: {
+      requiresAuth: true,
       titleKey: 'navigation.disciplines',
       descriptionKey:
         'modules.disciplinesDescription',
@@ -73,6 +76,7 @@ const moduleRoutes: RouteRecordRaw[] = [
     component: () =>
       import('@/views/ModulePlaceholderView.vue'),
     meta: {
+      requiresAuth: true,
       titleKey: 'navigation.curricula',
       descriptionKey:
         'modules.curriculaDescription',
@@ -88,6 +92,7 @@ const moduleRoutes: RouteRecordRaw[] = [
     component: () =>
       import('@/views/ModulePlaceholderView.vue'),
     meta: {
+      requiresAuth: true,
       titleKey: 'navigation.workload',
       descriptionKey:
         'modules.workloadDescription',
@@ -103,6 +108,7 @@ const moduleRoutes: RouteRecordRaw[] = [
     component: () =>
       import('@/views/ModulePlaceholderView.vue'),
     meta: {
+      requiresAuth: true,
       titleKey: 'navigation.schedules',
       descriptionKey:
         'modules.schedulesDescription',
@@ -118,13 +124,12 @@ const moduleRoutes: RouteRecordRaw[] = [
     component: () =>
       import('@/views/ModulePlaceholderView.vue'),
     meta: {
+      requiresAuth: true,
       titleKey: 'navigation.reports',
       descriptionKey:
         'modules.reportsDescription',
       icon: 'pi pi-file-export',
-      breadcrumbKeys: [
-        'navigation.reports',
-      ],
+      breadcrumbKeys: ['navigation.reports'],
     },
   },
   {
@@ -133,6 +138,7 @@ const moduleRoutes: RouteRecordRaw[] = [
     component: () =>
       import('@/views/ModulePlaceholderView.vue'),
     meta: {
+      requiresAuth: true,
       titleKey: 'navigation.settings',
       descriptionKey:
         'modules.settingsDescription',
@@ -149,55 +155,62 @@ const routes: RouteRecordRaw[] = [
     path: '/',
     component: () =>
       import('@/layouts/DefaultLayout.vue'),
-
+    meta: {
+      requiresAuth: true,
+    },
     children: [
       {
         path: '',
         name: 'dashboard',
         component: () =>
           import('@/views/DashboardView.vue'),
-
         meta: {
+          requiresAuth: true,
           titleKey: 'dashboard.title',
         },
       },
-
       ...moduleRoutes,
     ],
   },
-
   {
     path: '/login',
     component: () =>
       import('@/layouts/AuthLayout.vue'),
-
     children: [
       {
         path: '',
         name: 'login',
         component: () =>
           import('@/views/LoginView.vue'),
-
         meta: {
           titleKey: 'auth.loginTitle',
           guestOnly: true,
         },
       },
+      {
+        path: 'change-password',
+        name: 'change-password',
+        component: () =>
+          import(
+            '@/views/ChangePasswordView.vue'
+          ),
+        meta: {
+          titleKey: 'auth.changePassword',
+          requiresAuth: true,
+        },
+      },
     ],
   },
-
   {
     path: '/:pathMatch(.*)*',
     component: () =>
       import('@/layouts/EmptyLayout.vue'),
-
     children: [
       {
         path: '',
         name: 'not-found',
         component: () =>
           import('@/views/NotFoundView.vue'),
-
         meta: {
           titleKey: 'errors.notFoundTitle',
         },
@@ -210,7 +223,6 @@ const router = createRouter({
   history: createWebHistory(
     import.meta.env.BASE_URL,
   ),
-
   routes,
 
   scrollBehavior() {
@@ -238,8 +250,61 @@ function updateDocumentTitle(
     : appName
 }
 
-router.beforeEach((to) => {
+router.beforeEach(async (to) => {
+  const authStore = useAuthStore()
+
+  if (!authStore.initialized) {
+    await authStore.initialize()
+  }
+
   updateDocumentTitle(to.meta.titleKey)
+
+  if (
+    to.meta.requiresAuth &&
+    !authStore.isAuthenticated
+  ) {
+    return {
+      name: 'login',
+      query: {
+        redirect: to.fullPath,
+      },
+    }
+  }
+
+  if (
+    to.meta.guestOnly &&
+    authStore.isAuthenticated
+  ) {
+    if (authStore.user?.must_change_password) {
+      return {
+        name: 'change-password',
+      }
+    }
+
+    return {
+      name: 'dashboard',
+    }
+  }
+
+  if (
+    authStore.isAuthenticated &&
+    authStore.user?.must_change_password &&
+    to.name !== 'change-password'
+  ) {
+    return {
+      name: 'change-password',
+    }
+  }
+
+  if (
+    to.name === 'change-password' &&
+    authStore.isAuthenticated &&
+    !authStore.user?.must_change_password
+  ) {
+    return {
+      name: 'dashboard',
+    }
+  }
 
   return true
 })
