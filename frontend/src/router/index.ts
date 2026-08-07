@@ -12,13 +12,26 @@ const moduleRoutes: RouteRecordRaw[] = [
     path: 'departments',
     name: 'departments',
     component: () =>
-      import('@/views/ModulePlaceholderView.vue'),
+      import(
+        '@/modules/departments/DepartmentView.vue'
+        ),
+
     meta: {
       requiresAuth: true,
-      titleKey: 'navigation.departments',
+
+      requiredPermissions: [
+        'organizations.view_department',
+      ],
+
+      titleKey:
+        'navigation.departments',
+
       descriptionKey:
         'modules.departmentsDescription',
-      icon: 'pi pi-building',
+
+      icon:
+        'pi pi-building',
+
       breadcrumbKeys: [
         'navigation.departments',
       ],
@@ -167,29 +180,6 @@ const routes: RouteRecordRaw[] = [
         meta: {
           requiresAuth: true,
           titleKey: 'dashboard.title',
-        },
-      },
-
-      {
-        path: 'crud-demo',
-
-        name: 'crud-demo',
-
-        component: () =>
-          import(
-            '@/views/CrudDemoView.vue'
-            ),
-
-        meta: {
-          requiresAuth: true,
-          staffOnly: true,
-
-          titleKey:
-            'crud.infrastructureTitle',
-
-          breadcrumbKeys: [
-            'crud.infrastructureTitle',
-          ],
         },
       },
 

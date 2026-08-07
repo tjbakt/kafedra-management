@@ -34,9 +34,15 @@ const menuDefinitions: TranslatedSidebarItem[] = [
     children: [
       {
         label: '',
-        labelKey: 'navigation.departments',
-        icon: 'pi pi-building',
-        route: '/departments',
+        labelKey:
+          'navigation.departments',
+        icon:
+          'pi pi-building',
+        route:
+          '/departments',
+        permissions: [
+          'organizations.view_department',
+        ],
       },
       {
         label: '',
@@ -121,21 +127,6 @@ const menuDefinitions: TranslatedSidebarItem[] = [
 
         staffOnly: true,
       },
-
-      {
-        label: '',
-        labelKey:
-          'crud.infrastructureTitle',
-
-        icon:
-          'pi pi-database',
-
-        route:
-          '/crud-demo',
-
-        staffOnly: true,
-      },
-
     ],
   },
 ]

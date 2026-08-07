@@ -324,6 +324,148 @@ const uz = {
     infrastructureTitle:
       'CRUD infratuzilmasi',
   },
+
+  departments: {
+    title:
+      'Kafedralar',
+
+    description:
+      'Kafedralar, ularning fakultetlarga tegishliligi, aloqa ma’lumotlari va holatini boshqarish.',
+
+    create:
+      'Kafedra yaratish',
+
+    createTitle:
+      'Kafedra yaratish',
+
+    editTitle:
+      'Kafedrani tahrirlash',
+
+    detailsTitle:
+      'Kafedra haqida ma’lumot',
+
+    archive:
+      'Arxivlash',
+
+    archiveTitle:
+      'Kafedrani arxivlash',
+
+    archiveConfirm:
+      '«{name}» kafedrasini arxivlaysizmi? Yozuvni keyinchalik arxivdan tiklash mumkin.',
+
+    archived:
+      'Kafedra arxivga ko‘chirildi',
+
+    active:
+      'Faol',
+
+    inactive:
+      'Faol emas',
+
+    allStatuses:
+      'Barcha holatlar',
+
+    allUniversities:
+      'Barcha universitetlar',
+
+    allFaculties:
+      'Barcha fakultetlar',
+
+    searchPlaceholder:
+      'Kod yoki nom bo‘yicha qidirish...',
+
+    fields: {
+      code:
+        'Kod',
+
+      name:
+        'Nomi',
+
+      nameRu:
+        'Rus tilidagi nomi',
+
+      nameUz:
+        'O‘zbek tilidagi nomi',
+
+      shortNameRu:
+        'Rus tilidagi qisqa nomi',
+
+      shortNameUz:
+        'O‘zbek tilidagi qisqa nomi',
+
+      university:
+        'Universitet',
+
+      faculty:
+        'Fakultet',
+
+      head:
+        'Kafedra mudiri',
+
+      phone:
+        'Telefon',
+
+      email:
+        'Elektron pochta',
+
+      room:
+        'Auditoriya / xona',
+
+      sortOrder:
+        'Saralash tartibi',
+
+      active:
+        'Faol kafedra',
+
+      status:
+        'Holat',
+
+      createdAt:
+        'Yaratilgan',
+
+      createdBy:
+        'Yaratgan',
+
+      updatedAt:
+        'O‘zgartirilgan',
+
+      updatedBy:
+        'O‘zgartirgan',
+    },
+
+    placeholders: {
+      faculty:
+        'Fakultetni tanlang',
+    },
+
+    sections: {
+      general:
+        'Asosiy ma’lumot',
+
+      contacts:
+        'Aloqa ma’lumotlari',
+
+      audit:
+        'O‘zgarishlar tarixi',
+    },
+
+    validation: {
+      facultyRequired:
+        'Fakultetni tanlang',
+
+      codeRequired:
+        'Kafedra kodini kiriting',
+
+      nameRuRequired:
+        'Rus tilidagi nomni kiriting',
+
+      nameUzRequired:
+        'O‘zbek tilidagi nomni kiriting',
+
+      invalidEmail:
+        'To‘g‘ri elektron pochta manzilini kiriting',
+    },
+  },
 }
 
 export default uz
