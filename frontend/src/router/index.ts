@@ -199,6 +199,37 @@ const routes: RouteRecordRaw[] = [
           titleKey: 'dashboard.title',
         },
       },
+      {
+        path:
+          'staff-employments',
+
+        name:
+          'staff-employments',
+
+        component: () =>
+          import(
+            '@/modules/staff-employments/StaffEmploymentsView.vue'
+            ),
+
+        meta: {
+          requiresAuth: true,
+
+          requiredPermissions: [
+            'staff.view_staffemployment',
+          ],
+
+          titleKey:
+            'navigation.staffEmployments',
+
+          icon:
+            'pi pi-briefcase',
+
+          breadcrumbKeys: [
+            'navigation.teachers',
+            'navigation.staffEmployments',
+          ],
+        },
+      },
 
       {
         path: 'access-debug',

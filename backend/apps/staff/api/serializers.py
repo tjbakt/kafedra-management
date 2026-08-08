@@ -374,25 +374,16 @@ class StaffMemberSerializer(LocalizedStaffNameMixin, AuditFieldsSerializer):
 
         return attrs
 
-class StaffEmploymentSerializer(AuditFieldsSerializer):
+class StaffEmploymentSerializer(LocalizedStaffNameMixin, AuditFieldsSerializer):
     staff_member_name = serializers.CharField(
         source="staff_member.full_name",
         read_only=True,
     )
-    department_name = serializers.CharField(
-        source="department.name_ru",
-        read_only=True,
-    )
+    department_name = serializers.SerializerMethodField()
+    faculty_name = serializers.SerializerMethodField()
+    position_name = serializers.SerializerMethodField()
     faculty = serializers.IntegerField(
         source="department.faculty_id",
-        read_only=True,
-    )
-    faculty_name = serializers.CharField(
-        source="department.faculty.name_ru",
-        read_only=True,
-    )
-    position_name = serializers.CharField(
-        source="position.name_ru",
         read_only=True,
     )
     employment_type_name = serializers.CharField(
@@ -445,6 +436,23 @@ class StaffEmploymentSerializer(AuditFieldsSerializer):
             "archived_by",
         )
 
+    @extend_schema_field(serializers.CharField())
+    def get_department_name(self, obj) -> str:
+        return self.get_localized_name(
+            obj.department
+        )
+
+    @extend_schema_field(serializers.CharField())
+    def get_faculty_name(self, obj) -> str:
+        return self.get_localized_name(
+            obj.department.faculty
+        )
+
+    @extend_schema_field(serializers.CharField())
+    def get_position_name(self, obj) -> str:
+        return self.get_localized_name(
+            obj.position
+        )
     def validate(self, attrs):
         instance = getattr(self, "instance", None)
 

@@ -75,6 +75,7 @@ const ru = {
     reports: 'Отчёты',
     system: 'Система',
     settings: 'Настройки',
+    staffEmployments: 'Трудовые назначения',
   },
 
   profile: {
@@ -637,6 +638,173 @@ const ru = {
         'Дата рождения не может быть в будущем',
     },
   },
+
+  staffEmployments: {
+    title:
+      'Трудовые назначения',
+
+    description:
+      'Назначение преподавателей и сотрудников на кафедры и должности, учёт вида занятости, ставки и сроков работы.',
+
+    create:
+      'Добавить назначение',
+
+    createTitle:
+      'Создание трудового назначения',
+
+    editTitle:
+      'Редактирование трудового назначения',
+
+    detailsTitle:
+      'Трудовое назначение',
+
+    archive:
+      'Архивировать',
+
+    archiveTitle:
+      'Архивирование назначения',
+
+    archiveConfirm:
+      'Архивировать назначение сотрудника «{name}»? Запись можно будет восстановить из архива.',
+
+    archived:
+      'Трудовое назначение перемещено в архив',
+
+    active:
+      'Активно',
+
+    inactive:
+      'Неактивно',
+
+    allStatuses:
+      'Все статусы',
+
+    allDepartments:
+      'Все кафедры',
+
+    allPositions:
+      'Все должности',
+
+    allTypes:
+      'Все виды занятости',
+
+    allAssignments:
+      'Все назначения',
+
+    primaryOnly:
+      'Только основные',
+
+    additionalOnly:
+      'Только дополнительные',
+
+    searchPlaceholder:
+      'Поиск по сотруднику, кафедре или должности...',
+
+    types: {
+      primary:
+        'Основное место работы',
+
+      internalPartTime:
+        'Внутреннее совместительство',
+
+      externalPartTime:
+        'Внешнее совместительство',
+
+      hourly:
+        'Почасовая работа',
+    },
+
+    fields: {
+      staffMember:
+        'Сотрудник',
+
+      faculty:
+        'Факультет',
+
+      department:
+        'Кафедра',
+
+      position:
+        'Должность',
+
+      employmentType:
+        'Вид занятости',
+
+      rate:
+        'Ставка',
+
+      startDate:
+        'Дата начала работы',
+
+      endDate:
+        'Дата окончания работы',
+
+      primary:
+        'Основное назначение',
+
+      active:
+        'Назначение активно',
+
+      status:
+        'Статус',
+
+      documentNumber:
+        'Номер приказа',
+
+      documentDate:
+        'Дата приказа',
+
+      notes:
+        'Примечание',
+
+      createdAt:
+        'Создано',
+
+      createdBy:
+        'Создал',
+
+      updatedAt:
+        'Изменено',
+
+      updatedBy:
+        'Изменил',
+    },
+
+    sections: {
+      assignment:
+        'Назначение',
+
+      period:
+        'Период работы',
+
+      document:
+        'Приказ',
+
+      audit:
+        'История изменений',
+    },
+
+    validation: {
+      staffRequired:
+        'Выберите сотрудника',
+
+      departmentRequired:
+        'Выберите кафедру',
+
+      positionRequired:
+        'Выберите должность',
+
+      startDateRequired:
+        'Укажите дату начала работы',
+
+      rateRange:
+        'Ставка должна быть от 0,01 до 3,00',
+
+      endBeforeStart:
+        'Дата окончания не может быть раньше даты начала',
+    },
+  },
+
 }
 
 export default ru

@@ -75,6 +75,7 @@ const uz = {
     reports: 'Hisobotlar',
     system: 'Tizim',
     settings: 'Sozlamalar',
+    staffEmployments: 'Mehnat tayinlovlari',
   },
 
   profile: {
@@ -640,6 +641,172 @@ const uz = {
 
       birthDateFuture:
         'Tug‘ilgan sana kelajakda bo‘lishi mumkin emas',
+    },
+  },
+
+  staffEmployments: {
+    title:
+      'Mehnat tayinlovlari',
+
+    description:
+      'O‘qituvchilar va xodimlarni kafedra hamda lavozimlarga tayinlash, bandlik turi, stavka va ish muddatlarini yuritish.',
+
+    create:
+      'Tayinlov qo‘shish',
+
+    createTitle:
+      'Mehnat tayinlovini yaratish',
+
+    editTitle:
+      'Mehnat tayinlovini tahrirlash',
+
+    detailsTitle:
+      'Mehnat tayinlovi',
+
+    archive:
+      'Arxivlash',
+
+    archiveTitle:
+      'Tayinlovni arxivlash',
+
+    archiveConfirm:
+      '«{name}» xodimining tayinlovini arxivlaysizmi? Yozuvni keyinchalik tiklash mumkin.',
+
+    archived:
+      'Mehnat tayinlovi arxivga ko‘chirildi',
+
+    active:
+      'Faol',
+
+    inactive:
+      'Faol emas',
+
+    allStatuses:
+      'Barcha holatlar',
+
+    allDepartments:
+      'Barcha kafedralar',
+
+    allPositions:
+      'Barcha lavozimlar',
+
+    allTypes:
+      'Barcha bandlik turlari',
+
+    allAssignments:
+      'Barcha tayinlovlar',
+
+    primaryOnly:
+      'Faqat asosiy',
+
+    additionalOnly:
+      'Faqat qo‘shimcha',
+
+    searchPlaceholder:
+      'Xodim, kafedra yoki lavozim bo‘yicha qidirish...',
+
+    types: {
+      primary:
+        'Asosiy ish joyi',
+
+      internalPartTime:
+        'Ichki o‘rindoshlik',
+
+      externalPartTime:
+        'Tashqi o‘rindoshlik',
+
+      hourly:
+        'Soatbay ish',
+    },
+
+    fields: {
+      staffMember:
+        'Xodim',
+
+      faculty:
+        'Fakultet',
+
+      department:
+        'Kafedra',
+
+      position:
+        'Lavozim',
+
+      employmentType:
+        'Bandlik turi',
+
+      rate:
+        'Stavka',
+
+      startDate:
+        'Ish boshlanish sanasi',
+
+      endDate:
+        'Ish tugash sanasi',
+
+      primary:
+        'Asosiy tayinlov',
+
+      active:
+        'Tayinlov faol',
+
+      status:
+        'Holat',
+
+      documentNumber:
+        'Buyruq raqami',
+
+      documentDate:
+        'Buyruq sanasi',
+
+      notes:
+        'Izoh',
+
+      createdAt:
+        'Yaratilgan',
+
+      createdBy:
+        'Yaratgan',
+
+      updatedAt:
+        'O‘zgartirilgan',
+
+      updatedBy:
+        'O‘zgartirgan',
+    },
+
+    sections: {
+      assignment:
+        'Tayinlov',
+
+      period:
+        'Ish davri',
+
+      document:
+        'Buyruq',
+
+      audit:
+        'O‘zgarishlar tarixi',
+    },
+
+    validation: {
+      staffRequired:
+        'Xodimni tanlang',
+
+      departmentRequired:
+        'Kafedrani tanlang',
+
+      positionRequired:
+        'Lavozimni tanlang',
+
+      startDateRequired:
+        'Ish boshlanish sanasini kiriting',
+
+      rateRange:
+        'Stavka 0,01 dan 3,00 gacha bo‘lishi kerak',
+
+      endBeforeStart:
+        'Tugash sanasi boshlanish sanasidan oldin bo‘lishi mumkin emas',
     },
   },
 

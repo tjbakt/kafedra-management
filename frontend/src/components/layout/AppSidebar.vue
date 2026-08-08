@@ -55,6 +55,15 @@ const menuDefinitions: TranslatedSidebarItem[] = [
       },
       {
         label: '',
+        labelKey: 'navigation.staffEmployments',
+        icon: 'pi pi-briefcase',
+        route: '/staff-employments',
+        permissions: [
+          'staff.view_staffemployment',
+        ],
+      },
+      {
+        label: '',
         labelKey: 'navigation.studentGroups',
         icon: 'pi pi-id-card',
         route: '/students',
