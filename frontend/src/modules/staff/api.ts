@@ -31,7 +31,8 @@ export async function getAcademicDegrees(): Promise<
         params: {
           page_size: 100,
           is_active: true,
-          ordering: 'sort_order,name_ru',
+          ordering:
+            'sort_order,name_ru',
         },
       },
     )
@@ -51,7 +52,8 @@ export async function getAcademicTitles(): Promise<
         params: {
           page_size: 100,
           is_active: true,
-          ordering: 'sort_order,name_ru',
+          ordering:
+            'sort_order,name_ru',
         },
       },
     )

@@ -305,7 +305,7 @@ const columns =
         t(
           'departments.fields.room',
         ),
-      minWidth: '8rem',
+      minWidth: '6rem',
     },
     {
       field: 'is_active',

@@ -169,10 +169,7 @@ class FacultySerializer(
 ):
     display_name = serializers.SerializerMethodField()
     display_short_name = serializers.SerializerMethodField()
-    university_name = serializers.CharField(
-        source="university.name_ru",
-        read_only=True,
-    )
+    university_name = serializers.SerializerMethodField()
     departments_count = serializers.IntegerField(
         read_only=True,
     )
@@ -222,6 +219,21 @@ class FacultySerializer(
             "archived_by",
         )
 
+    @extend_schema_field(serializers.CharField())
+    def get_university_name(self, obj) -> str:
+        language = self.get_current_language(obj)
+
+        if language == "uz":
+            return (
+                    obj.university.name_uz
+                    or obj.university.name_ru
+            )
+
+        return (
+                obj.university.name_ru
+                or obj.university.name_uz
+        )
+
     def validate_university(self, value):
         if value.is_archived:
             raise serializers.ValidationError(
@@ -242,18 +254,12 @@ class DepartmentSerializer(
 ):
     display_name = serializers.SerializerMethodField()
     display_short_name = serializers.SerializerMethodField()
-    faculty_name = serializers.CharField(
-        source="faculty.name_ru",
-        read_only=True,
-    )
+    faculty_name = serializers.SerializerMethodField()
     university = serializers.IntegerField(
         source="faculty.university_id",
         read_only=True,
     )
-    university_name = serializers.CharField(
-        source="faculty.university.name_ru",
-        read_only=True,
-    )
+    university_name = serializers.SerializerMethodField()
 
     class Meta:
         model = Department
@@ -299,6 +305,38 @@ class DepartmentSerializer(
             "is_archived",
             "archived_at",
             "archived_by",
+        )
+
+    @extend_schema_field(serializers.CharField())
+    def get_faculty_name(self, obj) -> str:
+        language = self.get_current_language(obj)
+
+        if language == "uz":
+            return (
+                    obj.faculty.name_uz
+                    or obj.faculty.name_ru
+            )
+
+        return (
+                obj.faculty.name_ru
+                or obj.faculty.name_uz
+        )
+
+    @extend_schema_field(serializers.CharField())
+    def get_university_name(self, obj) -> str:
+        language = self.get_current_language(obj)
+
+        university = obj.faculty.university
+
+        if language == "uz":
+            return (
+                    university.name_uz
+                    or university.name_ru
+            )
+
+        return (
+                university.name_ru
+                or university.name_uz
         )
 
     def validate_faculty(self, value):

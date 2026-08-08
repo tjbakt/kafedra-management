@@ -24,7 +24,7 @@ const { t } = useI18n()
 const form = reactive({
   username: '',
   password: '',
-  remember: true,
+  remember: false,
 })
 
 const errors = reactive({

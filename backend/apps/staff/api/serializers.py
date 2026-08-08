@@ -25,11 +25,7 @@ from drf_spectacular.utils import (
 from decimal import Decimal
 
 class LocalizedStaffNameMixin:
-
-    @extend_schema_field(
-        serializers.CharField()
-    )
-    def get_display_name(self, obj) -> str:
+    def get_current_language(self) -> str:
         request = self.context.get("request")
 
         if (
@@ -37,14 +33,26 @@ class LocalizedStaffNameMixin:
             and request.user
             and request.user.is_authenticated
         ):
-            language = request.user.interface_language
-        else:
-            language = (get_language() or "ru")[:2]
+            return request.user.interface_language
+
+        return (get_language() or "ru")[:2]
+
+    def get_localized_name(self, obj) -> str:
+        if obj is None:
+            return ""
+
+        language = self.get_current_language()
 
         if language == "uz":
             return obj.name_uz or obj.name_ru
 
         return obj.name_ru or obj.name_uz
+
+    @extend_schema_field(
+        serializers.CharField()
+    )
+    def get_display_name(self, obj) -> str:
+        return self.get_localized_name(obj)
 
 
 class StaffPositionSerializer(
@@ -184,15 +192,13 @@ class AcademicTitleSerializer(
     def validate_code(self, value):
         return value.strip().upper()
 
-class StaffEmploymentShortSerializer(serializers.ModelSerializer):
-    department_name = serializers.CharField(
-        source="department.name_ru",
-        read_only=True,
-    )
-    position_name = serializers.CharField(
-        source="position.name_ru",
-        read_only=True,
-    )
+class StaffEmploymentShortSerializer(
+    LocalizedStaffNameMixin,
+    serializers.ModelSerializer,
+):
+    department_name = serializers.SerializerMethodField()
+    position_name = serializers.SerializerMethodField()
+
     employment_type_name = serializers.CharField(
         source="get_employment_type_display",
         read_only=True,
@@ -200,6 +206,7 @@ class StaffEmploymentShortSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = StaffEmployment
+
         fields = (
             "id",
             "department",
@@ -215,8 +222,24 @@ class StaffEmploymentShortSerializer(serializers.ModelSerializer):
             "is_active",
         )
 
+    @extend_schema_field(
+        serializers.CharField()
+    )
+    def get_department_name(self, obj) -> str:
+        return self.get_localized_name(
+            obj.department
+        )
 
-class StaffMemberSerializer(AuditFieldsSerializer):
+    @extend_schema_field(
+        serializers.CharField()
+    )
+    def get_position_name(self, obj) -> str:
+        return self.get_localized_name(
+            obj.position
+        )
+
+
+class StaffMemberSerializer(LocalizedStaffNameMixin, AuditFieldsSerializer):
     full_name = serializers.CharField(read_only=True)
     has_academic_degree = serializers.BooleanField(read_only=True)
     has_academic_title = serializers.BooleanField(read_only=True)
@@ -225,16 +248,8 @@ class StaffMemberSerializer(AuditFieldsSerializer):
         read_only=True,
         allow_null=True,
     )
-    academic_degree_name = serializers.CharField(
-        source="academic_degree.name_ru",
-        read_only=True,
-        allow_null=True,
-    )
-    academic_title_name = serializers.CharField(
-        source="academic_title.name_ru",
-        read_only=True,
-        allow_null=True,
-    )
+    academic_degree_name = serializers.SerializerMethodField()
+    academic_title_name = serializers.SerializerMethodField()
     employments = StaffEmploymentShortSerializer(
         many=True,
         read_only=True,
@@ -291,6 +306,31 @@ class StaffMemberSerializer(AuditFieldsSerializer):
             "archived_by",
         )
 
+    @extend_schema_field(
+        serializers.CharField(
+            allow_null=True
+        )
+    )
+    def get_academic_degree_name(self, obj):
+        if not obj.academic_degree:
+            return None
+
+        return self.get_localized_name(
+            obj.academic_degree
+        )
+
+    @extend_schema_field(
+        serializers.CharField(
+            allow_null=True
+        )
+    )
+    def get_academic_title_name(self, obj):
+        if not obj.academic_title:
+            return None
+
+        return self.get_localized_name(
+            obj.academic_title
+        )
     def validate_personnel_number(self, value):
         return value.strip().upper()
 

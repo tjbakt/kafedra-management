@@ -18620,8 +18620,9 @@ components:
           title: Активно
         sort_order:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           title: Порядок сортировки
         created_at:
           type: string
@@ -18706,8 +18707,9 @@ components:
           title: Активно
         sort_order:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           title: Порядок сортировки
       required:
       - code
@@ -18864,8 +18866,9 @@ components:
           title: Активно
         sort_order:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           title: Порядок сортировки
         created_at:
           type: string
@@ -18950,8 +18953,9 @@ components:
           title: Активно
         sort_order:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           title: Порядок сортировки
       required:
       - code
@@ -19700,8 +19704,9 @@ components:
           maxLength: 100
         version:
           type: integer
-          maximum: 32767
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           default: 1
           title: Номер версии
         study_program:
@@ -19833,8 +19838,9 @@ components:
           readOnly: true
         semester_number:
           type: integer
-          maximum: 32767
+          maximum: 9223372036854775807
           minimum: 1
+          format: int64
           title: Номер семестра
         season:
           type: string
@@ -19884,8 +19890,9 @@ components:
           readOnly: true
         weeks_count:
           type: integer
-          maximum: 32767
+          maximum: 9223372036854775807
           minimum: 1
+          format: int64
           title: Количество учебных недель
         is_active:
           type: boolean
@@ -19962,8 +19969,9 @@ components:
           title: Дисциплина
         semester_number:
           type: integer
-          maximum: 32767
+          maximum: 9223372036854775807
           minimum: 1
+          format: int64
           title: Номер семестра
         teaching_department:
           type: integer
@@ -19993,8 +20001,9 @@ components:
           title: Часы самостоятельной работы
         weeks_count:
           type: integer
-          maximum: 32767
+          maximum: 9223372036854775807
           minimum: 1
+          format: int64
           title: Количество учебных недель
         is_active:
           type: boolean
@@ -20018,8 +20027,9 @@ components:
           maxLength: 100
         version:
           type: integer
-          maximum: 32767
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           default: 1
           title: Номер версии
         study_program:
@@ -20093,8 +20103,9 @@ components:
           title: Базовое количество часов
         students_per_unit:
           type: integer
-          maximum: 32767
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           nullable: true
           title: Количество студентов на одну расчётную единицу
           description: Используется для некоторых видов расчёта по количеству студентов.
@@ -20174,8 +20185,9 @@ components:
           title: Базовое количество часов
         students_per_unit:
           type: integer
-          maximum: 32767
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           nullable: true
           title: Количество студентов на одну расчётную единицу
           description: Используется для некоторых видов расчёта по количеству студентов.
@@ -20273,8 +20285,9 @@ components:
           title: Активно
         sort_order:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           title: Порядок сортировки
         created_at:
           type: string
@@ -20383,8 +20396,9 @@ components:
           title: Активно
         sort_order:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           title: Порядок сортировки
       required:
       - code
@@ -20488,8 +20502,9 @@ components:
           title: Активна
         sort_order:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           title: Порядок сортировки
         created_at:
           type: string
@@ -20572,8 +20587,9 @@ components:
           title: Активна
         sort_order:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           title: Порядок сортировки
       required:
       - code
@@ -20776,8 +20792,9 @@ components:
           title: Активно
         sort_order:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           title: Порядок сортировки
         created_at:
           type: string
@@ -20861,8 +20878,9 @@ components:
           title: Активно
         sort_order:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           title: Порядок сортировки
       required:
       - code
@@ -20944,8 +20962,9 @@ components:
           title: Активно
         sort_order:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           title: Порядок сортировки
         departments_count:
           type: integer
@@ -21057,8 +21076,9 @@ components:
           title: Активно
         sort_order:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           title: Порядок сортировки
       required:
       - code
@@ -21246,21 +21266,24 @@ components:
           readOnly: true
         semester_number:
           type: integer
-          maximum: 32767
+          maximum: 9223372036854775807
           minimum: 1
+          format: int64
           title: Номер семестра по учебному плану
         season:
           type: string
           readOnly: true
         students_count:
           type: integer
-          maximum: 32767
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           title: Количество студентов в семестре
         subgroup_count:
           type: integer
-          maximum: 32767
+          maximum: 9223372036854775807
           minimum: 1
+          format: int64
           title: Количество подгрупп
         status:
           allOf:
@@ -21343,18 +21366,21 @@ components:
           title: Академический семестр
         semester_number:
           type: integer
-          maximum: 32767
+          maximum: 9223372036854775807
           minimum: 1
+          format: int64
           title: Номер семестра по учебному плану
         students_count:
           type: integer
-          maximum: 32767
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           title: Количество студентов в семестре
         subgroup_count:
           type: integer
-          maximum: 32767
+          maximum: 9223372036854775807
           minimum: 1
+          format: int64
           title: Количество подгрупп
         status:
           allOf:
@@ -21436,8 +21462,9 @@ components:
           title: Активен
         sort_order:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           title: Порядок сортировки
         created_at:
           type: string
@@ -21527,8 +21554,9 @@ components:
           title: Активен
         sort_order:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           title: Порядок сортировки
       required:
       - code
@@ -21794,8 +21822,9 @@ components:
           title: Комментарий проверяющего
         sort_order:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           title: Порядок
         is_imported_teaching_workload:
           type: boolean
@@ -21932,8 +21961,9 @@ components:
           title: Комментарий проверяющего
         sort_order:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           title: Порядок
       required:
       - individual_plan
@@ -22001,8 +22031,9 @@ components:
           title: Активен
         sort_order:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           title: Порядок сортировки
         created_at:
           type: string
@@ -22099,8 +22130,9 @@ components:
           title: Активен
         sort_order:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           title: Порядок сортировки
       required:
       - code
@@ -23990,8 +24022,9 @@ components:
           title: Активно
         sort_order:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           title: Порядок сортировки
     PatchedAcademicSemesterRequest:
       type: object
@@ -24050,8 +24083,9 @@ components:
           title: Активно
         sort_order:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           title: Порядок сортировки
     PatchedAcademicYearRequest:
       type: object
@@ -24085,8 +24119,9 @@ components:
           title: Дисциплина
         semester_number:
           type: integer
-          maximum: 32767
+          maximum: 9223372036854775807
           minimum: 1
+          format: int64
           title: Номер семестра
         teaching_department:
           type: integer
@@ -24116,8 +24151,9 @@ components:
           title: Часы самостоятельной работы
         weeks_count:
           type: integer
-          maximum: 32767
+          maximum: 9223372036854775807
           minimum: 1
+          format: int64
           title: Количество учебных недель
         is_active:
           type: boolean
@@ -24136,8 +24172,9 @@ components:
           maxLength: 100
         version:
           type: integer
-          maximum: 32767
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           default: 1
           title: Номер версии
         study_program:
@@ -24187,8 +24224,9 @@ components:
           title: Базовое количество часов
         students_per_unit:
           type: integer
-          maximum: 32767
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           nullable: true
           title: Количество студентов на одну расчётную единицу
           description: Используется для некоторых видов расчёта по количеству студентов.
@@ -24253,8 +24291,9 @@ components:
           title: Активно
         sort_order:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           title: Порядок сортировки
     PatchedDisciplineRequest:
       type: object
@@ -24286,8 +24325,9 @@ components:
           title: Активна
         sort_order:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           title: Порядок сортировки
     PatchedEducationDurationRequest:
       type: object
@@ -24335,8 +24375,9 @@ components:
           title: Активно
         sort_order:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           title: Порядок сортировки
     PatchedFacultyRequest:
       type: object
@@ -24393,8 +24434,9 @@ components:
           title: Активно
         sort_order:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           title: Порядок сортировки
     PatchedGroupCurriculumAssignmentRequest:
       type: object
@@ -24437,18 +24479,21 @@ components:
           title: Академический семестр
         semester_number:
           type: integer
-          maximum: 32767
+          maximum: 9223372036854775807
           minimum: 1
+          format: int64
           title: Номер семестра по учебному плану
         students_count:
           type: integer
-          maximum: 32767
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           title: Количество студентов в семестре
         subgroup_count:
           type: integer
-          maximum: 32767
+          maximum: 9223372036854775807
           minimum: 1
+          format: int64
           title: Количество подгрупп
         status:
           allOf:
@@ -24496,8 +24541,9 @@ components:
           title: Активен
         sort_order:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           title: Порядок сортировки
     PatchedIndividualPlanItemRequest:
       type: object
@@ -24580,8 +24626,9 @@ components:
           title: Комментарий проверяющего
         sort_order:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           title: Порядок
     PatchedIndividualPlanRequest:
       type: object
@@ -24625,8 +24672,9 @@ components:
           title: Активен
         sort_order:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           title: Порядок сортировки
     PatchedPlannedWorkloadRequest:
       type: object
@@ -24821,8 +24869,9 @@ components:
           title: Активно
         sort_order:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           title: Порядок сортировки
     PatchedStudentGroupRequest:
       type: object
@@ -24888,8 +24937,9 @@ components:
           title: Активно
         sort_order:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           title: Порядок сортировки
     PatchedStudyProgramRequest:
       type: object
@@ -24924,8 +24974,9 @@ components:
           title: Активно
         sort_order:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           title: Порядок сортировки
     PatchedSystemRoleRequest:
       type: object
@@ -24953,8 +25004,9 @@ components:
           title: Активна
         sort_order:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           title: Порядок сортировки
     PatchedTeachingStreamGroupRequest:
       type: object
@@ -25071,8 +25123,9 @@ components:
           title: Активно
         sort_order:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           title: Порядок сортировки
     PatchedUserRequest:
       type: object
@@ -25244,8 +25297,9 @@ components:
           title: Активен
         sort_order:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           title: Порядок сортировки
     PlannedWorkload:
       type: object
@@ -26327,8 +26381,9 @@ components:
           title: Активно
         sort_order:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           title: Порядок сортировки
         created_at:
           type: string
@@ -26412,8 +26467,9 @@ components:
           title: Активно
         sort_order:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           title: Порядок сортировки
       required:
       - code
@@ -26626,8 +26682,9 @@ components:
           title: Активно
         sort_order:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           title: Порядок сортировки
         created_at:
           type: string
@@ -26715,8 +26772,9 @@ components:
           title: Активно
         sort_order:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           title: Порядок сортировки
       required:
       - code
@@ -26773,8 +26831,9 @@ components:
           title: Активно
         sort_order:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           title: Порядок сортировки
         created_at:
           type: string
@@ -26863,8 +26922,9 @@ components:
           title: Активно
         sort_order:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           title: Порядок сортировки
       required:
       - code
@@ -26900,8 +26960,9 @@ components:
           title: Активна
         sort_order:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           title: Порядок сортировки
         created_at:
           type: string
@@ -26998,8 +27059,9 @@ components:
           title: Активна
         sort_order:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           title: Порядок сортировки
       required:
       - code
@@ -27559,8 +27621,9 @@ components:
           title: Активно
         sort_order:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           title: Порядок сортировки
         faculties_count:
           type: integer
@@ -27676,8 +27739,9 @@ components:
           title: Активно
         sort_order:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           title: Порядок сортировки
       required:
       - code
@@ -28640,8 +28704,9 @@ components:
           title: Активен
         sort_order:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           title: Порядок сортировки
         created_at:
           type: string
@@ -28757,8 +28822,9 @@ components:
           title: Активен
         sort_order:
           type: integer
-          maximum: 2147483647
+          maximum: 9223372036854775807
           minimum: 0
+          format: int64
           title: Порядок сортировки
       required:
       - code

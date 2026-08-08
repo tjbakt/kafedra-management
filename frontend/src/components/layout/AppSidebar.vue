@@ -46,12 +46,9 @@ const menuDefinitions: TranslatedSidebarItem[] = [
       },
       {
         label: '',
-        labelKey:
-          'navigation.teachers',
-        icon:
-          'pi pi-users',
-        route:
-          '/teachers',
+        labelKey: 'navigation.teachers',
+        icon: 'pi pi-users',
+        route: '/teachers',
         permissions: [
           'staff.view_staffmember',
         ],

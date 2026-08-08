@@ -28,6 +28,7 @@ import {
 import type {
   AcademicDegreeOption,
   AcademicTitleOption,
+  SelectOption,
   StaffMember,
   StaffMemberPayload,
 } from '@/modules/staff/types'
@@ -48,6 +49,10 @@ import {
   usePermissions,
 } from '@/composables/usePermissions'
 
+import {
+  useLocaleStore,
+} from '@/stores/locale'
+
 import type {
   CrudColumn,
 } from '@/types/crud'
@@ -62,6 +67,9 @@ import {
 
 const { t } = useI18n()
 
+const localeStore =
+  useLocaleStore()
+
 const toast =
   useAppToast()
 
@@ -74,9 +82,7 @@ const {
 } = usePermissions()
 
 const selectedStaffMember =
-  ref<StaffMember | null>(
-    null,
-  )
+  ref<StaffMember | null>(null)
 
 const formVisible =
   ref(false)
@@ -135,6 +141,71 @@ const canDelete = computed(
     ),
 )
 
+function localizedName(
+  ru: string | null | undefined,
+  uz: string | null | undefined,
+): string {
+  if (localeStore.locale === 'uz') {
+    return (
+      uz?.trim() ||
+      ru?.trim() ||
+      '—'
+    )
+  }
+
+  return (
+    ru?.trim() ||
+    uz?.trim() ||
+    '—'
+  )
+}
+
+const degreeFilterOptions =
+  computed<SelectOption[]>(() => [
+    {
+      id: null,
+      label:
+        t(
+          'staff.allDegrees',
+        ),
+    },
+
+    ...academicDegrees.value.map(
+      (item) => ({
+        id: item.id,
+
+        label:
+          localizedName(
+            item.name_ru,
+            item.name_uz,
+          ),
+      }),
+    ),
+  ])
+
+const titleFilterOptions =
+  computed<SelectOption[]>(() => [
+    {
+      id: null,
+      label:
+        t(
+          'staff.allTitles',
+        ),
+    },
+
+    ...academicTitles.value.map(
+      (item) => ({
+        id: item.id,
+
+        label:
+          localizedName(
+            item.name_ru,
+            item.name_uz,
+          ),
+      }),
+    ),
+  ])
+
 const statusOptions =
   computed(() => [
     {
@@ -144,13 +215,13 @@ const statusOptions =
         ),
       value: null,
     },
+
     {
       label:
-        t(
-          'staff.working',
-        ),
+        t('staff.working'),
       value: true,
     },
+
     {
       label:
         t(
@@ -158,30 +229,6 @@ const statusOptions =
         ),
       value: false,
     },
-  ])
-
-const degreeOptions =
-  computed(() => [
-    {
-      id: null,
-      name_ru:
-        t(
-          'staff.allDegrees',
-        ),
-    },
-    ...academicDegrees.value,
-  ])
-
-const titleOptions =
-  computed(() => [
-    {
-      id: null,
-      name_ru:
-        t(
-          'staff.allTitles',
-        ),
-    },
-    ...academicTitles.value,
   ])
 
 const columns =
@@ -199,8 +246,7 @@ const columns =
 
       sortable: true,
 
-      minWidth:
-        '9rem',
+      minWidth: '9rem',
     },
 
     {
@@ -212,13 +258,11 @@ const columns =
           'staff.fields.fullName',
         ),
 
-      sortField:
-        'last_name',
-
       sortable: true,
 
-      minWidth:
-        '17rem',
+      sortField: 'last_name',
+
+      minWidth: '17rem',
     },
 
     {
@@ -230,11 +274,9 @@ const columns =
           'staff.fields.academicDegree',
         ),
 
-      bodySlot:
-        'degree',
+      bodySlot: 'degree',
 
-      minWidth:
-        '12rem',
+      minWidth: '12rem',
     },
 
     {
@@ -246,43 +288,35 @@ const columns =
           'staff.fields.academicTitle',
         ),
 
-      bodySlot:
-        'title',
+      bodySlot: 'title',
 
-      minWidth:
-        '12rem',
+      minWidth: '12rem',
     },
 
     {
-      field:
-        'phone',
+      field: 'phone',
 
       header:
         t(
           'staff.fields.phone',
         ),
 
-      minWidth:
-        '10rem',
+      minWidth: '10rem',
     },
 
     {
-      field:
-        'is_active',
+      field: 'is_active',
 
       header:
         t(
           'staff.fields.status',
         ),
 
-      bodySlot:
-        'status',
+      bodySlot: 'status',
 
-      width:
-        '8rem',
+      width: '8rem',
 
-      align:
-        'center',
+      align: 'center',
     },
   ])
 
@@ -315,7 +349,7 @@ const {
     initialPageSize: 20,
 
     initialOrdering:
-      'last_name,first_name,middle_name',
+      'last_name,first_name',
   },
 )
 
@@ -332,18 +366,18 @@ async function loadLookups(): Promise<void> {
 
   try {
     const [
-      degreeResponse,
-      titleResponse,
+      degreesResponse,
+      titlesResponse,
     ] = await Promise.all([
       getAcademicDegrees(),
       getAcademicTitles(),
     ])
 
     academicDegrees.value =
-      degreeResponse.results
+      degreesResponse.results
 
     academicTitles.value =
-      titleResponse.results
+      titlesResponse.results
   } catch (lookupError) {
     const normalized =
       normalizeApiError(
@@ -370,19 +404,19 @@ function openCreate(): void {
 }
 
 function openView(
-  staffMember: StaffMember,
+  member: StaffMember,
 ): void {
   selectedStaffMember.value =
-    staffMember
+    member
 
   detailsVisible.value = true
 }
 
 function openEdit(
-  staffMember: StaffMember,
+  member: StaffMember,
 ): void {
   selectedStaffMember.value =
-    staffMember
+    member
 
   clearFormErrors()
 
@@ -447,7 +481,7 @@ async function saveStaffMember(
 }
 
 function archiveStaffMember(
-  staffMember: StaffMember,
+  member: StaffMember,
 ): void {
   confirmDelete({
     header:
@@ -460,14 +494,14 @@ function archiveStaffMember(
         'staff.archiveConfirm',
         {
           name:
-            staffMember.full_name,
+            member.full_name,
         },
       ),
 
     accept: async () => {
       try {
         await staffMembersApi.remove(
-          staffMember.id,
+          member.id,
         )
 
         toast.success(
@@ -512,7 +546,7 @@ async function applyTitleFilter(): Promise<void> {
   await load()
 }
 
-async function applyActiveFilter(): Promise<void> {
+async function applyStatusFilter(): Promise<void> {
   setFilter(
     'is_active',
     selectedActive.value,
@@ -522,14 +556,9 @@ async function applyActiveFilter(): Promise<void> {
 }
 
 async function resetFilters(): Promise<void> {
-  selectedDegree.value =
-    null
-
-  selectedTitle.value =
-    null
-
-  selectedActive.value =
-    null
+  selectedDegree.value = null
+  selectedTitle.value = null
+  selectedActive.value = null
 
   clearFilters()
 
@@ -547,13 +576,9 @@ onMounted(async () => {
 <template>
   <div class="staff-page">
     <BasePageHeader
-      :title="
-        t('staff.title')
-      "
+      :title="t('staff.title')"
       :description="
-        t(
-          'staff.description',
-        )
+        t('staff.description')
       "
       icon="pi pi-users"
     >
@@ -561,9 +586,7 @@ onMounted(async () => {
         <Button
           v-if="canCreate"
           :label="
-            t(
-              'staff.create',
-            )
+            t('staff.create')
           "
           icon="pi pi-plus"
           @click="openCreate"
@@ -597,13 +620,11 @@ onMounted(async () => {
             selectedDegree
           "
           :options="
-            degreeOptions
+            degreeFilterOptions
           "
-          option-label="name_ru"
+          option-label="label"
           option-value="id"
-          class="
-            staff-filter
-          "
+          class="staff-filter"
           filter
           @change="
             applyDegreeFilter
@@ -615,13 +636,11 @@ onMounted(async () => {
             selectedTitle
           "
           :options="
-            titleOptions
+            titleFilterOptions
           "
-          option-label="name_ru"
+          option-label="label"
           option-value="id"
-          class="
-            staff-filter
-          "
+          class="staff-filter"
           filter
           @change="
             applyTitleFilter
@@ -642,7 +661,7 @@ onMounted(async () => {
             staff-filter--status
           "
           @change="
-            applyActiveFilter
+            applyStatusFilter
           "
         />
       </template>
@@ -746,9 +765,7 @@ onMounted(async () => {
           <Button
             v-if="canDelete"
             v-tooltip.bottom="
-              t(
-                'staff.archive',
-              )
+              t('staff.archive')
             "
             icon="pi pi-box"
             severity="danger"
@@ -768,9 +785,7 @@ onMounted(async () => {
           <Button
             v-if="canCreate"
             :label="
-              t(
-                'staff.create',
-              )
+              t('staff.create')
             "
             icon="pi pi-plus"
             @click="openCreate"
@@ -823,11 +838,11 @@ onMounted(async () => {
 }
 
 .staff-filter {
-  width: 13rem;
+  width: 14rem;
 }
 
 .staff-filter--status {
-  width: 10rem;
+  width: 11rem;
 }
 
 @media (max-width: 991px) {

@@ -472,7 +472,7 @@ const uz = {
       'O‘qituvchilar va xodimlar',
 
     description:
-      'Kafedra o‘qituvchilari va xodimlarining kadrlar kartochkalari.',
+      'Universitet o‘qituvchilari va xodimlarining kadrlar kartochkalari.',
 
     create:
       'Xodim qo‘shish',
@@ -525,11 +525,14 @@ const uz = {
     genderNotSpecified:
       'Ko‘rsatilmagan',
 
+    primaryEmployment:
+      'Asosiy',
+
     rateShort:
       'stavka',
 
     noEmployments:
-      'Kafedraga mehnat tayinlovlari hali mavjud emas.',
+      'Mehnat tayinlovlari hali mavjud emas.',
 
     fields: {
       personnelNumber:
@@ -630,15 +633,16 @@ const uz = {
         'To‘g‘ri elektron pochta manzilini kiriting',
 
       degreeDateWithoutDegree:
-        'Ilmiy darajasiz uning sanasini ko‘rsatib bo‘lmaydi',
+        'Ilmiy darajasiz uning berilgan sanasini ko‘rsatib bo‘lmaydi',
 
       titleDateWithoutTitle:
-        'Ilmiy unvonsiz uning sanasini ko‘rsatib bo‘lmaydi',
+        'Ilmiy unvonsiz uning berilgan sanasini ko‘rsatib bo‘lmaydi',
 
       birthDateFuture:
         'Tug‘ilgan sana kelajakda bo‘lishi mumkin emas',
     },
   },
+
 }
 
 export default uz

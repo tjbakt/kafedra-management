@@ -39,7 +39,9 @@ const moduleRoutes: RouteRecordRaw[] = [
   },
   {
     path: 'teachers',
+
     name: 'teachers',
+
     component: () =>
       import(
         '@/modules/staff/StaffMembersView.vue'
@@ -47,15 +49,20 @@ const moduleRoutes: RouteRecordRaw[] = [
 
     meta: {
       requiresAuth: true,
+
       requiredPermissions: [
         'staff.view_staffmember',
       ],
+
       titleKey:
         'navigation.teachers',
+
       descriptionKey:
         'modules.teachersDescription',
+
       icon:
         'pi pi-users',
+
       breadcrumbKeys: [
         'navigation.teachers',
       ],

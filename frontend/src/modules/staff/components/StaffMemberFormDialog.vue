@@ -16,13 +16,15 @@ import { useI18n } from 'vue-i18n'
 import BaseDialog from '@/components/base/BaseDialog.vue'
 import BaseFormActions from '@/components/base/BaseFormActions.vue'
 import BaseFormField from '@/components/base/BaseFormField.vue'
-
 import FormValidationSummary from '@/components/forms/FormValidationSummary.vue'
+
+import { useLocaleStore } from '@/stores/locale'
 
 import type {
   AcademicDegreeOption,
   AcademicTitleOption,
-  Gender,
+  SelectOption,
+  StaffGender,
   StaffMember,
   StaffMemberPayload,
 } from '@/modules/staff/types'
@@ -65,10 +67,13 @@ const props = withDefaults(
 )
 
 const emit = defineEmits<{
-  submit: [payload: StaffMemberPayload]
+  submit: [
+    payload: StaffMemberPayload,
+  ]
 }>()
 
 const { t } = useI18n()
+const localeStore = useLocaleStore()
 
 const form = reactive({
   personnel_number: '',
@@ -77,18 +82,24 @@ const form = reactive({
   first_name: '',
   middle_name: '',
 
-  gender: '' as Gender,
+  gender: '' as StaffGender,
 
   birth_date: null as Date | null,
 
   phone: '',
   email: '',
 
-  academic_degree: null as number | null,
-  academic_title: null as number | null,
+  academic_degree:
+    null as number | null,
 
-  degree_awarded_date: null as Date | null,
-  title_awarded_date: null as Date | null,
+  academic_title:
+    null as number | null,
+
+  degree_awarded_date:
+    null as Date | null,
+
+  title_awarded_date:
+    null as Date | null,
 
   is_active: true,
 
@@ -102,25 +113,96 @@ const isEditing = computed(
   () => Boolean(props.staffMember),
 )
 
-const title = computed(
+const dialogTitle = computed(
   () =>
     isEditing.value
       ? t('staff.editTitle')
       : t('staff.createTitle'),
 )
 
+const today = new Date()
+
+function localizedName(
+  ru: string | null | undefined,
+  uz: string | null | undefined,
+): string {
+  if (localeStore.locale === 'uz') {
+    return (
+      uz?.trim() ||
+      ru?.trim() ||
+      '—'
+    )
+  }
+
+  return (
+    ru?.trim() ||
+    uz?.trim() ||
+    '—'
+  )
+}
+
+/*
+ * Намеренно преобразуем lookup в простые
+ * { id, label }, чтобы PrimeVue Select
+ * не зависел от сложных serializer objects.
+ */
+const degreeOptions =
+  computed<SelectOption[]>(() =>
+    props.academicDegrees
+      .filter(
+        (item) =>
+          item.is_active &&
+          !item.is_archived,
+      )
+      .map((item) => ({
+        id: item.id,
+
+        label:
+          localizedName(
+            item.name_ru,
+            item.name_uz,
+          ),
+      })),
+  )
+
+const titleOptions =
+  computed<SelectOption[]>(() =>
+    props.academicTitles
+      .filter(
+        (item) =>
+          item.is_active &&
+          !item.is_archived,
+      )
+      .map((item) => ({
+        id: item.id,
+
+        label:
+          localizedName(
+            item.name_ru,
+            item.name_uz,
+          ),
+      })),
+  )
+
 const genderOptions = computed(() => [
   {
-    label: t('staff.genderNotSpecified'),
     value: '',
+    label:
+      t(
+        'staff.genderNotSpecified',
+      ),
   },
+
   {
-    label: t('staff.genderMale'),
     value: 'male',
+    label:
+      t('staff.genderMale'),
   },
+
   {
-    label: t('staff.genderFemale'),
     value: 'female',
+    label:
+      t('staff.genderFemale'),
   },
 ])
 
@@ -153,7 +235,7 @@ function parseDate(
   )
 }
 
-function formatDate(
+function serializeDate(
   value: Date | null,
 ): string | null {
   if (!value) {
@@ -204,57 +286,69 @@ function resetForm(): void {
 }
 
 function fillForm(
-  staffMember: StaffMember,
+  member: StaffMember,
 ): void {
   form.personnel_number =
-    staffMember.personnel_number
+    member.personnel_number
 
   form.last_name =
-    staffMember.last_name
+    member.last_name
 
   form.first_name =
-    staffMember.first_name
+    member.first_name
 
   form.middle_name =
-    staffMember.middle_name
+    member.middle_name
 
   form.gender =
-    staffMember.gender
+    member.gender
 
   form.birth_date =
     parseDate(
-      staffMember.birth_date,
+      member.birth_date,
     )
 
   form.phone =
-    staffMember.phone
+    member.phone
 
   form.email =
-    staffMember.email
+    member.email
 
   form.academic_degree =
-    staffMember.academic_degree
+    member.academic_degree
 
   form.academic_title =
-    staffMember.academic_title
+    member.academic_title
 
   form.degree_awarded_date =
     parseDate(
-      staffMember.degree_awarded_date,
+      member.degree_awarded_date,
     )
 
   form.title_awarded_date =
     parseDate(
-      staffMember.title_awarded_date,
+      member.title_awarded_date,
     )
 
   form.is_active =
-    staffMember.is_active
+    member.is_active
 
   form.notes =
-    staffMember.notes
+    member.notes
 
   clearLocalErrors()
+}
+
+function fieldError(
+  field: string,
+): string {
+  return (
+    localErrors[field] ||
+    getFieldError(
+      props.fieldErrors,
+      field,
+    )
+  )
 }
 
 function validate(): boolean {
@@ -296,6 +390,16 @@ function validate(): boolean {
   }
 
   if (
+    form.birth_date &&
+    form.birth_date > today
+  ) {
+    localErrors.birth_date =
+      t(
+        'staff.validation.birthDateFuture',
+      )
+  }
+
+  if (
     form.degree_awarded_date &&
     !form.academic_degree
   ) {
@@ -315,40 +419,9 @@ function validate(): boolean {
       )
   }
 
-  const today = new Date()
-
-  today.setHours(
-    0,
-    0,
-    0,
-    0,
-  )
-
-  if (
-    form.birth_date &&
-    form.birth_date > today
-  ) {
-    localErrors.birth_date =
-      t(
-        'staff.validation.birthDateFuture',
-      )
-  }
-
   return (
     Object.keys(localErrors)
       .length === 0
-  )
-}
-
-function fieldError(
-  field: string,
-): string {
-  return (
-    localErrors[field] ||
-    getFieldError(
-      props.fieldErrors,
-      field,
-    )
   )
 }
 
@@ -376,7 +449,7 @@ function submit(): void {
       form.gender,
 
     birth_date:
-      formatDate(
+      serializeDate(
         form.birth_date,
       ),
 
@@ -393,12 +466,12 @@ function submit(): void {
       form.academic_title,
 
     degree_awarded_date:
-      formatDate(
+      serializeDate(
         form.degree_awarded_date,
       ),
 
     title_awarded_date:
-      formatDate(
+      serializeDate(
         form.title_awarded_date,
       ),
 
@@ -414,8 +487,7 @@ watch(
   () => form.academic_degree,
   (value) => {
     if (!value) {
-      form.degree_awarded_date =
-        null
+      form.degree_awarded_date = null
     }
   },
 )
@@ -424,8 +496,7 @@ watch(
   () => form.academic_title,
   (value) => {
     if (!value) {
-      form.title_awarded_date =
-        null
+      form.title_awarded_date = null
     }
   },
 )
@@ -451,12 +522,12 @@ watch(
 
 watch(
   () => props.staffMember,
-  (staffMember) => {
+  (member) => {
     if (
       visible.value &&
-      staffMember
+      member
     ) {
-      fillForm(staffMember)
+      fillForm(member)
     }
   },
 )
@@ -465,7 +536,7 @@ watch(
 <template>
   <BaseDialog
     v-model="visible"
-    :title="title"
+    :title="dialogTitle"
     width="58rem"
     :loading="loading"
   >
@@ -495,9 +566,7 @@ watch(
           }}
         </h3>
 
-        <div
-          class="staff-form__grid"
-        >
+        <div class="staff-form__grid">
           <BaseFormField
             :label="
               t(
@@ -531,15 +600,11 @@ watch(
             "
             name="gender"
             :error="
-              fieldError(
-                'gender',
-              )
+              fieldError('gender')
             "
           >
             <Select
-              v-model="
-                form.gender
-              "
+              v-model="form.gender"
               input-id="gender"
               :options="
                 genderOptions
@@ -645,6 +710,7 @@ watch(
               input-id="birth_date"
               date-format="dd.mm.yy"
               show-icon
+              :max-date="today"
               class="w-full"
               :disabled="loading"
             />
@@ -661,9 +727,7 @@ watch(
           }}
         </h3>
 
-        <div
-          class="staff-form__grid"
-        >
+        <div class="staff-form__grid">
           <BaseFormField
             :label="
               t(
@@ -672,9 +736,7 @@ watch(
             "
             name="phone"
             :error="
-              fieldError(
-                'phone',
-              )
+              fieldError('phone')
             "
           >
             <InputText
@@ -694,9 +756,7 @@ watch(
             "
             name="email"
             :error="
-              fieldError(
-                'email',
-              )
+              fieldError('email')
             "
           >
             <InputText
@@ -719,9 +779,7 @@ watch(
           }}
         </h3>
 
-        <div
-          class="staff-form__grid"
-        >
+        <div class="staff-form__grid">
           <BaseFormField
             :label="
               t(
@@ -741,9 +799,9 @@ watch(
               "
               input-id="academic_degree"
               :options="
-                academicDegrees
+                degreeOptions
               "
-              option-label="name_ru"
+              option-label="label"
               option-value="id"
               show-clear
               filter
@@ -769,9 +827,12 @@ watch(
               v-model="
                 form.degree_awarded_date
               "
-              input-id="degree_awarded_date"
+              input-id="
+                degree_awarded_date
+              "
               date-format="dd.mm.yy"
               show-icon
+              :max-date="today"
               class="w-full"
               :disabled="
                 loading ||
@@ -799,9 +860,9 @@ watch(
               "
               input-id="academic_title"
               :options="
-                academicTitles
+                titleOptions
               "
-              option-label="name_ru"
+              option-label="label"
               option-value="id"
               show-clear
               filter
@@ -827,9 +888,12 @@ watch(
               v-model="
                 form.title_awarded_date
               "
-              input-id="title_awarded_date"
+              input-id="
+                title_awarded_date
+              "
               date-format="dd.mm.yy"
               show-icon
+              :max-date="today"
               class="w-full"
               :disabled="
                 loading ||
@@ -857,16 +921,12 @@ watch(
           "
           name="notes"
           :error="
-            fieldError(
-              'notes',
-            )
+            fieldError('notes')
           "
         >
           <Textarea
             id="notes"
-            v-model="
-              form.notes
-            "
+            v-model="form.notes"
             rows="4"
             auto-resize
             class="w-full"
@@ -875,7 +935,9 @@ watch(
         </BaseFormField>
 
         <label
-          class="staff-form__checkbox"
+          class="
+            staff-form__checkbox
+          "
         >
           <Checkbox
             v-model="
@@ -940,9 +1002,9 @@ watch(
 
 .staff-form__checkbox {
   display: flex;
+  width: fit-content;
   align-items: center;
   gap: 0.55rem;
-  width: fit-content;
   font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;

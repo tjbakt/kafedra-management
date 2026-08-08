@@ -22,7 +22,7 @@ const props =
 
 const { t } = useI18n()
 
-const title = computed(
+const dialogTitle = computed(
   () =>
     props.staffMember
       ? props.staffMember.full_name
@@ -70,8 +70,8 @@ function formatDateTime(
 <template>
   <BaseDialog
     v-model="visible"
-    :title="title"
-    width="55rem"
+    :title="dialogTitle"
+    width="56rem"
   >
     <div
       v-if="staffMember"
@@ -359,9 +359,7 @@ function formatDateTime(
               employment in
                 staffMember.employments
             "
-            :key="
-              employment.id
-            "
+            :key="employment.id"
             class="employment-card"
           >
             <div>
@@ -378,7 +376,11 @@ function formatDateTime(
               </span>
             </div>
 
-            <div>
+            <div
+              class="
+                employment-card__meta
+              "
+            >
               <Tag
                 :value="
                   employment.employment_type_name
@@ -396,13 +398,25 @@ function formatDateTime(
                   )
                 }}
               </span>
+
+              <Tag
+                v-if="
+                  employment.is_primary
+                "
+                :value="
+                  t(
+                    'staff.primaryEmployment',
+                  )
+                "
+                severity="success"
+              />
             </div>
           </article>
         </div>
 
         <p
           v-else
-          class="staff-details__empty"
+          class="staff-details__muted"
         >
           {{
             t(
@@ -413,7 +427,9 @@ function formatDateTime(
       </section>
 
       <section
-        v-if="staffMember.notes"
+        v-if="
+          staffMember.notes
+        "
       >
         <h3>
           {{
@@ -424,11 +440,9 @@ function formatDateTime(
         </h3>
 
         <p
-          class="staff-details__notes"
+          class="staff-details__muted"
         >
-          {{
-            staffMember.notes
-          }}
+          {{ staffMember.notes }}
         </p>
       </section>
 
@@ -565,7 +579,7 @@ function formatDateTime(
 
 .employment-list {
   display: grid;
-  gap: 0.6rem;
+  gap: 0.65rem;
 }
 
 .employment-card {
@@ -580,12 +594,6 @@ function formatDateTime(
     var(--app-border-color);
   border-radius:
     var(--app-radius);
-}
-
-.employment-card > div {
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
 }
 
 .employment-card > div:first-child {
@@ -603,8 +611,14 @@ function formatDateTime(
   font-size: 0.75rem;
 }
 
-.staff-details__empty,
-.staff-details__notes {
+.employment-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.staff-details__muted {
   margin: 0;
   color:
     var(--app-text-muted);
