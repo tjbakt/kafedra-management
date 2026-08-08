@@ -16,9 +16,18 @@ const visible =
   })
 
 const props =
-  defineProps<{
-    department: Department | null
-  }>()
+  withDefaults(
+    defineProps<{
+      department: Department | null
+
+      facultyName?: string
+      universityName?: string
+    }>(),
+    {
+      facultyName: '',
+      universityName: '',
+    },
+  )
 
 const { t } = useI18n()
 
@@ -128,9 +137,7 @@ function formatDate(
             </dt>
 
             <dd>
-              {{
-                department.faculty_name
-              }}
+              {{ facultyName || department.faculty_name || '—' }}
             </dd>
           </div>
 
@@ -144,9 +151,7 @@ function formatDate(
             </dt>
 
             <dd>
-              {{
-                department.university_name
-              }}
+              {{ universityName || department.university_name || '—' }}
             </dd>
           </div>
 

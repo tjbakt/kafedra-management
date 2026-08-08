@@ -11,6 +11,7 @@ import {
 } from 'vue'
 
 import { useI18n } from 'vue-i18n'
+import { useLocaleStore } from '@/stores/locale'
 
 import BaseDialog from '@/components/base/BaseDialog.vue'
 import BaseFormActions from '@/components/base/BaseFormActions.vue'
@@ -64,6 +65,7 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+const localeStore = useLocaleStore()
 
 const form = reactive({
   faculty: null as number | null,
@@ -104,13 +106,100 @@ const title = computed(
         ),
 )
 
+interface FacultySelectOption {
+  id: number
+  label: string
+  universityLabel: string
+  code: string
+}
+
+function getLocalizedName(
+  nameRu: string | undefined | null,
+  nameUz: string | undefined | null,
+): string {
+  if (localeStore.locale === 'uz') {
+    return (
+      nameUz?.trim() ||
+      nameRu?.trim() ||
+      '—'
+    )
+  }
+
+  return (
+    nameRu?.trim() ||
+    nameUz?.trim() ||
+    '—'
+  )
+}
+
 const availableFaculties =
-  computed(() =>
-    props.faculties.filter(
-      (faculty) =>
-        faculty.is_active &&
-        !faculty.is_archived,
-    ),
+  computed<FacultySelectOption[]>(
+    () => {
+      const options =
+        props.faculties
+          .filter(
+            (faculty) =>
+              faculty.is_active &&
+              !faculty.is_archived,
+          )
+          .map(
+            (faculty) => ({
+              id:
+                faculty.id,
+
+              label:
+                getLocalizedName(
+                  faculty.name_ru,
+                  faculty.name_uz,
+                ),
+
+              universityLabel:
+                faculty.university_name ||
+                '',
+
+              code:
+                faculty.code || '',
+            }),
+          )
+
+      /*
+       * Важный fallback.
+       *
+       * Если редактируемая кафедра связана
+       * с факультетом, которого сейчас нет
+       * в lookup (например факультет стал
+       * неактивным), PrimeVue всё равно
+       * должен получить option для текущего
+       * modelValue.
+       */
+      if (
+        props.department &&
+        !options.some(
+          (option) =>
+            option.id ===
+            props.department?.faculty,
+        )
+      ) {
+        options.unshift({
+          id:
+            props.department.faculty,
+
+          label:
+            props.department
+              .faculty_name ||
+            `#${props.department.faculty}`,
+
+          universityLabel:
+            props.department
+              .university_name ||
+            '',
+
+          code: '',
+        })
+      }
+
+      return options
+    },
   )
 
 function resetLocalErrors(): void {
@@ -368,48 +457,31 @@ watch(
           "
         >
           <Select
-            v-model="
-              form.faculty
-            "
+            v-model="form.faculty"
             input-id="faculty"
-            :options="
-              availableFaculties
-            "
-            option-label="
-              display_name
-            "
+            :options="availableFaculties"
+            option-label="label"
             option-value="id"
-            :placeholder="
-              t(
-                'departments.placeholders.faculty',
-              )
-            "
-            :disabled="
-              loading
-            "
-            filter
-            class="w-full"
+            :placeholder="t('departments.placeholders.faculty')"
+            :disabled="loading"
+            :invalid="Boolean(fieldError('faculty'))"
+            filter class="w-full"
           >
-            <template
-              #option="{ option }"
-            >
-              <div
-                class="faculty-option"
-              >
+            <template #option="{ option }">
+              <div class="faculty-option">
                 <strong>
-                  {{
-                    option.display_name
-                  }}
+                  {{ option.label }}
                 </strong>
 
-                <small>
-                  {{
-                    option.university_name
-                  }}
-                  ·
-                  {{
-                    option.code
-                  }}
+                <small v-if="option.universityLabel || option.code">
+                  {{ option.universityLabel }}
+
+                  <template
+                    v-if="option.universityLabel && option.code">
+                    ·
+                  </template>
+
+                  {{ option.code }}
                 </small>
               </div>
             </template>

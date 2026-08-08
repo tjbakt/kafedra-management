@@ -461,6 +461,179 @@ const ru = {
         'Введите корректный адрес электронной почты',
     },
   },
+
+  staff: {
+    title:
+      'Преподаватели и сотрудники',
+
+    description:
+      'Кадровые карточки преподавателей и сотрудников кафедры.',
+
+    create:
+      'Добавить сотрудника',
+
+    createTitle:
+      'Создание карточки сотрудника',
+
+    editTitle:
+      'Редактирование карточки сотрудника',
+
+    detailsTitle:
+      'Карточка сотрудника',
+
+    archive:
+      'Архивировать',
+
+    archiveTitle:
+      'Архивирование сотрудника',
+
+    archiveConfirm:
+      'Архивировать карточку «{name}»? Запись можно будет восстановить из архива.',
+
+    archived:
+      'Карточка сотрудника перемещена в архив',
+
+    working:
+      'Работает',
+
+    notWorking:
+      'Не работает',
+
+    allStatuses:
+      'Все статусы',
+
+    allDegrees:
+      'Все учёные степени',
+
+    allTitles:
+      'Все учёные звания',
+
+    searchPlaceholder:
+      'Поиск по ФИО, табельному номеру, телефону или email...',
+
+    genderMale:
+      'Мужской',
+
+    genderFemale:
+      'Женский',
+
+    genderNotSpecified:
+      'Не указан',
+
+    rateShort:
+      'ставки',
+
+    noEmployments:
+      'Назначения на кафедры пока отсутствуют.',
+
+    fields: {
+      personnelNumber:
+        'Табельный номер',
+
+      fullName:
+        'ФИО',
+
+      lastName:
+        'Фамилия',
+
+      firstName:
+        'Имя',
+
+      middleName:
+        'Отчество',
+
+      gender:
+        'Пол',
+
+      birthDate:
+        'Дата рождения',
+
+      phone:
+        'Телефон',
+
+      email:
+        'Электронная почта',
+
+      academicDegree:
+        'Учёная степень',
+
+      academicTitle:
+        'Учёное звание',
+
+      degreeDate:
+        'Дата присуждения степени',
+
+      titleDate:
+        'Дата присвоения звания',
+
+      active:
+        'Сотрудник работает',
+
+      status:
+        'Статус',
+
+      notes:
+        'Примечание',
+
+      username:
+        'Пользователь системы',
+
+      createdAt:
+        'Создано',
+
+      createdBy:
+        'Создал',
+
+      updatedAt:
+        'Изменено',
+
+      updatedBy:
+        'Изменил',
+    },
+
+    sections: {
+      personal:
+        'Личные данные',
+
+      contacts:
+        'Контактные данные',
+
+      academic:
+        'Учёная степень и звание',
+
+      additional:
+        'Дополнительная информация',
+
+      employments:
+        'Трудовые назначения',
+
+      audit:
+        'История изменений',
+    },
+
+    validation: {
+      personnelNumberRequired:
+        'Введите табельный номер',
+
+      lastNameRequired:
+        'Введите фамилию',
+
+      firstNameRequired:
+        'Введите имя',
+
+      invalidEmail:
+        'Введите корректный адрес электронной почты',
+
+      degreeDateWithoutDegree:
+        'Нельзя указать дату присуждения без учёной степени',
+
+      titleDateWithoutTitle:
+        'Нельзя указать дату присвоения без учёного звания',
+
+      birthDateFuture:
+        'Дата рождения не может быть в будущем',
+    },
+  },
 }
 
 export default ru

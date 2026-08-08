@@ -10,28 +10,27 @@ import {
 } from 'vue'
 
 import { useI18n } from 'vue-i18n'
-import { useLocaleStore } from '@/stores/locale'
 
 import BaseCard from '@/components/base/BaseCard.vue'
 import BaseDataTable from '@/components/base/BaseDataTable.vue'
 import BasePageHeader from '@/components/base/BasePageHeader.vue'
 import BaseToolbar from '@/components/base/BaseToolbar.vue'
 
-import DepartmentDetailsDialog from '@/modules/departments/components/DepartmentDetailsDialog.vue'
-import DepartmentFormDialog from '@/modules/departments/components/DepartmentFormDialog.vue'
+import StaffMemberDetailsDialog from '@/modules/staff/components/StaffMemberDetailsDialog.vue'
+import StaffMemberFormDialog from '@/modules/staff/components/StaffMemberFormDialog.vue'
 
 import {
-  departmentsApi,
-  getFacultyOptions,
-  getUniversityOptions,
-} from '@/modules/departments/api'
+  getAcademicDegrees,
+  getAcademicTitles,
+  staffMembersApi,
+} from '@/modules/staff/api'
 
 import type {
-  Department,
-  DepartmentPayload,
-  FacultyOption,
-  UniversityOption,
-} from '@/modules/departments/types'
+  AcademicDegreeOption,
+  AcademicTitleOption,
+  StaffMember,
+  StaffMemberPayload,
+} from '@/modules/staff/types'
 
 import {
   useCrudList,
@@ -62,8 +61,9 @@ import {
 } from '@/utils/api-errors'
 
 const { t } = useI18n()
-const localeStore = useLocaleStore()
-const toast = useAppToast()
+
+const toast =
+  useAppToast()
 
 const {
   confirmDelete,
@@ -73,8 +73,8 @@ const {
   can,
 } = usePermissions()
 
-const selectedDepartment =
-  ref<Department | null>(
+const selectedStaffMember =
+  ref<StaffMember | null>(
     null,
   )
 
@@ -87,19 +87,19 @@ const detailsVisible =
 const saving =
   ref(false)
 
-const universities =
-  ref<UniversityOption[]>([])
-
-const faculties =
-  ref<FacultyOption[]>([])
-
 const lookupsLoading =
   ref(false)
 
-const selectedUniversity =
+const academicDegrees =
+  ref<AcademicDegreeOption[]>([])
+
+const academicTitles =
+  ref<AcademicTitleOption[]>([])
+
+const selectedDegree =
   ref<number | null>(null)
 
-const selectedFaculty =
+const selectedTitle =
   ref<number | null>(null)
 
 const selectedActive =
@@ -117,21 +117,21 @@ const generalFormError =
 const canCreate = computed(
   () =>
     can(
-      'organizations.add_department',
+      'staff.add_staffmember',
     ),
 )
 
 const canEdit = computed(
   () =>
     can(
-      'organizations.change_department',
+      'staff.change_staffmember',
     ),
 )
 
 const canDelete = computed(
   () =>
     can(
-      'organizations.delete_department',
+      'staff.delete_staffmember',
     ),
 )
 
@@ -140,183 +140,149 @@ const statusOptions =
     {
       label:
         t(
-          'departments.allStatuses',
+          'staff.allStatuses',
         ),
       value: null,
     },
     {
       label:
         t(
-          'departments.active',
+          'staff.working',
         ),
       value: true,
     },
     {
       label:
         t(
-          'departments.inactive',
+          'staff.notWorking',
         ),
       value: false,
     },
   ])
 
-const universityOptions =
+const degreeOptions =
   computed(() => [
     {
-      id: null as number | null,
-
-      label:
+      id: null,
+      name_ru:
         t(
-          'departments.allUniversities',
+          'staff.allDegrees',
         ),
     },
-
-    ...universities.value.map(
-      (university) => ({
-        id:
-        university.id,
-
-        label:
-          getLocalizedName(
-            university.name_ru,
-            university.name_uz,
-          ),
-      }),
-    ),
+    ...academicDegrees.value,
   ])
 
-const facultyOptions =
-  computed(() => {
-    const source =
-      selectedUniversity.value
-        ? faculties.value.filter(
-          (faculty) =>
-            faculty.university ===
-            selectedUniversity.value,
-        )
-        : faculties.value
-
-    return [
-      {
-        id: null as number | null,
-
-        label:
-          t(
-            'departments.allFaculties',
-          ),
-      },
-
-      ...source.map(
-        (faculty) => ({
-          id:
-          faculty.id,
-
-          label:
-            getLocalizedName(
-              faculty.name_ru,
-              faculty.name_uz,
-            ),
-        }),
-      ),
-    ]
-  })
-
-const selectedFacultyName =
-  computed(() => {
-    if (
-      !selectedDepartment.value
-    ) {
-      return ''
-    }
-
-    return getFacultyName(
-      selectedDepartment.value
-        .faculty,
-
-      selectedDepartment.value
-        .faculty_name,
-    )
-  })
-
-const selectedUniversityName =
-  computed(() => {
-    if (
-      !selectedDepartment.value
-    ) {
-      return ''
-    }
-
-    return getUniversityName(
-      selectedDepartment.value
-        .university,
-
-      selectedDepartment.value
-        .university_name,
-    )
-  })
+const titleOptions =
+  computed(() => [
+    {
+      id: null,
+      name_ru:
+        t(
+          'staff.allTitles',
+        ),
+    },
+    ...academicTitles.value,
+  ])
 
 const columns =
   computed<
-    CrudColumn<Department>[]
+    CrudColumn<StaffMember>[]
   >(() => [
     {
-      field: 'code',
+      field:
+        'personnel_number',
+
       header:
         t(
-          'departments.fields.code',
+          'staff.fields.personnelNumber',
         ),
+
       sortable: true,
-      minWidth: '6rem',
+
+      minWidth:
+        '9rem',
     },
+
     {
-      field: 'display_name',
+      field:
+        'full_name',
+
       header:
         t(
-          'departments.fields.name',
+          'staff.fields.fullName',
         ),
-      sortable: true,
+
       sortField:
-        localeStore.locale === 'uz'
-          ? 'name_uz'
-          : 'name_ru',
-      bodySlot: 'departmentName',
-      minWidth: '14rem',
+        'last_name',
+
+      sortable: true,
+
+      minWidth:
+        '17rem',
     },
+
     {
-      field: 'faculty_name',
+      field:
+        'academic_degree_name',
+
       header:
         t(
-          'departments.fields.faculty',
+          'staff.fields.academicDegree',
         ),
-      bodySlot: 'facultyName',
-      minWidth: '14rem',
+
+      bodySlot:
+        'degree',
+
+      minWidth:
+        '12rem',
     },
+
     {
-      field: 'head_name',
+      field:
+        'academic_title_name',
+
       header:
         t(
-          'departments.fields.head',
+          'staff.fields.academicTitle',
         ),
-      minWidth: '13rem',
+
+      bodySlot:
+        'title',
+
+      minWidth:
+        '12rem',
     },
+
     {
-      field: 'room',
+      field:
+        'phone',
+
       header:
         t(
-          'departments.fields.room',
+          'staff.fields.phone',
         ),
-      minWidth: '8rem',
+
+      minWidth:
+        '10rem',
     },
+
     {
-      field: 'is_active',
+      field:
+        'is_active',
+
       header:
         t(
-          'departments.fields.status',
+          'staff.fields.status',
         ),
-      sortable: false,
-      bodySlot: 'status',
-      width: '8rem',
-      align: 'center',
+
+      bodySlot:
+        'status',
+
+      width:
+        '8rem',
+
+      align:
+        'center',
     },
   ])
 
@@ -339,89 +305,25 @@ const {
 
   setFilter,
   clearFilters,
-} = useCrudList<Department>(
+} = useCrudList<StaffMember>(
   (params) =>
-    departmentsApi.list(
+    staffMembersApi.list(
       params,
     ),
+
   {
     initialPageSize: 20,
+
     initialOrdering:
-      'sort_order,name_ru',
+      'last_name,first_name,middle_name',
   },
 )
 
-function getLocalizedName(
-  nameRu: string | undefined | null,
-  nameUz: string | undefined | null,
-): string {
-  if (localeStore.locale === 'uz') {
-    return (
-      nameUz?.trim() ||
-      nameRu?.trim() ||
-      '—'
-    )
-  }
-
-  return (
-    nameRu?.trim() ||
-    nameUz?.trim() ||
-    '—'
-  )
-}
-
-function getDepartmentName(
-  department: Department,
-): string {
-  return getLocalizedName(
-    department.name_ru,
-    department.name_uz,
-  )
-}
-
-function getFacultyName(
-  facultyId: number,
-  fallback = '',
-): string {
-  const faculty =
-    faculties.value.find(
-      (item) =>
-        item.id === facultyId,
-    )
-
-  if (!faculty) {
-    return fallback || '—'
-  }
-
-  return getLocalizedName(
-    faculty.name_ru,
-    faculty.name_uz,
-  )
-}
-
-function getUniversityName(
-  universityId: number,
-  fallback = '',
-): string {
-  const university =
-    universities.value.find(
-      (item) =>
-        item.id === universityId,
-    )
-
-  if (!university) {
-    return fallback || '—'
-  }
-
-  return getLocalizedName(
-    university.name_ru,
-    university.name_uz,
-  )
-}
-
 function clearFormErrors(): void {
   fieldErrors.value = {}
+
   nonFieldErrors.value = []
+
   generalFormError.value = ''
 }
 
@@ -430,25 +332,23 @@ async function loadLookups(): Promise<void> {
 
   try {
     const [
-      universityResponse,
-      facultyResponse,
+      degreeResponse,
+      titleResponse,
     ] = await Promise.all([
-      getUniversityOptions(),
-      getFacultyOptions(),
+      getAcademicDegrees(),
+      getAcademicTitles(),
     ])
 
-    universities.value =
-      universityResponse.results
+    academicDegrees.value =
+      degreeResponse.results
 
-    faculties.value =
-      facultyResponse.results
+    academicTitles.value =
+      titleResponse.results
   } catch (lookupError) {
     const normalized =
       normalizeApiError(
         lookupError,
-        t(
-          'crud.loadError',
-        ),
+        t('crud.loadError'),
       )
 
     toast.error(
@@ -461,7 +361,7 @@ async function loadLookups(): Promise<void> {
 }
 
 function openCreate(): void {
-  selectedDepartment.value =
+  selectedStaffMember.value =
     null
 
   clearFormErrors()
@@ -470,37 +370,38 @@ function openCreate(): void {
 }
 
 function openView(
-  department: Department,
+  staffMember: StaffMember,
 ): void {
-  selectedDepartment.value =
-    department
+  selectedStaffMember.value =
+    staffMember
 
   detailsVisible.value = true
 }
 
 function openEdit(
-  department: Department,
+  staffMember: StaffMember,
 ): void {
-  selectedDepartment.value =
-    department
+  selectedStaffMember.value =
+    staffMember
 
   clearFormErrors()
 
   formVisible.value = true
 }
 
-async function saveDepartment(
-  payload: DepartmentPayload,
+async function saveStaffMember(
+  payload: StaffMemberPayload,
 ): Promise<void> {
   saving.value = true
+
   clearFormErrors()
 
   try {
     if (
-      selectedDepartment.value
+      selectedStaffMember.value
     ) {
-      await departmentsApi.update(
-        selectedDepartment.value.id,
+      await staffMembersApi.update(
+        selectedStaffMember.value.id,
         payload,
       )
 
@@ -509,7 +410,7 @@ async function saveDepartment(
         t('crud.updated'),
       )
     } else {
-      await departmentsApi.create(
+      await staffMembersApi.create(
         payload,
       )
 
@@ -520,7 +421,8 @@ async function saveDepartment(
     }
 
     formVisible.value = false
-    selectedDepartment.value =
+
+    selectedStaffMember.value =
       null
 
     await refresh()
@@ -544,35 +446,33 @@ async function saveDepartment(
   }
 }
 
-function archiveDepartment(
-  department: Department,
+function archiveStaffMember(
+  staffMember: StaffMember,
 ): void {
   confirmDelete({
     header:
       t(
-        'departments.archiveTitle',
+        'staff.archiveTitle',
       ),
 
     message:
       t(
-        'departments.archiveConfirm',
+        'staff.archiveConfirm',
         {
           name:
-            department.display_name,
+            staffMember.full_name,
         },
       ),
 
     accept: async () => {
       try {
-        await departmentsApi.remove(
-          department.id,
+        await staffMembersApi.remove(
+          staffMember.id,
         )
 
         toast.success(
           t('common.success'),
-          t(
-            'departments.archived',
-          ),
+          t('staff.archived'),
         )
 
         await refresh()
@@ -594,27 +494,19 @@ function archiveDepartment(
   })
 }
 
-async function applyUniversityFilter(): Promise<void> {
+async function applyDegreeFilter(): Promise<void> {
   setFilter(
-    'university',
-    selectedUniversity.value,
-  )
-
-  selectedFaculty.value =
-    null
-
-  setFilter(
-    'faculty',
-    undefined,
+    'academic_degree',
+    selectedDegree.value,
   )
 
   await load()
 }
 
-async function applyFacultyFilter(): Promise<void> {
+async function applyTitleFilter(): Promise<void> {
   setFilter(
-    'faculty',
-    selectedFaculty.value,
+    'academic_title',
+    selectedTitle.value,
   )
 
   await load()
@@ -630,10 +522,10 @@ async function applyActiveFilter(): Promise<void> {
 }
 
 async function resetFilters(): Promise<void> {
-  selectedUniversity.value =
+  selectedDegree.value =
     null
 
-  selectedFaculty.value =
+  selectedTitle.value =
     null
 
   selectedActive.value =
@@ -653,28 +545,24 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div
-    class="departments-page"
-  >
+  <div class="staff-page">
     <BasePageHeader
       :title="
-        t(
-          'departments.title',
-        )
+        t('staff.title')
       "
       :description="
         t(
-          'departments.description',
+          'staff.description',
         )
       "
-      icon="pi pi-building"
+      icon="pi pi-users"
     >
       <template #actions>
         <Button
           v-if="canCreate"
           :label="
             t(
-              'departments.create',
+              'staff.create',
             )
           "
           icon="pi pi-plus"
@@ -695,7 +583,7 @@ onMounted(async () => {
       "
       :search-placeholder="
         t(
-          'departments.searchPlaceholder',
+          'staff.searchPlaceholder',
         )
       "
       @refresh="refresh"
@@ -705,27 +593,39 @@ onMounted(async () => {
     >
       <template #center>
         <Select
-          v-model="selectedUniversity"
-          :options="universityOptions"
-          option-label="label"
+          v-model="
+            selectedDegree
+          "
+          :options="
+            degreeOptions
+          "
+          option-label="name_ru"
           option-value="id"
-          class="department-filter"
-          :placeholder="t( 'departments.allUniversities' )"
-          :loading="lookupsLoading"
+          class="
+            staff-filter
+          "
           filter
-          @change="applyUniversityFilter"
+          @change="
+            applyDegreeFilter
+          "
         />
 
         <Select
-          v-model="selectedFaculty"
-          :options="facultyOptions"
-          option-label="label"
+          v-model="
+            selectedTitle
+          "
+          :options="
+            titleOptions
+          "
+          option-label="name_ru"
           option-value="id"
-          class="department-filter"
-          :placeholder="t( 'departments.allFaculties' )"
-          :loading="lookupsLoading"
+          class="
+            staff-filter
+          "
           filter
-          @change="applyFacultyFilter"
+          @change="
+            applyTitleFilter
+          "
         />
 
         <Select
@@ -738,8 +638,8 @@ onMounted(async () => {
           option-label="label"
           option-value="value"
           class="
-            department-filter
-            department-filter--status
+            staff-filter
+            staff-filter--status
           "
           @change="
             applyActiveFilter
@@ -767,26 +667,29 @@ onMounted(async () => {
         @page="
           handlePage
         "
-        @sort="handleSort"
+        @sort="
+          handleSort
+        "
         @retry="refresh"
-        @row-click="openView"
+        @row-click="
+          openView
+        "
       >
-
         <template
-          #departmentName="{ row }"
+          #degree="{ row }"
         >
           {{
-            getDepartmentName(row)
+            row.academic_degree_name ||
+            '—'
           }}
         </template>
+
         <template
-          #facultyName="{ row }"
+          #title="{ row }"
         >
           {{
-            getFacultyName(
-              row.faculty,
-              row.faculty_name,
-            )
+            row.academic_title_name ||
+            '—'
           }}
         </template>
 
@@ -797,10 +700,10 @@ onMounted(async () => {
             :value="
               row.is_active
                 ? t(
-                    'departments.active',
+                    'staff.working',
                   )
                 : t(
-                    'departments.inactive',
+                    'staff.notWorking',
                   )
             "
             :severity="
@@ -844,7 +747,7 @@ onMounted(async () => {
             v-if="canDelete"
             v-tooltip.bottom="
               t(
-                'departments.archive',
+                'staff.archive',
               )
             "
             icon="pi pi-box"
@@ -852,7 +755,7 @@ onMounted(async () => {
             text
             rounded
             @click.stop="
-              archiveDepartment(
+              archiveStaffMember(
                 row,
               )
             "
@@ -866,7 +769,7 @@ onMounted(async () => {
             v-if="canCreate"
             :label="
               t(
-                'departments.create',
+                'staff.create',
               )
             "
             icon="pi pi-plus"
@@ -876,13 +779,16 @@ onMounted(async () => {
       </BaseDataTable>
     </BaseCard>
 
-    <DepartmentFormDialog
+    <StaffMemberFormDialog
       v-model="formVisible"
-      :department="
-        selectedDepartment
+      :staff-member="
+        selectedStaffMember
       "
-      :faculties="
-        faculties
+      :academic-degrees="
+        academicDegrees
+      "
+      :academic-titles="
+        academicTitles
       "
       :loading="saving"
       :field-errors="
@@ -895,36 +801,38 @@ onMounted(async () => {
         generalFormError
       "
       @submit="
-        saveDepartment
+        saveStaffMember
       "
     />
 
-    <DepartmentDetailsDialog
-      v-model="detailsVisible"
-      :department="selectedDepartment"
-      :faculty-name="selectedFacultyName"
-      :university-name="selectedUniversityName"
+    <StaffMemberDetailsDialog
+      v-model="
+        detailsVisible
+      "
+      :staff-member="
+        selectedStaffMember
+      "
     />
   </div>
 </template>
 
 <style scoped>
-.departments-page {
+.staff-page {
   display: grid;
   gap: 1rem;
 }
 
-.department-filter {
+.staff-filter {
   width: 13rem;
 }
 
-.department-filter--status {
+.staff-filter--status {
   width: 10rem;
 }
 
 @media (max-width: 991px) {
-  .department-filter,
-  .department-filter--status {
+  .staff-filter,
+  .staff-filter--status {
     width: 100%;
   }
 }

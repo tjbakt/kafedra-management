@@ -65,17 +65,40 @@ export interface DepartmentPayload {
 
 export interface UniversityOption {
   id: number
+
   code: string
+
+  name_ru: string
+  name_uz: string
+
+  short_name_ru: string
+  short_name_uz: string
+
   display_name: string
+  display_short_name: string
+
+  is_active: boolean
+  is_archived: boolean
 }
 
 export interface FacultyOption {
   id: number
+
   university: number
   university_name: string
 
+  faculty_type?: string
+
   code: string
+
+  name_ru: string
+  name_uz: string
+
+  short_name_ru: string
+  short_name_uz: string
+
   display_name: string
+  display_short_name: string
 
   is_active: boolean
   is_archived: boolean

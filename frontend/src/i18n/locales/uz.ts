@@ -466,6 +466,179 @@ const uz = {
         'To‘g‘ri elektron pochta manzilini kiriting',
     },
   },
+
+  staff: {
+    title:
+      'O‘qituvchilar va xodimlar',
+
+    description:
+      'Kafedra o‘qituvchilari va xodimlarining kadrlar kartochkalari.',
+
+    create:
+      'Xodim qo‘shish',
+
+    createTitle:
+      'Xodim kartochkasini yaratish',
+
+    editTitle:
+      'Xodim kartochkasini tahrirlash',
+
+    detailsTitle:
+      'Xodim kartochkasi',
+
+    archive:
+      'Arxivlash',
+
+    archiveTitle:
+      'Xodimni arxivlash',
+
+    archiveConfirm:
+      '«{name}» kartochkasini arxivlaysizmi? Yozuvni keyinchalik tiklash mumkin.',
+
+    archived:
+      'Xodim kartochkasi arxivga ko‘chirildi',
+
+    working:
+      'Ishlamoqda',
+
+    notWorking:
+      'Ishlamaydi',
+
+    allStatuses:
+      'Barcha holatlar',
+
+    allDegrees:
+      'Barcha ilmiy darajalar',
+
+    allTitles:
+      'Barcha ilmiy unvonlar',
+
+    searchPlaceholder:
+      'F.I.Sh., tabel raqami, telefon yoki email bo‘yicha qidirish...',
+
+    genderMale:
+      'Erkak',
+
+    genderFemale:
+      'Ayol',
+
+    genderNotSpecified:
+      'Ko‘rsatilmagan',
+
+    rateShort:
+      'stavka',
+
+    noEmployments:
+      'Kafedraga mehnat tayinlovlari hali mavjud emas.',
+
+    fields: {
+      personnelNumber:
+        'Tabel raqami',
+
+      fullName:
+        'F.I.Sh.',
+
+      lastName:
+        'Familiya',
+
+      firstName:
+        'Ism',
+
+      middleName:
+        'Otasining ismi',
+
+      gender:
+        'Jinsi',
+
+      birthDate:
+        'Tug‘ilgan sana',
+
+      phone:
+        'Telefon',
+
+      email:
+        'Elektron pochta',
+
+      academicDegree:
+        'Ilmiy daraja',
+
+      academicTitle:
+        'Ilmiy unvon',
+
+      degreeDate:
+        'Ilmiy daraja berilgan sana',
+
+      titleDate:
+        'Ilmiy unvon berilgan sana',
+
+      active:
+        'Xodim ishlamoqda',
+
+      status:
+        'Holat',
+
+      notes:
+        'Izoh',
+
+      username:
+        'Tizim foydalanuvchisi',
+
+      createdAt:
+        'Yaratilgan',
+
+      createdBy:
+        'Yaratgan',
+
+      updatedAt:
+        'O‘zgartirilgan',
+
+      updatedBy:
+        'O‘zgartirgan',
+    },
+
+    sections: {
+      personal:
+        'Shaxsiy ma’lumotlar',
+
+      contacts:
+        'Aloqa ma’lumotlari',
+
+      academic:
+        'Ilmiy daraja va unvon',
+
+      additional:
+        'Qo‘shimcha ma’lumot',
+
+      employments:
+        'Mehnat tayinlovlari',
+
+      audit:
+        'O‘zgarishlar tarixi',
+    },
+
+    validation: {
+      personnelNumberRequired:
+        'Tabel raqamini kiriting',
+
+      lastNameRequired:
+        'Familiyani kiriting',
+
+      firstNameRequired:
+        'Ismni kiriting',
+
+      invalidEmail:
+        'To‘g‘ri elektron pochta manzilini kiriting',
+
+      degreeDateWithoutDegree:
+        'Ilmiy darajasiz uning sanasini ko‘rsatib bo‘lmaydi',
+
+      titleDateWithoutTitle:
+        'Ilmiy unvonsiz uning sanasini ko‘rsatib bo‘lmaydi',
+
+      birthDateFuture:
+        'Tug‘ilgan sana kelajakda bo‘lishi mumkin emas',
+    },
+  },
 }
 
 export default uz
