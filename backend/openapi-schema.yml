@@ -25865,16 +25865,16 @@ components:
           title: Учёная степень
         academic_degree_name:
           type: string
-          readOnly: true
           nullable: true
+          readOnly: true
         academic_title:
           type: integer
           nullable: true
           title: Учёное звание
         academic_title_name:
           type: string
-          readOnly: true
           nullable: true
+          readOnly: true
         has_academic_degree:
           type: boolean
           readOnly: true
@@ -26179,16 +26179,16 @@ components:
           title: Учёная степень
         academic_degree_name:
           type: string
-          readOnly: true
           nullable: true
+          readOnly: true
         academic_title:
           type: integer
           nullable: true
           title: Учёное звание
         academic_title_name:
           type: string
-          readOnly: true
           nullable: true
+          readOnly: true
         has_academic_degree:
           type: boolean
           readOnly: true

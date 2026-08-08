@@ -64,6 +64,24 @@ const menuDefinitions: TranslatedSidebarItem[] = [
       },
       {
         label: '',
+        labelKey: 'navigation.staffAcademicYears',
+        icon: 'pi pi-calendar-clock',
+        route: '/staff-academic-years',
+        permissions: [
+          'staff.view_staffemploymentacademicyear',
+        ],
+      },
+      {
+        label: '',
+        labelKey: 'navigation.workloadNorms',
+        icon: 'pi pi-chart-bar',
+        route: '/workload-norms',
+        permissions: [
+          'staff.view_workloadnorm',
+        ],
+      },
+      {
+        label: '',
         labelKey: 'navigation.studentGroups',
         icon: 'pi pi-id-card',
         route: '/students',

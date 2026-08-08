@@ -540,6 +540,7 @@ class StaffEmploymentSerializer(LocalizedStaffNameMixin, AuditFieldsSerializer):
         return attrs
 
 class StaffEmploymentAcademicYearSerializer(
+    LocalizedStaffNameMixin,
     AuditFieldsSerializer
 ):
     staff_member = serializers.IntegerField(
@@ -554,27 +555,14 @@ class StaffEmploymentAcademicYearSerializer(
         source="staff_employment.department_id",
         read_only=True,
     )
-    department_name = serializers.CharField(
-        source="staff_employment.department.name_ru",
-        read_only=True,
-    )
-    position_name = serializers.CharField(
-        source="staff_employment.position.name_ru",
-        read_only=True,
-    )
+    department_name = serializers.SerializerMethodField()
+    position_name = serializers.SerializerMethodField()
+
+    academic_degree_name = serializers.SerializerMethodField()
+    academic_title_name = serializers.SerializerMethodField()
     academic_year_name = serializers.CharField(
         source="academic_year.name",
         read_only=True,
-    )
-    academic_degree_name = serializers.CharField(
-        source="academic_degree.name_ru",
-        read_only=True,
-        allow_null=True,
-    )
-    academic_title_name = serializers.CharField(
-        source="academic_title.name_ru",
-        read_only=True,
-        allow_null=True,
     )
     has_academic_degree = serializers.BooleanField(
         read_only=True,
@@ -633,6 +621,48 @@ class StaffEmploymentAcademicYearSerializer(
             "is_archived",
             "archived_at",
             "archived_by",
+        )
+
+    @extend_schema_field(
+        serializers.CharField()
+    )
+    def get_department_name(self, obj) -> str:
+        return self.get_localized_name(
+            obj.staff_employment.department
+        )
+
+    @extend_schema_field(
+        serializers.CharField()
+    )
+    def get_position_name(self, obj) -> str:
+        return self.get_localized_name(
+            obj.staff_employment.position
+        )
+
+    @extend_schema_field(
+        serializers.CharField(
+            allow_null=True
+        )
+    )
+    def get_academic_degree_name(self, obj):
+        if not obj.academic_degree:
+            return None
+
+        return self.get_localized_name(
+            obj.academic_degree
+        )
+
+    @extend_schema_field(
+        serializers.CharField(
+            allow_null=True
+        )
+    )
+    def get_academic_title_name(self, obj):
+        if not obj.academic_title:
+            return None
+
+        return self.get_localized_name(
+            obj.academic_title
         )
 
     @extend_schema_field(

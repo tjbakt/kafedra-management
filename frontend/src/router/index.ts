@@ -230,6 +230,58 @@ const routes: RouteRecordRaw[] = [
           ],
         },
       },
+      {
+        path: 'staff-academic-years',
+        name: 'staff-academic-years',
+        component: () =>
+          import(
+            '@/modules/staff-academic-years/StaffAcademicYearsView.vue'
+            ),
+        meta: {
+          requiresAuth: true,
+          requiredPermissions: [
+            'staff.view_staffemploymentacademicyear',
+          ],
+          titleKey: 'navigation.staffAcademicYears',
+          icon:'pi pi-calendar-clock',
+          breadcrumbKeys: [
+            'navigation.teachers',
+            'navigation.staffAcademicYears',
+          ],
+        },
+      },
+
+      {
+        path:
+          'workload-norms',
+
+        name:
+          'workload-norms',
+
+        component: () =>
+          import(
+            '@/modules/staff-academic-years/WorkloadNormsView.vue'
+            ),
+
+        meta: {
+          requiresAuth: true,
+
+          requiredPermissions: [
+            'staff.view_workloadnorm',
+          ],
+
+          titleKey:
+            'navigation.workloadNorms',
+
+          icon:
+            'pi pi-chart-bar',
+
+          breadcrumbKeys: [
+            'navigation.workload',
+            'navigation.workloadNorms',
+          ],
+        },
+      },
 
       {
         path: 'access-debug',

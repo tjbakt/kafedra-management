@@ -76,6 +76,8 @@ const uz = {
     system: 'Tizim',
     settings: 'Sozlamalar',
     staffEmployments: 'Mehnat tayinlovlari',
+    staffAcademicYears: 'Yillar bo‘yicha kadrlar',
+    workloadNorms: 'Yuklama me’yorlari',
   },
 
   profile: {
@@ -807,6 +809,204 @@ const uz = {
 
       endBeforeStart:
         'Tugash sanasi boshlanish sanasidan oldin bo‘lishi mumkin emas',
+    },
+  },
+
+  staffAcademicYears: {
+    title:
+      'O‘quv yillari bo‘yicha kadr ma’lumotlari',
+
+    description:
+      'Har bir o‘quv yili uchun o‘qituvchining stavkasi, ilmiy darajasi va ilmiy unvonini qayd etish.',
+
+    create:
+      'Yozuv qo‘shish',
+
+    createTitle:
+      'O‘quv yili uchun kadr ma’lumotlari',
+
+    editTitle:
+      'Kadr ma’lumotlarini tahrirlash',
+
+    archive:
+      'Arxivlash',
+
+    archiveTitle:
+      'Kadr ma’lumotlarini arxivlash',
+
+    archiveConfirm:
+      '«{name}»ning {year} yil uchun ma’lumotlarini arxivlaysizmi?',
+
+    archived:
+      'Kadr ma’lumotlari arxivga ko‘chirildi',
+
+    active:
+      'Faol',
+
+    inactive:
+      'Faol emas',
+
+    current:
+      'Joriy',
+
+    closed:
+      'Yopilgan',
+
+    allYears:
+      'Barcha o‘quv yillari',
+
+    allDepartments:
+      'Barcha kafedralar',
+
+    allStatuses:
+      'Barcha holatlar',
+
+    searchPlaceholder:
+      'Xodim, kafedra, lavozim, daraja yoki unvon bo‘yicha qidirish...',
+
+    bulkCreate:
+      'Yetishmayotganlarni to‘ldirish',
+
+    bulkTitle:
+      'Kadr ma’lumotlarini ommaviy to‘ldirish',
+
+    bulkDescription:
+      'Tizim amaldagi mehnat tayinlovlari uchun yetishmayotgan yozuvlarni joriy stavka, daraja va unvon asosida yaratadi.',
+
+    bulkRun:
+      'To‘ldirish',
+
+    bulkCompleted:
+      'Ommaviy to‘ldirish yakunlandi',
+
+    bulkResult:
+      'Yaratildi: {created}; tiklandi: {restored}; o‘tkazib yuborildi: {skipped}; qoldi: {missing}.',
+
+    fields: {
+      employment:
+        'Mehnat tayinlovi',
+
+      staffMember:
+        'Xodim',
+
+      academicYear:
+        'O‘quv yili',
+
+      department:
+        'Kafedra',
+
+      position:
+        'Lavozim',
+
+      rate:
+        'Stavka',
+
+      academicDegree:
+        'Ilmiy daraja',
+
+      academicTitle:
+        'Ilmiy unvon',
+
+      recommendedHours:
+        'Soat me’yori',
+
+      active:
+        'Yozuv faol',
+
+      status:
+        'Holat',
+
+      notes:
+        'Izoh',
+    },
+
+    validation: {
+      employmentRequired:
+        'Mehnat tayinlovini tanlang',
+
+      yearRequired:
+        'O‘quv yilini tanlang',
+
+      rateRange:
+        'Stavka 0,01 dan 3,00 gacha bo‘lishi kerak',
+    },
+  },
+
+  workloadNorms: {
+    title:
+      'O‘quv yuklamasi me’yorlari',
+
+    description:
+      'O‘quv yili, stavka, ilmiy daraja va ilmiy unvon mavjudligiga qarab axborot xarakteridagi yillik yuklama me’yorlari.',
+
+    create:
+      'Me’yor qo‘shish',
+
+    createTitle:
+      'Yuklama me’yorini yaratish',
+
+    editTitle:
+      'Yuklama me’yorini tahrirlash',
+
+    archive:
+      'Arxivlash',
+
+    archiveTitle:
+      'Me’yorni arxivlash',
+
+    archiveConfirm:
+      '{year} yil, {rate} stavka uchun me’yorni arxivlaysizmi?',
+
+    archived:
+      'Yuklama me’yori arxivga ko‘chirildi',
+
+    active:
+      'Faol',
+
+    inactive:
+      'Faol emas',
+
+    allYears:
+      'Barcha o‘quv yillari',
+
+    allStatuses:
+      'Barcha holatlar',
+
+    fields: {
+      academicYear:
+        'O‘quv yili',
+
+      rate:
+        'Stavka',
+
+      hasDegree:
+        'Ilmiy daraja mavjud',
+
+      hasTitle:
+        'Ilmiy unvon mavjud',
+
+      annualHours:
+        'Yillik soat me’yori',
+
+      active:
+        'Me’yor faol',
+
+      status:
+        'Holat',
+
+      notes:
+        'Izoh',
+    },
+
+    validation: {
+      yearRequired:
+        'O‘quv yilini tanlang',
+
+      rateRange:
+        'Stavka 0,01 dan 3,00 gacha bo‘lishi kerak',
+
+      hoursRange:
+        'Yillik me’yor 0 dan 10000 soatgacha bo‘lishi kerak',
     },
   },
 
