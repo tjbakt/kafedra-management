@@ -356,15 +356,21 @@ class StudyFormSerializer(
         )
 
 
-class EducationDurationSerializer(AuditFieldsSerializer):
-    education_level_name = serializers.CharField(
-        source="education_level.name_ru",
-        read_only=True,
-    )
-    study_form_name = serializers.CharField(
-        source="study_form.name_ru",
-        read_only=True,
-    )
+class EducationDurationSerializer(LocalizedNameMixin, AuditFieldsSerializer):
+    education_level_name = serializers.SerializerMethodField()
+    study_form_name = serializers.SerializerMethodField()
+
+    @extend_schema_field(serializers.CharField())
+    def get_education_level_name(self, obj) -> str:
+        return self.get_display_name(
+            obj.education_level
+        )
+
+    @extend_schema_field(serializers.CharField())
+    def get_study_form_name(self, obj) -> str:
+        return self.get_display_name(
+            obj.study_form
+        )
 
     class Meta:
         model = EducationDuration

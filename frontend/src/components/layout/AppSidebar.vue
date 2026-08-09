@@ -82,6 +82,15 @@ const menuDefinitions: TranslatedSidebarItem[] = [
       },
       {
         label: '',
+        labelKey: 'navigation.academicSettings',
+        icon: 'pi pi-graduation-cap',
+        route: '/academic-settings',
+        permissions: [
+          'academics.view_academicyear',
+        ],
+      },
+      {
+        label: '',
         labelKey: 'navigation.studentGroups',
         icon: 'pi pi-id-card',
         route: '/students',

@@ -78,6 +78,7 @@ const uz = {
     staffEmployments: 'Mehnat tayinlovlari',
     staffAcademicYears: 'Yillar bo‘yicha kadrlar',
     workloadNorms: 'Yuklama me’yorlari',
+    academicSettings: 'Akademik ma’lumotnomalar',
   },
 
   profile: {
@@ -1007,6 +1008,238 @@ const uz = {
 
       hoursRange:
         'Yillik me’yor 0 dan 10000 soatgacha bo‘lishi kerak',
+    },
+  },
+
+  academicSettings: {
+    title:
+      'Akademik ma’lumotnomalar',
+
+    description:
+      'O‘quv yillari, ta’lim darajalari, ta’lim shakllari, davomiyligi va akademik semestrlar.',
+
+    archiveConfirm:
+      'Yozuvni arxivga ko‘chirasizmi?',
+
+    tabs: {
+      years:
+        'O‘quv yillari',
+
+      levels:
+        'Ta’lim darajalari',
+
+      forms:
+        'Ta’lim shakllari',
+
+      durations:
+        'Davomiylik',
+
+      semesters:
+        'Semestrlar',
+    },
+
+    common: {
+      code:
+        'Kod',
+
+      name:
+        'Nomi',
+
+      nameRu:
+        'Rus tilidagi nomi',
+
+      nameUz:
+        'O‘zbek tilidagi nomi',
+
+      sortOrder:
+        'Tartib',
+
+      active:
+        'Faol',
+    },
+
+    academicYears: {
+      createTitle:
+        'O‘quv yilini yaratish',
+
+      editTitle:
+        'O‘quv yilini tahrirlash',
+
+      open:
+        'Ochiq',
+
+      closed:
+        'Yopilgan',
+
+      close:
+        'O‘quv yilini yopish',
+
+      reopen:
+        'Qayta ochish',
+
+      closeTitle:
+        'O‘quv yilini yopish',
+
+      reopenTitle:
+        'O‘quv yilini qayta ochish',
+
+      closeDescription:
+        '{year} o‘quv yilini yopasizmi? Yopilgandan so‘ng qayta ochilmaguncha ma’lumotlarni o‘zgartirib bo‘lmaydi.',
+
+      reopenDescription:
+        '{year} o‘quv yilini qayta ochasizmi? Sabab ko‘rsatilishi shart.',
+
+      operationSuccess:
+        'O‘quv yili holati muvaffaqiyatli o‘zgartirildi',
+
+      fields: {
+        name:
+          'O‘quv yili',
+
+        startYear:
+          'Boshlanish yili',
+
+        endYear:
+          'Tugash yili',
+
+        current:
+          'Joriy',
+
+        active:
+          'Faol',
+
+        status:
+          'Holat',
+
+        closingComment:
+          'Yopish izohi',
+
+        reopeningReason:
+          'Qayta ochish sababi',
+      },
+
+      validation: {
+        startYear:
+          'Boshlanish yili 2000 dan 2200 gacha bo‘lishi kerak',
+
+        endYear:
+          'Tugash yili boshlanish yilidan keyingi yil bo‘lishi kerak',
+
+        reopenReason:
+          'Qayta ochish sababini kiriting',
+      },
+    },
+
+    educationLevels: {
+      createTitle:
+        'Ta’lim darajasini qo‘shish',
+
+      editTitle:
+        'Ta’lim darajasini tahrirlash',
+
+      codes: {
+        bachelor:
+          'Bakalavriat',
+
+        master:
+          'Magistratura',
+      },
+    },
+
+    studyForms: {
+      createTitle:
+        'Ta’lim shaklini qo‘shish',
+
+      editTitle:
+        'Ta’lim shaklini tahrirlash',
+
+      codes: {
+        fullTime:
+          'Kunduzgi',
+
+        partTime:
+          'Sirtqi',
+
+        evening:
+          'Kechki',
+
+        distance:
+          'Masofaviy',
+      },
+    },
+
+    educationDurations: {
+      createTitle:
+        'Ta’lim davomiyligini qo‘shish',
+
+      editTitle:
+        'Ta’lim davomiyligini tahrirlash',
+
+      fields: {
+        level:
+          'Ta’lim darajasi',
+
+        studyForm:
+          'Ta’lim shakli',
+
+        semesters:
+          'Semestrlar soni',
+
+        months:
+          'Davomiyligi, oy',
+      },
+
+      validation: {
+        semesters:
+          'Semestrlar soni 1 dan 20 gacha bo‘lishi kerak',
+
+        months:
+          'Davomiylik semestrlar soniga mos bo‘lishi kerak: 1 semestr = 6 oy',
+      },
+    },
+
+    semesters: {
+      createTitle:
+        'Semestr yaratish',
+
+      editTitle:
+        'Semestrni tahrirlash',
+
+      seasons: {
+        autumn:
+          'Kuzgi',
+
+        spring:
+          'Bahorgi',
+      },
+
+      fields: {
+        academicYear:
+          'O‘quv yili',
+
+        season:
+          'Semestr',
+
+        startDate:
+          'Boshlanish sanasi',
+
+        endDate:
+          'Tugash sanasi',
+
+        current:
+          'Joriy semestr',
+      },
+
+      validation: {
+        endDate:
+          'Tugash sanasi boshlanish sanasidan keyin bo‘lishi kerak',
+
+        autumnYear:
+          'Kuzgi semestr o‘quv yilining boshlanish yilida boshlanishi kerak',
+
+        springYear:
+          'Bahorgi semestr o‘quv yilining tugash yilida boshlanishi kerak',
+      },
     },
   },
 

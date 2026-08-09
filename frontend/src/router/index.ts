@@ -284,6 +284,37 @@ const routes: RouteRecordRaw[] = [
       },
 
       {
+        path:
+          'academic-settings',
+
+        name:
+          'academic-settings',
+
+        component: () =>
+          import(
+            '@/modules/academic-settings/AcademicSettingsView.vue'
+            ),
+
+        meta: {
+          requiresAuth: true,
+
+          requiredPermissions: [
+            'academics.view_academicyear',
+          ],
+
+          titleKey:
+            'navigation.academicSettings',
+
+          icon:
+            'pi pi-graduation-cap',
+
+          breadcrumbKeys: [
+            'navigation.academicSettings',
+          ],
+        },
+      },
+
+      {
         path: 'access-debug',
         name: 'access-debug',
 
