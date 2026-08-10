@@ -571,26 +571,15 @@ class StudyProgramSerializer(
     AuditFieldsSerializer,
 ):
     display_name = serializers.SerializerMethodField()
-    university_name = serializers.CharField(
-        source="university.name_ru",
-        read_only=True,
-    )
-    education_level_name = serializers.CharField(
-        source="education_level.name_ru",
-        read_only=True,
-    )
-    profiling_department_name = serializers.CharField(
-        source="profiling_department.name_ru",
-        read_only=True,
-    )
+    university_name = serializers.SerializerMethodField()
+    education_level_name = serializers.SerializerMethodField()
+    profiling_department_name = serializers.SerializerMethodField()
+    profiling_faculty_name = serializers.SerializerMethodField()
     profiling_faculty = serializers.IntegerField(
         source="profiling_department.faculty_id",
         read_only=True,
     )
-    profiling_faculty_name = serializers.CharField(
-        source="profiling_department.faculty.name_ru",
-        read_only=True,
-    )
+
 
     class Meta:
         model = StudyProgram
@@ -632,6 +621,36 @@ class StudyProgramSerializer(
             "is_archived",
             "archived_at",
             "archived_by",
+        )
+
+    @extend_schema_field(serializers.CharField())
+    def get_university_name(self, obj) -> str:
+        return self.get_display_name(
+            obj.university
+        )
+
+    @extend_schema_field(serializers.CharField())
+    def get_education_level_name(self, obj) -> str:
+        return self.get_display_name(
+            obj.education_level
+        )
+
+    @extend_schema_field(serializers.CharField())
+    def get_profiling_department_name(
+            self,
+            obj,
+    ) -> str:
+        return self.get_display_name(
+            obj.profiling_department
+        )
+
+    @extend_schema_field(serializers.CharField())
+    def get_profiling_faculty_name(
+            self,
+            obj,
+    ) -> str:
+        return self.get_display_name(
+            obj.profiling_department.faculty
         )
 
     def validate_code(self, value):

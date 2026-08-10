@@ -79,6 +79,7 @@ const uz = {
     staffAcademicYears: 'Yillar bo‘yicha kadrlar',
     workloadNorms: 'Yuklama me’yorlari',
     academicSettings: 'Akademik ma’lumotnomalar',
+    studyPrograms: 'Ta’lim yo‘nalishlari',
   },
 
   profile: {
@@ -1240,6 +1241,140 @@ const uz = {
         springYear:
           'Bahorgi semestr o‘quv yilining tugash yilida boshlanishi kerak',
       },
+    },
+  },
+
+  studyPrograms: {
+    title:
+      'Ta’lim yo‘nalishlari',
+
+    description:
+      'Ta’lim yo‘nalishlari, ta’lim darajalari va profil kafedralarini boshqarish.',
+
+    create:
+      'Yo‘nalish qo‘shish',
+
+    createTitle:
+      'Ta’lim yo‘nalishini yaratish',
+
+    editTitle:
+      'Ta’lim yo‘nalishini tahrirlash',
+
+    detailsTitle:
+      'Ta’lim yo‘nalishi',
+
+    archive:
+      'Arxivlash',
+
+    archiveTitle:
+      'Yo‘nalishni arxivlash',
+
+    archiveConfirm:
+      '«{name}» yo‘nalishini arxivlaysizmi? Yozuvni keyinchalik tiklash mumkin.',
+
+    archived:
+      'Ta’lim yo‘nalishi arxivga ko‘chirildi',
+
+    active:
+      'Faol',
+
+    inactive:
+      'Faol emas',
+
+    allStatuses:
+      'Barcha holatlar',
+
+    allUniversities:
+      'Barcha universitetlar',
+
+    allEducationLevels:
+      'Barcha ta’lim darajalari',
+
+    allDepartments:
+      'Barcha profil kafedralar',
+
+    searchPlaceholder:
+      'Yo‘nalish kodi yoki nomi bo‘yicha qidirish...',
+
+    fields: {
+      code:
+        'Yo‘nalish kodi',
+
+      name:
+        'Nomi',
+
+      nameRu:
+        'Rus tilidagi nomi',
+
+      nameUz:
+        'O‘zbek tilidagi nomi',
+
+      university:
+        'Universitet',
+
+      educationLevel:
+        'Ta’lim darajasi',
+
+      profilingFaculty:
+        'Profil fakultet',
+
+      profilingDepartment:
+        'Profil kafedra',
+
+      sortOrder:
+        'Saralash tartibi',
+
+      active:
+        'Yo‘nalish faol',
+
+      status:
+        'Holat',
+
+      createdAt:
+        'Yaratilgan',
+
+      createdBy:
+        'Yaratgan',
+
+      updatedAt:
+        'O‘zgartirilgan',
+
+      updatedBy:
+        'O‘zgartirgan',
+    },
+
+    sections: {
+      general:
+        'Asosiy ma’lumot',
+
+      structure:
+        'Akademik tuzilma',
+
+      audit:
+        'O‘zgarishlar tarixi',
+    },
+
+    validation: {
+      universityRequired:
+        'Universitetni tanlang',
+
+      educationLevelRequired:
+        'Ta’lim darajasini tanlang',
+
+      codeRequired:
+        'Yo‘nalish kodini kiriting',
+
+      nameRuRequired:
+        'Rus tilidagi nomni kiriting',
+
+      nameUzRequired:
+        'O‘zbek tilidagi nomni kiriting',
+
+      departmentRequired:
+        'Profil kafedrani tanlang',
+
+      departmentUniversityMismatch:
+        'Profil kafedra tanlangan universitetga tegishli bo‘lishi kerak',
     },
   },
 

@@ -91,6 +91,16 @@ const menuDefinitions: TranslatedSidebarItem[] = [
       },
       {
         label: '',
+        labelKey: 'navigation.studyPrograms',
+        icon: 'pi pi-book',
+        route: '/study-programs',
+        permissions: [
+          'academics.view_studyprogram',
+        ],
+      },
+
+      {
+        label: '',
         labelKey: 'navigation.studentGroups',
         icon: 'pi pi-id-card',
         route: '/students',

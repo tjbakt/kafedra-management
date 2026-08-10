@@ -200,11 +200,9 @@ const routes: RouteRecordRaw[] = [
         },
       },
       {
-        path:
-          'staff-employments',
+        path: 'staff-employments',
 
-        name:
-          'staff-employments',
+        name: 'staff-employments',
 
         component: () =>
           import(
@@ -252,30 +250,19 @@ const routes: RouteRecordRaw[] = [
       },
 
       {
-        path:
-          'workload-norms',
-
-        name:
-          'workload-norms',
-
+        path: 'workload-norms',
+        name: 'workload-norms',
         component: () =>
           import(
             '@/modules/staff-academic-years/WorkloadNormsView.vue'
             ),
-
         meta: {
           requiresAuth: true,
-
           requiredPermissions: [
             'staff.view_workloadnorm',
           ],
-
-          titleKey:
-            'navigation.workloadNorms',
-
-          icon:
-            'pi pi-chart-bar',
-
+          titleKey: 'navigation.workloadNorms',
+          icon: 'pi pi-chart-bar',
           breadcrumbKeys: [
             'navigation.workload',
             'navigation.workloadNorms',
@@ -284,32 +271,42 @@ const routes: RouteRecordRaw[] = [
       },
 
       {
-        path:
-          'academic-settings',
-
-        name:
-          'academic-settings',
-
+        path: 'academic-settings',
+        name: 'academic-settings',
         component: () =>
           import(
             '@/modules/academic-settings/AcademicSettingsView.vue'
             ),
-
         meta: {
           requiresAuth: true,
-
           requiredPermissions: [
             'academics.view_academicyear',
           ],
-
-          titleKey:
-            'navigation.academicSettings',
-
-          icon:
-            'pi pi-graduation-cap',
-
+          titleKey: 'navigation.academicSettings',
+          icon: 'pi pi-graduation-cap',
           breadcrumbKeys: [
             'navigation.academicSettings',
+          ],
+        },
+      },
+
+      {
+        path: 'study-programs',
+        name: 'study-programs',
+        component: () =>
+          import(
+            '@/modules/study-programs/StudyProgramsView.vue'
+            ),
+        meta: {
+          requiresAuth: true,
+          requiredPermissions: [
+            'academics.view_studyprogram',
+          ],
+          titleKey: 'navigation.studyPrograms',
+          icon: 'pi pi-book',
+          breadcrumbKeys: [
+            'navigation.academicSettings',
+            'navigation.studyPrograms',
           ],
         },
       },
