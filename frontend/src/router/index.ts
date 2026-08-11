@@ -69,17 +69,21 @@ const moduleRoutes: RouteRecordRaw[] = [
     },
   },
   {
-    path: 'students',
-    name: 'students',
+    path: 'student-groups',
+    name: 'student-groups',
     component: () =>
-      import('@/views/ModulePlaceholderView.vue'),
+      import(
+        '@/modules/student-groups/StudentGroupsView.vue'
+        ),
     meta: {
       requiresAuth: true,
+      requiredPermissions: [
+        'academics.view_studentgroup',
+      ],
       titleKey: 'navigation.studentGroups',
-      descriptionKey:
-        'modules.studentsDescription',
-      icon: 'pi pi-id-card',
+      icon: 'pi pi-users',
       breadcrumbKeys: [
+        'navigation.academicSettings',
         'navigation.studentGroups',
       ],
     },

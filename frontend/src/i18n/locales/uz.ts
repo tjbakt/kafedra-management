@@ -1378,6 +1378,182 @@ const uz = {
     },
   },
 
+  studentGroups: {
+    title:
+      'O‘quv guruhlari',
+
+    description:
+      'O‘quv guruhlari, ta’lim yo‘nalishlari, ta’lim shakllari va talabalar kontingentini boshqarish.',
+
+    create:
+      'Guruh qo‘shish',
+
+    createTitle:
+      'O‘quv guruhini yaratish',
+
+    editTitle:
+      'O‘quv guruhini tahrirlash',
+
+    detailsTitle:
+      'O‘quv guruhi',
+
+    archive:
+      'Arxivlash',
+
+    archiveTitle:
+      'Guruhni arxivlash',
+
+    archiveConfirm:
+      '«{code}» o‘quv guruhini arxivlaysizmi? Yozuvni keyinchalik tiklash mumkin.',
+
+    archived:
+      'O‘quv guruhi arxivga ko‘chirildi',
+
+    active:
+      'Faol',
+
+    inactive:
+      'Faol emas',
+
+    currentYear:
+      'Joriy o‘quv yili',
+
+    closedYear:
+      'Yopilgan o‘quv yili',
+
+    allAdmissionYears:
+      'Barcha qabul yillari',
+
+    allFaculties:
+      'Barcha fakultetlar',
+
+    allPrograms:
+      'Barcha yo‘nalishlar',
+
+    allStudyForms:
+      'Barcha ta’lim shakllari',
+
+    allStatuses:
+      'Barcha holatlar',
+
+    searchPlaceholder:
+      'Guruh kodi yoki ta’lim yo‘nalishi bo‘yicha qidirish...',
+
+    noAvailableStudyForms:
+      'Mavjud ta’lim shakllari yo‘q. Ta’lim davomiyligi ma’lumotnomasini tekshiring.',
+
+    durationValue:
+      '{months} oy / {semesters} sem.',
+
+    fields: {
+      code:
+        'Guruh kodi',
+
+      admissionYear:
+        'Qabul qilingan o‘quv yili',
+
+      graduationYear:
+        'Rejalashtirilgan bitiruv yili',
+
+      faculty:
+        'Fakultet / bo‘lim',
+
+      studyProgram:
+        'Ta’lim yo‘nalishi',
+
+      educationLevel:
+        'Ta’lim darajasi',
+
+      studyForm:
+        'Ta’lim shakli',
+
+      profilingFaculty:
+        'Profil fakultet',
+
+      profilingDepartment:
+        'Profil kafedra',
+
+      duration:
+        'Me’yoriy ta’lim davomiyligi',
+
+      studentCount:
+        'Talabalar soni',
+
+      subgroupCount:
+        'Kichik guruhlar soni',
+
+      active:
+        'Guruh faol',
+
+      status:
+        'Holat',
+
+      notes:
+        'Izoh',
+
+      createdAt:
+        'Yaratilgan',
+
+      createdBy:
+        'Yaratgan',
+
+      updatedAt:
+        'O‘zgartirilgan',
+
+      updatedBy:
+        'O‘zgartirgan',
+    },
+
+    sections: {
+      general:
+        'Asosiy ma’lumotlar',
+
+      education:
+        'Ta’lim parametrlari',
+
+      programInfo:
+        'Tanlangan yo‘nalish parametrlari',
+
+      profiling:
+        'Profil bo‘linma',
+
+      audit:
+        'O‘zgarishlar tarixi',
+    },
+
+    validation: {
+      codeRequired:
+        'Guruh kodini kiriting',
+
+      admissionYearRequired:
+        'Qabul o‘quv yilini tanlang',
+
+      facultyRequired:
+        'Fakultet yoki bo‘limni tanlang',
+
+      programRequired:
+        'Ta’lim yo‘nalishini tanlang',
+
+      studyFormRequired:
+        'Ta’lim shaklini tanlang',
+
+      studentCountRange:
+        'Talabalar soni 0 dan 1000 gacha bo‘lishi kerak',
+
+      subgroupCountRange:
+        'Kichik guruhlar soni 1 dan 20 gacha bo‘lishi kerak',
+
+      universityMismatch:
+        'Guruh fakulteti va ta’lim yo‘nalishi bir universitetga tegishli bo‘lishi kerak',
+
+      durationMissing:
+        'Tanlangan yo‘nalish darajasi va ta’lim shakli uchun me’yoriy davomiylik belgilanmagan',
+
+      graduationYear:
+        'Bitiruv o‘quv yili qabul o‘quv yilidan keyin bo‘lishi kerak',
+    },
+  },
+
 }
 
 export default uz

@@ -102,8 +102,11 @@ const menuDefinitions: TranslatedSidebarItem[] = [
       {
         label: '',
         labelKey: 'navigation.studentGroups',
-        icon: 'pi pi-id-card',
-        route: '/students',
+        icon: 'pi pi-user',
+        route: '/student-groups',
+        permissions: [
+          'academics.view_studentgroup',
+        ],
       },
     ],
   },

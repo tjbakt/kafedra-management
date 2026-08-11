@@ -691,29 +691,18 @@ class StudyProgramSerializer(
         return attrs
 
 
-class StudentGroupSerializer(AuditFieldsSerializer):
-    faculty_name = serializers.CharField(
-        source="faculty.name_ru",
-        read_only=True,
-    )
+class StudentGroupSerializer(LocalizedNameMixin, AuditFieldsSerializer):
+    faculty_name = serializers.SerializerMethodField()
+    study_program_name = serializers.SerializerMethodField()
+    education_level_name = serializers.SerializerMethodField()
+    study_form_name = serializers.SerializerMethodField()
+
     faculty_type = serializers.CharField(
         source="faculty.faculty_type",
         read_only=True,
     )
-    study_program_name = serializers.CharField(
-        source="study_program.name_ru",
-        read_only=True,
-    )
     education_level = serializers.IntegerField(
         source="study_program.education_level_id",
-        read_only=True,
-    )
-    education_level_name = serializers.CharField(
-        source="study_program.education_level.name_ru",
-        read_only=True,
-    )
-    study_form_name = serializers.CharField(
-        source="study_form.name_ru",
         read_only=True,
     )
     admission_academic_year_name = serializers.CharField(
@@ -729,18 +718,55 @@ class StudentGroupSerializer(AuditFieldsSerializer):
         source="study_program.profiling_department_id",
         read_only=True,
     )
-    profiling_department_name = serializers.CharField(
-        source="study_program.profiling_department.name_ru",
-        read_only=True,
-    )
+    profiling_department_name = serializers.SerializerMethodField()
+    profiling_department_faculty_name = serializers.SerializerMethodField()
+
     profiling_department_faculty = serializers.IntegerField(
         source="study_program.profiling_department.faculty_id",
         read_only=True,
     )
-    profiling_department_faculty_name = serializers.CharField(
-        source="study_program.profiling_department.faculty.name_ru",
-        read_only=True,
-    )
+
+    @extend_schema_field(serializers.CharField())
+    def get_faculty_name(self, obj) -> str:
+        return self.get_display_name(
+            obj.faculty
+        )
+
+    @extend_schema_field(serializers.CharField())
+    def get_study_program_name(self, obj) -> str:
+        return self.get_display_name(
+            obj.study_program
+        )
+
+    @extend_schema_field(serializers.CharField())
+    def get_education_level_name(self, obj) -> str:
+        return self.get_display_name(
+            obj.study_program.education_level
+        )
+
+    @extend_schema_field(serializers.CharField())
+    def get_study_form_name(self, obj) -> str:
+        return self.get_display_name(
+            obj.study_form
+        )
+
+    @extend_schema_field(serializers.CharField())
+    def get_profiling_department_name(
+            self,
+            obj,
+    ) -> str:
+        return self.get_display_name(
+            obj.study_program.profiling_department
+        )
+
+    @extend_schema_field(serializers.CharField())
+    def get_profiling_department_faculty_name(
+            self,
+            obj,
+    ) -> str:
+        return self.get_display_name(
+            obj.study_program.profiling_department.faculty
+        )
 
     class Meta:
         model = StudentGroup
