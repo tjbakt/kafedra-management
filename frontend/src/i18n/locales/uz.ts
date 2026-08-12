@@ -80,6 +80,7 @@ const uz = {
     workloadNorms: 'Yuklama me’yorlari',
     academicSettings: 'Akademik ma’lumotnomalar',
     studyPrograms: 'Ta’lim yo‘nalishlari',
+    curriculumReferences: 'O‘quv rejasi ma’lumotnomalari',
   },
 
   profile: {
@@ -1551,6 +1552,252 @@ const uz = {
 
       graduationYear:
         'Bitiruv o‘quv yili qabul o‘quv yilidan keyin bo‘lishi kerak',
+    },
+  },
+
+  curriculumReferences: {
+    title:
+      'O‘quv rejasi ma’lumotnomalari',
+
+    description:
+      'O‘quv rejalarini shakllantirish va yuklamani hisoblashda ishlatiladigan fanlar hamda o‘quv ishlari turlari.',
+
+    tabs: {
+      disciplines:
+        'Fanlar',
+
+      workloadTypes:
+        'O‘quv ishlari turlari',
+    },
+
+    common: {
+      active:
+        'Faol',
+
+      inactive:
+        'Faol emas',
+
+      status:
+        'Holat',
+
+      sortOrder:
+        'Tartib',
+
+      archive:
+        'Arxivlash',
+    },
+
+    filters: {
+      all:
+        'Barchasi',
+
+      allStatuses:
+        'Barcha holatlar',
+
+      allDepartments:
+        'Barcha kafedralar',
+
+      allCalculationModes:
+        'Barcha hisoblash usullari',
+
+      classroom:
+        'Auditoriya ishi',
+
+      teachingLoad:
+        'O‘qituvchi yuklamasida',
+    },
+
+    disciplines: {
+      create:
+        'Fan qo‘shish',
+
+      createTitle:
+        'Fan yaratish',
+
+      editTitle:
+        'Fanni tahrirlash',
+
+      archiveTitle:
+        'Fanni arxivlash',
+
+      archiveConfirm:
+        '«{name}» fanini arxivlaysizmi?',
+
+      archived:
+        'Fan arxivga ko‘chirildi',
+
+      searchPlaceholder:
+        'Fan kodi yoki nomi bo‘yicha qidirish...',
+
+      fields: {
+        code:
+          'Fan kodi',
+
+        name:
+          'Nomi',
+
+        nameRu:
+          'Rus tilidagi nomi',
+
+        nameUz:
+          'O‘zbek tilidagi nomi',
+
+        department:
+          'Standart kafedra',
+      },
+
+      validation: {
+        codeRequired:
+          'Fan kodini kiriting',
+
+        nameRuRequired:
+          'Rus tilidagi nomni kiriting',
+
+        nameUzRequired:
+          'O‘zbek tilidagi nomni kiriting',
+      },
+    },
+
+    workloadTypes: {
+      create:
+        'Ish turini qo‘shish',
+
+      createTitle:
+        'O‘quv ishi turini yaratish',
+
+      editTitle:
+        'O‘quv ishi turini tahrirlash',
+
+      archiveTitle:
+        'Ish turini arxivlash',
+
+      archiveConfirm:
+        '«{name}» ish turini arxivlaysizmi?',
+
+      archived:
+        'O‘quv ishi turi arxivga ko‘chirildi',
+
+      searchPlaceholder:
+        'Ish turi kodi yoki nomi bo‘yicha qidirish...',
+
+      fields: {
+        code:
+          'Ish turi',
+
+        name:
+          'Nomi',
+
+        nameRu:
+          'Rus tilidagi nomi',
+
+        nameUz:
+          'O‘zbek tilidagi nomi',
+
+        calculationMode:
+          'Hisoblash usuli',
+
+        reportCategory:
+          'Hisobot kategoriyasi',
+
+        classroom:
+          'Auditoriya ishi',
+
+        teachingLoad:
+          'O‘qituvchi yuklamasiga kiritish',
+      },
+
+      codes: {
+        lecture:
+          'Ma’ruzalar',
+
+        practice:
+          'Amaliy mashg‘ulotlar',
+
+        laboratory:
+          'Laboratoriya mashg‘ulotlari',
+
+        seminar:
+          'Seminar mashg‘ulotlari',
+
+        consultation:
+          'Maslahatlar',
+
+        exam:
+          'Imtihon',
+
+        credit:
+          'Sinov',
+
+        courseWork:
+          'Kurs ishi',
+
+        courseProject:
+          'Kurs loyihasi',
+
+        independentWork:
+          'Mustaqil ish',
+
+        other:
+          'Boshqa ish turi',
+      },
+
+      calculationModes: {
+        fixed:
+          'Belgilangan soatlar',
+
+        perGroup:
+          'O‘quv guruhiga',
+
+        perSubgroup:
+          'Kichik guruhga',
+
+        perStudent:
+          'Bir talabaga',
+      },
+
+      reportCategories: {
+        lecture:
+          'Ma’ruzalar',
+
+        practice:
+          'Amaliy mashg‘ulotlar',
+
+        laboratory:
+          'Laboratoriya mashg‘ulotlari',
+
+        courseWorkSupervision:
+          'Kurs ishiga rahbarlik',
+
+        courseProjectSupervision:
+          'Kurs loyihasiga rahbarlik',
+
+        courseDefense:
+          'Kurs ishi/loyihasini himoya qilish',
+
+        scientificPractice:
+          'Ilmiy amaliyot',
+
+        qualificationPractice:
+          'Malakaviy amaliyot',
+
+        masterSupervision:
+          'Magistrlik dissertatsiyasiga rahbarlik',
+
+        masterDefense:
+          'Magistrlik dissertatsiyasini himoya qilish',
+
+        graduationSupervision:
+          'Bitiruv malakaviy ishiga rahbarlik',
+
+        graduationDefense:
+          'Bitiruv malakaviy ishini himoya qilish',
+
+        rating:
+          'Reyting',
+
+        other:
+          'Boshqa',
+      },
     },
   },
 

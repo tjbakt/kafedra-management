@@ -105,18 +105,21 @@ const moduleRoutes: RouteRecordRaw[] = [
     },
   },
   {
-    path: 'curriculum',
-    name: 'curriculum',
+    path: 'curriculum-references',
+    name: 'curriculum-references',
     component: () =>
-      import('@/views/ModulePlaceholderView.vue'),
+      import(
+        '@/modules/curriculum-references/CurriculumReferencesView.vue'
+        ),
     meta: {
       requiresAuth: true,
-      titleKey: 'navigation.curricula',
-      descriptionKey:
-        'modules.curriculaDescription',
-      icon: 'pi pi-list-check',
+      requiredPermissions: [
+        'curriculum.view_discipline',
+      ],
+      titleKey: 'navigation.curriculumReferences',
+      icon: 'pi pi-book',
       breadcrumbKeys: [
-        'navigation.curricula',
+        'navigation.curriculumReferences',
       ],
     },
   },

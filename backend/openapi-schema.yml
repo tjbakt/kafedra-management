@@ -20495,8 +20495,8 @@ components:
             учебном плане её можно изменить.
         default_department_name:
           type: string
-          readOnly: true
           nullable: true
+          readOnly: true
         is_active:
           type: boolean
           title: Активна

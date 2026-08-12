@@ -20,7 +20,8 @@ const layoutStore = useLayoutStore()
 const { t } = useI18n()
 const { hasAccess } = usePermissions()
 
-const menuDefinitions: TranslatedSidebarItem[] = [
+let menuDefinitions: TranslatedSidebarItem[];
+menuDefinitions = [
   {
     label: '',
     labelKey: 'navigation.dashboard',
@@ -123,9 +124,12 @@ const menuDefinitions: TranslatedSidebarItem[] = [
       },
       {
         label: '',
-        labelKey: 'navigation.curricula',
-        icon: 'pi pi-list-check',
-        route: '/curriculum',
+        labelKey: 'navigation.curriculumReferences',
+        icon: 'pi pi-book',
+        route: '/curriculum-references',
+        permissions: [
+          'curriculum.view_discipline',
+        ],
       },
       {
         label: '',
@@ -181,7 +185,7 @@ const menuDefinitions: TranslatedSidebarItem[] = [
       },
     ],
   },
-]
+];
 
 const menuItems =
   computed<TranslatedSidebarItem[]>(

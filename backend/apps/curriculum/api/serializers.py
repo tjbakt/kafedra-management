@@ -43,11 +43,7 @@ class DisciplineSerializer(
     AuditFieldsSerializer,
 ):
     display_name = serializers.SerializerMethodField()
-    default_department_name = serializers.CharField(
-        source="default_department.name_ru",
-        read_only=True,
-        allow_null=True,
-    )
+    default_department_name = serializers.SerializerMethodField()
 
     class Meta:
         model = Discipline
@@ -84,6 +80,18 @@ class DisciplineSerializer(
             "archived_by",
         )
 
+    @extend_schema_field(
+        serializers.CharField(
+            allow_null=True,
+        )
+    )
+    def get_default_department_name(self, obj):
+        if not obj.default_department:
+            return None
+
+        return self.get_display_name(
+            obj.default_department
+        )
     def validate_code(self, value):
         return value.strip().upper()
 

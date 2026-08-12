@@ -80,6 +80,7 @@ const ru = {
     workloadNorms: 'Нормы нагрузки',
     academicSettings: 'Академические справочники',
     studyPrograms: 'Направления подготовки',
+    curriculumReferences: 'Справочники учебного плана',
   },
 
   profile: {
@@ -1545,6 +1546,252 @@ const ru = {
 
       graduationYear:
         'Учебный год выпуска должен быть позже учебного года поступления',
+    },
+  },
+
+  curriculumReferences: {
+    title:
+      'Справочники учебного плана',
+
+    description:
+      'Дисциплины и виды учебной работы, используемые при формировании учебных планов и расчёте нагрузки.',
+
+    tabs: {
+      disciplines:
+        'Дисциплины',
+
+      workloadTypes:
+        'Виды учебной работы',
+    },
+
+    common: {
+      active:
+        'Активно',
+
+      inactive:
+        'Неактивно',
+
+      status:
+        'Статус',
+
+      sortOrder:
+        'Порядок',
+
+      archive:
+        'Архивировать',
+    },
+
+    filters: {
+      all:
+        'Все',
+
+      allStatuses:
+        'Все статусы',
+
+      allDepartments:
+        'Все кафедры',
+
+      allCalculationModes:
+        'Все способы расчёта',
+
+      classroom:
+        'Аудиторная работа',
+
+      teachingLoad:
+        'В нагрузке преподавателя',
+    },
+
+    disciplines: {
+      create:
+        'Добавить дисциплину',
+
+      createTitle:
+        'Создание дисциплины',
+
+      editTitle:
+        'Редактирование дисциплины',
+
+      archiveTitle:
+        'Архивирование дисциплины',
+
+      archiveConfirm:
+        'Архивировать дисциплину «{name}»?',
+
+      archived:
+        'Дисциплина перемещена в архив',
+
+      searchPlaceholder:
+        'Поиск по коду или названию дисциплины...',
+
+      fields: {
+        code:
+          'Код дисциплины',
+
+        name:
+          'Название',
+
+        nameRu:
+          'Название на русском',
+
+        nameUz:
+          'Название на узбекском',
+
+        department:
+          'Кафедра по умолчанию',
+      },
+
+      validation: {
+        codeRequired:
+          'Введите код дисциплины',
+
+        nameRuRequired:
+          'Введите название на русском языке',
+
+        nameUzRequired:
+          'Введите название на узбекском языке',
+      },
+    },
+
+    workloadTypes: {
+      create:
+        'Добавить вид работы',
+
+      createTitle:
+        'Создание вида учебной работы',
+
+      editTitle:
+        'Редактирование вида учебной работы',
+
+      archiveTitle:
+        'Архивирование вида работы',
+
+      archiveConfirm:
+        'Архивировать вид работы «{name}»?',
+
+      archived:
+        'Вид учебной работы перемещён в архив',
+
+      searchPlaceholder:
+        'Поиск по коду или названию вида работы...',
+
+      fields: {
+        code:
+          'Вид работы',
+
+        name:
+          'Название',
+
+        nameRu:
+          'Название на русском',
+
+        nameUz:
+          'Название на узбекском',
+
+        calculationMode:
+          'Способ расчёта',
+
+        reportCategory:
+          'Категория для отчётов',
+
+        classroom:
+          'Аудиторная работа',
+
+        teachingLoad:
+          'Включать в нагрузку преподавателя',
+      },
+
+      codes: {
+        lecture:
+          'Лекции',
+
+        practice:
+          'Практические занятия',
+
+        laboratory:
+          'Лабораторные занятия',
+
+        seminar:
+          'Семинарские занятия',
+
+        consultation:
+          'Консультации',
+
+        exam:
+          'Экзамен',
+
+        credit:
+          'Зачёт',
+
+        courseWork:
+          'Курсовая работа',
+
+        courseProject:
+          'Курсовой проект',
+
+        independentWork:
+          'Самостоятельная работа',
+
+        other:
+          'Другой вид работы',
+      },
+
+      calculationModes: {
+        fixed:
+          'Фиксированные часы',
+
+        perGroup:
+          'На учебную группу',
+
+        perSubgroup:
+          'На подгруппу',
+
+        perStudent:
+          'На одного студента',
+      },
+
+      reportCategories: {
+        lecture:
+          'Лекции',
+
+        practice:
+          'Практические занятия',
+
+        laboratory:
+          'Лабораторные занятия',
+
+        courseWorkSupervision:
+          'Руководство курсовой работой',
+
+        courseProjectSupervision:
+          'Руководство курсовым проектом',
+
+        courseDefense:
+          'Защита курсовой работы/проекта',
+
+        scientificPractice:
+          'Научная практика',
+
+        qualificationPractice:
+          'Квалификационная практика',
+
+        masterSupervision:
+          'Руководство магистерской диссертацией',
+
+        masterDefense:
+          'Защита магистерской диссертации',
+
+        graduationSupervision:
+          'Руководство выпускной квалификационной работой',
+
+        graduationDefense:
+          'Защита выпускной квалификационной работы',
+
+        rating:
+          'Рейтинг',
+
+        other:
+          'Другое',
+      },
     },
   },
 
