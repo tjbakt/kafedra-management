@@ -74,7 +74,12 @@ import {
   normalizeApiError,
 } from '@/utils/api-errors'
 
+import {
+  useRouter,
+} from 'vue-router'
+
 const { t } = useI18n()
+const router = useRouter()
 
 const localeStore =
   useLocaleStore()
@@ -726,6 +731,20 @@ async function saveCurriculum(
   }
 }
 
+function openCurriculumMatrix(
+  curriculum: Curriculum,
+): void {
+  void router.push({
+    name:
+      'curriculum-disciplines',
+
+    params: {
+      curriculumId:
+        curriculum.id,
+    },
+  })
+}
+
 function archiveCurriculum(
   curriculum: Curriculum,
 ): void {
@@ -1118,6 +1137,22 @@ onMounted(async () => {
         <template
           #actions="{ row }"
         >
+          <Button
+            v-tooltip.bottom="
+              t(
+                'curricula.openMatrix',
+              )
+            "
+            icon="pi pi-table"
+            severity="info"
+            text
+            rounded
+            @click.stop="
+              openCurriculumMatrix(
+                row,
+              )
+            "
+          />
           <Button
             v-tooltip.bottom="
               t('common.view')

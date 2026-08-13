@@ -259,21 +259,13 @@ class CurriculumWorkloadSerializer(AuditFieldsSerializer):
 
         return attrs
 
-class CurriculumDisciplineSerializer(
-    AuditFieldsSerializer,
-):
+class CurriculumDisciplineSerializer(LocalizedNameMixin, AuditFieldsSerializer,):
     discipline_code = serializers.CharField(
         source="discipline.code",
         read_only=True,
     )
-    discipline_name = serializers.CharField(
-        source="discipline.name_ru",
-        read_only=True,
-    )
-    teaching_department_name = serializers.CharField(
-        source="teaching_department.name_ru",
-        read_only=True,
-    )
+    discipline_name = serializers.SerializerMethodField()
+    teaching_department_name = serializers.SerializerMethodField()
     control_form_name = serializers.CharField(
         source="get_control_form_display",
         read_only=True,
@@ -293,6 +285,21 @@ class CurriculumDisciplineSerializer(
         many=True,
         read_only=True,
     )
+
+    @extend_schema_field(serializers.CharField())
+    def get_discipline_name(self, obj) -> str:
+        return self.get_display_name(
+            obj.discipline
+        )
+
+    @extend_schema_field(serializers.CharField())
+    def get_teaching_department_name(
+            self,
+            obj,
+    ) -> str:
+        return self.get_display_name(
+            obj.teaching_department
+        )
 
     class Meta:
         model = CurriculumDiscipline

@@ -81,6 +81,7 @@ const ru = {
     academicSettings: 'Академические справочники',
     studyPrograms: 'Направления подготовки',
     curriculumReferences: 'Справочники учебного плана',
+    curriculumDisciplines: 'Состав учебного плана',
   },
 
   profile: {
@@ -1799,6 +1800,7 @@ const ru = {
     closedAcademicYear: 'Закрытый учебный год',
     noStudyForms: 'Для уровня выбранного направления нет настроенных форм обучения.',
     durationInfo: 'Уровень: {level}. Нормативная продолжительность: {months} мес., {semesters} семестров.',
+    openMatrix: 'Состав учебного плана',
     statuses: {
       draft: 'Черновик',
       approved: 'Утверждён',
@@ -1846,6 +1848,207 @@ const ru = {
       academicYearRequired: 'Выберите учебный год начала действия',
       approvalDateRequired: 'Для утверждённого учебного плана необходимо указать дату утверждения',
       durationMissing: 'Для выбранного уровня образования и формы обучения не настроена нормативная продолжительность',
+    },
+  },
+
+  curriculumDisciplines: {
+    title:
+      'Состав учебного плана',
+
+    description:
+      'Матрица дисциплин учебного плана по семестрам.',
+
+    create:
+      'Добавить дисциплину',
+
+    createTitle:
+      'Добавление дисциплины в учебный план',
+
+    editTitle:
+      'Редактирование дисциплины учебного плана',
+
+    archive:
+      'Архивировать',
+
+    archiveTitle:
+      'Архивирование дисциплины',
+
+    archiveConfirm:
+      'Архивировать дисциплину «{discipline}» из {semester} семестра?',
+
+    archived:
+      'Дисциплина учебного плана перемещена в архив',
+
+    active:
+      'Активна',
+
+    inactive:
+      'Неактивна',
+
+    backToCurricula:
+      'К учебным планам',
+
+    invalidCurriculum:
+      'Некорректный идентификатор учебного плана.',
+
+    searchPlaceholder:
+      'Поиск по коду, названию дисциплины или кафедре...',
+
+    semesterOption:
+      '{semester} семестр — {season}',
+
+    semesterNumber:
+      '{semester} сем.',
+
+    contactHoursHint:
+      'Расчётный объём без самостоятельной работы: {hours} ч. Плановые контактные часы будут сформированы из видов нагрузки.',
+
+    seasons: {
+      autumn:
+        'Осенний',
+
+      spring:
+        'Весенний',
+    },
+
+    componentTypes: {
+      required:
+        'Обязательная',
+
+      elective:
+        'По выбору',
+
+      optional:
+        'Факультатив',
+    },
+
+    controlForms: {
+      none:
+        'Без итогового контроля',
+
+      exam:
+        'Экзамен',
+
+      credit:
+        'Зачёт',
+
+      gradedCredit:
+        'Дифференцированный зачёт',
+
+      courseWork:
+        'Курсовая работа',
+
+      courseProject:
+        'Курсовой проект',
+    },
+
+    sections: {
+      discipline:
+        'Дисциплина и семестр',
+
+      hours:
+        'Кредиты и академический объём',
+    },
+
+    summary: {
+      plan:
+        'Учебный план',
+
+      version:
+        'Версия',
+
+      semesters:
+        'Семестров',
+
+      disciplines:
+        'Записей',
+    },
+
+    filters: {
+      allSemesters:
+        'Все семестры',
+
+      allComponentTypes:
+        'Все компоненты',
+
+      allControlForms:
+        'Все формы контроля',
+
+      allStatuses:
+        'Все статусы',
+    },
+
+    fields: {
+      discipline:
+        'Дисциплина',
+
+      semester:
+        'Семестр',
+
+      department:
+        'Обеспечивающая кафедра',
+
+      componentType:
+        'Компонент',
+
+      controlForm:
+        'Форма контроля',
+
+      credits:
+        'Кредиты',
+
+      totalHours:
+        'Общий академический объём',
+
+      totalHoursShort:
+        'Всего ч.',
+
+      independentHours:
+        'Самостоятельная работа',
+
+      independentHoursShort:
+        'Самост. ч.',
+
+      plannedContactHours:
+        'Плановые контактные часы',
+
+      plannedContactHoursShort:
+        'Контакт ч.',
+
+      weeks:
+        'Учебных недель',
+
+      active:
+        'Запись активна',
+
+      status:
+        'Статус',
+
+      notes:
+        'Примечание',
+    },
+
+    validation: {
+      disciplineRequired:
+        'Выберите дисциплину',
+
+      semesterRequired:
+        'Выберите семестр',
+
+      semesterRange:
+        'Номер семестра превышает нормативную продолжительность учебного плана',
+
+      departmentRequired:
+        'Выберите обеспечивающую кафедру',
+
+      nonNegative:
+        'Значение не может быть отрицательным',
+
+      independentExceedsTotal:
+        'Самостоятельные часы не могут превышать общий академический объём',
+
+      weeks:
+        'Количество учебных недель должно быть не меньше 1',
     },
   },
 

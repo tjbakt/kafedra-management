@@ -78,6 +78,7 @@ const uz = {
     academicSettings: 'Akademik ma’lumotnomalar',
     studyPrograms: 'Ta’lim yo‘nalishlari',
     curriculumReferences: 'O‘quv rejasi ma’lumotnomalari',
+    curriculumDisciplines: 'O‘quv rejasi tarkibi',
   },
   profile: {
     profile: 'Profil',
@@ -1732,166 +1733,276 @@ const uz = {
     },
   },
   curricula: {
-  title: 'O‘quv rejalari',
-  description: 'Ta’lim yo‘nalishlari va ta’lim shakllari o‘quv rejalarining versiyalarini boshqarish.',
-  create: 'O‘quv rejasi qo‘shish',
-  createTitle: 'O‘quv rejasini yaratish',
-  editTitle: 'O‘quv rejasini tahrirlash',
+    title: 'O‘quv rejalari',
+    description: 'Ta’lim yo‘nalishlari va ta’lim shakllari o‘quv rejalarining versiyalarini boshqarish.',
+    create: 'O‘quv rejasi qo‘shish',
+    createTitle: 'O‘quv rejasini yaratish',
+    editTitle: 'O‘quv rejasini tahrirlash',
+    detailsTitle: 'O‘quv rejasi',
+    archive: 'Arxivlash',
+    archiveTitle: 'O‘quv rejasini arxivlash',
+    archiveConfirm: '«{code}» o‘quv rejasini arxivlaysizmi?',
+    archived: 'O‘quv rejasi arxivga ko‘chirildi',
+    searchPlaceholder: 'Reja kodi yoki ta’lim yo‘nalishi bo‘yicha qidirish...',
+    currentAcademicYear: 'Joriy o‘quv yili',
+    closedAcademicYear: 'Yopilgan o‘quv yili',
+    noStudyForms: 'Tanlangan yo‘nalish darajasi uchun ta’lim shakllari sozlanmagan.',
+    durationInfo: 'Daraja: {level}. Me’yoriy davomiylik: {months} oy, {semesters} semestr.',
+    openMatrix: 'O‘quv rejasi tarkibi',
+    statuses: {
+      draft: 'Qoralama',
+      approved: 'Tasdiqlangan',
+      archived: 'Eskirgan versiya',
+    },
 
-  detailsTitle:
-    'O‘quv rejasi',
+    filters: {
+      allUniversities: 'Barcha universitetlar',
+      allPrograms: 'Barcha yo‘nalishlar',
+      allStudyForms: 'Barcha ta’lim shakllari',
+      allAcademicYears: 'Barcha o‘quv yillari',
+      allStatuses: 'Barcha holatlar',
+      allActivity: 'Barcha faollik holatlari',
+    },
 
-  archive:
-    'Arxivlash',
+    sections: {
+      general: 'Asosiy ma’lumotlar',
+      approval: 'Tasdiqlash',
+      audit: 'O‘zgarishlar tarixi',
+    },
 
-  archiveTitle:
-    'O‘quv rejasini arxivlash',
+    fields: {
+      code: 'O‘quv rejasi kodi',
+      version: 'Versiya',
+      studyProgram: 'Ta’lim yo‘nalishi',
+      educationLevel: 'Ta’lim darajasi',
+      studyForm: 'Ta’lim shakli',
+      effectiveAcademicYear: 'Amal qilish boshlanadigan o‘quv yili',
+      semestersCount: 'Semestrlar soni',
+      semestersCountShort: 'Sem.',
+      disciplinesCount: 'Fanlar soni',
+      disciplinesCountShort: 'Fanlar',
+      status: 'Holat',
+      approvedAt: 'Tasdiqlangan sana',
+      approvalDocument: 'Tasdiqlash hujjati',
+      active: 'Faol',
+      notes: 'Izoh',
+      createdAt: 'Yaratilgan',
+      createdBy: 'Yaratgan',
+      updatedAt: 'O‘zgartirilgan',
+      updatedBy: 'O‘zgartirgan',
+    },
 
-  archiveConfirm:
-    '«{code}» o‘quv rejasini arxivlaysizmi?',
+    validation: {
+      codeRequired: 'O‘quv rejasi kodini kiriting',
+      version: 'Versiya raqami 1 dan kam bo‘lmasligi kerak',
+      programRequired: 'Ta’lim yo‘nalishini tanlang',
+      studyFormRequired: 'Ta’lim shaklini tanlang',
+      academicYearRequired: 'O‘quv rejasining boshlanish yilini tanlang',
+      approvalDateRequired: 'Tasdiqlangan o‘quv rejasi uchun tasdiqlash sanasi majburiy',
+      durationMissing: 'Tanlangan ta’lim darajasi va shakli uchun me’yoriy davomiylik sozlanmagan',
+    },
+  },
 
-  archived:
-    'O‘quv rejasi arxivga ko‘chirildi',
+  curriculumDisciplines: {
+    title:
+      'O‘quv rejasi tarkibi',
 
-  searchPlaceholder:
-    'Reja kodi yoki ta’lim yo‘nalishi bo‘yicha qidirish...',
+    description:
+      'Semestrlar bo‘yicha o‘quv rejasi fanlari matritsasi.',
 
-  currentAcademicYear:
-    'Joriy o‘quv yili',
+    create:
+      'Fan qo‘shish',
 
-  closedAcademicYear:
-    'Yopilgan o‘quv yili',
+    createTitle:
+      'O‘quv rejasiga fan qo‘shish',
 
-  noStudyForms:
-    'Tanlangan yo‘nalish darajasi uchun ta’lim shakllari sozlanmagan.',
+    editTitle:
+      'O‘quv rejasi fanini tahrirlash',
 
-  durationInfo:
-    'Daraja: {level}. Me’yoriy davomiylik: {months} oy, {semesters} semestr.',
+    archive:
+      'Arxivlash',
 
-  statuses: {
-    draft:
-      'Qoralama',
+    archiveTitle:
+      'Fanni arxivlash',
 
-    approved:
-      'Tasdiqlangan',
+    archiveConfirm:
+      '«{discipline}» fanini {semester}-semestrdan arxivlaysizmi?',
 
     archived:
-      'Eskirgan versiya',
-  },
-
-  filters: {
-    allUniversities:
-      'Barcha universitetlar',
-
-    allPrograms:
-      'Barcha yo‘nalishlar',
-
-    allStudyForms:
-      'Barcha ta’lim shakllari',
-
-    allAcademicYears:
-      'Barcha o‘quv yillari',
-
-    allStatuses:
-      'Barcha holatlar',
-
-    allActivity:
-      'Barcha faollik holatlari',
-  },
-
-  sections: {
-    general:
-      'Asosiy ma’lumotlar',
-
-    approval:
-      'Tasdiqlash',
-
-    audit:
-      'O‘zgarishlar tarixi',
-  },
-
-  fields: {
-    code:
-      'O‘quv rejasi kodi',
-
-    version:
-      'Versiya',
-
-    studyProgram:
-      'Ta’lim yo‘nalishi',
-
-    educationLevel:
-      'Ta’lim darajasi',
-
-    studyForm:
-      'Ta’lim shakli',
-
-    effectiveAcademicYear:
-      'Amal qilish boshlanadigan o‘quv yili',
-
-    semestersCount:
-      'Semestrlar soni',
-
-    semestersCountShort:
-      'Sem.',
-
-    disciplinesCount:
-      'Fanlar soni',
-
-    disciplinesCountShort:
-      'Fanlar',
-
-    status:
-      'Holat',
-
-    approvedAt:
-      'Tasdiqlangan sana',
-
-    approvalDocument:
-      'Tasdiqlash hujjati',
+      'O‘quv rejasi fani arxivga ko‘chirildi',
 
     active:
       'Faol',
 
-    notes:
-      'Izoh',
+    inactive:
+      'Faol emas',
 
-    createdAt:
-      'Yaratilgan',
+    backToCurricula:
+      'O‘quv rejalariga',
 
-    createdBy:
-      'Yaratgan',
+    invalidCurriculum:
+      'O‘quv rejasi identifikatori noto‘g‘ri.',
 
-    updatedAt:
-      'O‘zgartirilgan',
+    searchPlaceholder:
+      'Fan kodi, nomi yoki kafedra bo‘yicha qidirish...',
 
-    updatedBy:
-      'O‘zgartirgan',
+    semesterOption:
+      '{semester}-semestr — {season}',
+
+    semesterNumber:
+      '{semester}-sem.',
+
+    contactHoursHint:
+      'Mustaqil ishsiz hisoblangan hajm: {hours} soat. Rejadagi kontakt soatlari yuklama turlaridan shakllantiriladi.',
+
+    seasons: {
+      autumn:
+        'Kuzgi',
+
+      spring:
+        'Bahorgi',
+    },
+
+    componentTypes: {
+      required:
+        'Majburiy',
+
+      elective:
+        'Tanlov',
+
+      optional:
+        'Fakultativ',
+    },
+
+    controlForms: {
+      none:
+        'Yakuniy nazoratsiz',
+
+      exam:
+        'Imtihon',
+
+      credit:
+        'Sinov',
+
+      gradedCredit:
+        'Differensial sinov',
+
+      courseWork:
+        'Kurs ishi',
+
+      courseProject:
+        'Kurs loyihasi',
+    },
+
+    sections: {
+      discipline:
+        'Fan va semestr',
+
+      hours:
+        'Kreditlar va akademik hajm',
+    },
+
+    summary: {
+      plan:
+        'O‘quv rejasi',
+
+      version:
+        'Versiya',
+
+      semesters:
+        'Semestrlar',
+
+      disciplines:
+        'Yozuvlar',
+    },
+
+    filters: {
+      allSemesters:
+        'Barcha semestrlar',
+
+      allComponentTypes:
+        'Barcha komponentlar',
+
+      allControlForms:
+        'Barcha nazorat shakllari',
+
+      allStatuses:
+        'Barcha holatlar',
+    },
+
+    fields: {
+      discipline:
+        'Fan',
+
+      semester:
+        'Semestr',
+
+      department:
+        'Ta’minlovchi kafedra',
+
+      componentType:
+        'Komponent',
+
+      controlForm:
+        'Nazorat shakli',
+
+      credits:
+        'Kreditlar',
+
+      totalHours:
+        'Umumiy akademik hajm',
+
+      totalHoursShort:
+        'Jami soat',
+
+      independentHours:
+        'Mustaqil ish',
+
+      independentHoursShort:
+        'Mustaqil',
+
+      plannedContactHours:
+        'Rejadagi kontakt soatlari',
+
+      plannedContactHoursShort:
+        'Kontakt',
+
+      weeks:
+        'O‘quv haftalari',
+
+      active:
+        'Yozuv faol',
+
+      status:
+        'Holat',
+
+      notes:
+        'Izoh',
+    },
+
+    validation: {
+      disciplineRequired:
+        'Fanni tanlang',
+
+      semesterRequired:
+        'Semestrni tanlang',
+
+      semesterRange:
+        'Semestr raqami o‘quv rejasining me’yoriy davomiyligidan oshib ketgan',
+
+      departmentRequired:
+        'Ta’minlovchi kafedrani tanlang',
+
+      nonNegative:
+        'Qiymat manfiy bo‘lishi mumkin emas',
+
+      independentExceedsTotal:
+        'Mustaqil ish soatlari umumiy akademik hajmdan oshmasligi kerak',
+
+      weeks:
+        'O‘quv haftalari soni 1 dan kam bo‘lmasligi kerak',
+    },
   },
-
-  validation: {
-    codeRequired:
-      'O‘quv rejasi kodini kiriting',
-
-    version:
-      'Versiya raqami 1 dan kam bo‘lmasligi kerak',
-
-    programRequired:
-      'Ta’lim yo‘nalishini tanlang',
-
-    studyFormRequired:
-      'Ta’lim shaklini tanlang',
-
-    academicYearRequired:
-      'O‘quv rejasining boshlanish yilini tanlang',
-
-    approvalDateRequired:
-      'Tasdiqlangan o‘quv rejasi uchun tasdiqlash sanasi majburiy',
-
-    durationMissing:
-      'Tanlangan ta’lim darajasi va shakli uchun me’yoriy davomiylik sozlanmagan',
-  },
-},
 
 }
 
