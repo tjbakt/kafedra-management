@@ -124,6 +124,26 @@ const moduleRoutes: RouteRecordRaw[] = [
     },
   },
   {
+    path: 'curricula',
+    name: 'curricula',
+    component: () =>
+      import(
+        '@/modules/curricula/CurriculaView.vue'
+        ),
+    meta: {
+      requiresAuth: true,
+      requiredPermissions: [
+        'curriculum.view_curriculum',
+      ],
+      titleKey: 'navigation.curricula',
+      icon: 'pi pi-list-check',
+      breadcrumbKeys: [
+        'navigation.curriculumReferences',
+        'navigation.curricula',
+      ],
+    },
+  },
+  {
     path: 'workload',
     name: 'workload',
     component: () =>

@@ -418,27 +418,19 @@ class CurriculumDisciplineSerializer(
 
         return attrs
 
-class CurriculumSerializer(AuditFieldsSerializer):
+class CurriculumSerializer(LocalizedNameMixin, AuditFieldsSerializer):
     study_program_code = serializers.CharField(
         source="study_program.code",
-        read_only=True,
-    )
-    study_program_name = serializers.CharField(
-        source="study_program.name_ru",
         read_only=True,
     )
     education_level = serializers.IntegerField(
         source="study_program.education_level_id",
         read_only=True,
     )
-    education_level_name = serializers.CharField(
-        source="study_program.education_level.name_ru",
-        read_only=True,
-    )
-    study_form_name = serializers.CharField(
-        source="study_form.name_ru",
-        read_only=True,
-    )
+    study_program_name = serializers.SerializerMethodField()
+    education_level_name = serializers.SerializerMethodField()
+    study_form_name = serializers.SerializerMethodField()
+
     effective_academic_year_name = serializers.CharField(
         source="effective_academic_year.name",
         read_only=True,
@@ -455,6 +447,23 @@ class CurriculumSerializer(AuditFieldsSerializer):
         read_only=True,
     )
 
+    @extend_schema_field(serializers.CharField())
+    def get_study_program_name(self, obj) -> str:
+        return self.get_display_name(
+            obj.study_program
+        )
+
+    @extend_schema_field(serializers.CharField())
+    def get_education_level_name(self, obj) -> str:
+        return self.get_display_name(
+            obj.study_program.education_level
+        )
+
+    @extend_schema_field(serializers.CharField())
+    def get_study_form_name(self, obj) -> str:
+        return self.get_display_name(
+            obj.study_form
+        )
     class Meta:
         model = Curriculum
         fields = (

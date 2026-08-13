@@ -8,7 +8,6 @@ const uz = {
     allRightsReserved: 'Barcha huquqlar himoyalangan.',
     systemWorking: 'Tizim ishlamoqda',
   },
-
   common: {
     create: 'Yaratish',
     add: 'Qo‘shish',
@@ -50,7 +49,6 @@ const uz = {
     openMenu: 'Menyuni ochish yoki yig‘ish',
     openNotifications: 'Bildirishnomalarni ochish',
   },
-
   languages: {
     ru: 'Русский',
     uz: 'O‘zbekcha',
@@ -59,7 +57,6 @@ const uz = {
     saved: 'Asosiy interfeys tili saqlandi',
     saveError: 'Tanlangan tilni saqlab bo‘lmadi',
   },
-
   navigation: {
     dashboard: 'Bosh sahifa',
     organizationalStructure: 'Tashkiliy tuzilma',
@@ -82,7 +79,6 @@ const uz = {
     studyPrograms: 'Ta’lim yo‘nalishlari',
     curriculumReferences: 'O‘quv rejasi ma’lumotnomalari',
   },
-
   profile: {
     profile: 'Profil',
     settings: 'Sozlamalar',
@@ -90,11 +86,9 @@ const uz = {
     administrator: 'Administrator',
     systemAdministrator: 'Tizim administratori',
   },
-
   notifications: {
     title: 'Bildirishnomalar',
-    unread:
-      'O‘qilmagan bildirishnoma yo‘q | {count} ta o‘qilmagan bildirishnoma',
+    unread: 'O‘qilmagan bildirishnoma yo‘q | {count} ta o‘qilmagan bildirishnoma',
     markAllAsRead: 'Barchasini o‘qilgan deb belgilash',
     empty: 'Bildirishnomalar mavjud emas',
     clear: 'Tozalash',
@@ -108,42 +102,33 @@ const uz = {
     minutesAgo: '{count} daqiqa oldin',
     hourAgo: '1 soat oldin',
   },
-
   dashboard: {
     title: 'Boshqaruv paneli',
-    description:
-      'O‘quv jarayoni va yuklama taqsimoti holati haqida umumiy ma’lumot.',
-
+    description: 'O‘quv jarayoni va yuklama taqsimoti holati haqida umumiy ma’lumot.',
     teachers: 'O‘qituvchilar',
     disciplines: 'Fanlar',
     groups: 'O‘quv guruhlari',
     totalWorkload: 'Umumiy yuklama',
     hours: 'soat',
-
     teachersChange: 'Oy davomida +3',
     activePlans: '12 ta faol reja',
     studentsCount: '824 talaba',
     currentYear: 'Joriy o‘quv yili uchun',
-
     workloadDistribution: 'O‘quv yuklamasini taqsimlash',
-    workloadDistributionDescription:
-      'Joriy o‘quv yili yuklamasini tayyorlash holati',
+    workloadDistributionDescription: 'Joriy o‘quv yili yuklamasini tayyorlash holati',
     openModule: 'Modulni ochish',
-
     distributed: 'Taqsimlangan',
     checked: 'Tekshirilgan',
     approved: 'Tasdiqlangan',
     inProgress: 'Bajarilmoqda',
     requiresCheck: 'Tekshirish kerak',
     processing: 'Jarayonda',
-
     quickActions: 'Tezkor amallar',
     quickActionsDescription: 'Eng ko‘p foydalaniladigan bo‘limlar',
     manageEmployees: 'Xodimlarni boshqarish',
     viewAndEdit: 'Ko‘rish va tahrirlash',
     distributeHours: 'Soatlarni taqsimlash',
     pdfAndExcel: 'PDF va Excel',
-
     showToast: 'Toast ko‘rsatish',
     checkDialog: 'Dialogni tekshirish',
     interfaceWorks: 'Interfeys ishlamoqda',
@@ -151,14 +136,11 @@ const uz = {
     confirmDemoAction: 'Namoyish amalini bajarishni tasdiqlaysizmi?',
     actionConfirmed: 'Amal tasdiqlandi',
   },
-
   auth: {
     loginTitle: 'Tizimga kirish',
-    loginDescription:
-      'Hisob ma’lumotlaringizni kiriting.',
+    loginDescription: 'Hisob ma’lumotlaringizni kiriting.',
     username: 'Foydalanuvchi nomi',
-    usernamePlaceholder:
-      'Foydalanuvchi nomini kiriting',
+    usernamePlaceholder: 'Foydalanuvchi nomini kiriting',
     password: 'Parol',
     passwordPlaceholder: 'Parolni kiriting',
     rememberMe: 'Meni eslab qolish',
@@ -168,120 +150,72 @@ const uz = {
     loginSuccess: 'Kirish bajarildi',
     welcome: 'Xush kelibsiz, {name}!',
     loginFailed: 'Tizimga kirib bo‘lmadi',
-    invalidCredentials:
-      'Foydalanuvchi nomi yoki parol noto‘g‘ri.',
+    invalidCredentials: 'Foydalanuvchi nomi yoki parol noto‘g‘ri.',
     sessionExpired: 'Sessiya yakunlandi',
-    sessionExpiredDescription:
-      'Tizimga qayta kiring.',
+    sessionExpiredDescription: 'Tizimga qayta kiring.',
     logoutSuccess: 'Chiqish bajarildi',
-    logoutSuccessDescription:
-      'Siz tizimdan muvaffaqiyatli chiqdingiz.',
-    usernameRequired:
-      'Foydalanuvchi nomini kiriting',
+    logoutSuccessDescription: 'Siz tizimdan muvaffaqiyatli chiqdingiz.',
+    usernameRequired: 'Foydalanuvchi nomini kiriting',
     passwordRequired: 'Parolni kiriting',
-    passwordMinLength:
-      'Parol kamida 4 ta belgidan iborat bo‘lishi kerak',
+    passwordMinLength: 'Parol kamida 4 ta belgidan iborat bo‘lishi kerak',
     passwordRecovery: 'Parolni tiklash',
-    passwordRecoveryLater:
-      'Funksiya keyinroq ulanadi.',
+    passwordRecoveryLater: 'Funksiya keyinroq ulanadi.',
     changePassword: 'Parolni o‘zgartirish',
-    passwordChangeRequired:
-      'Vaqtinchalik parolni o‘zgartirish kerak.',
+    passwordChangeRequired: 'Vaqtinchalik parolni o‘zgartirish kerak.',
     currentPassword: 'Joriy parol',
     newPassword: 'Yangi parol',
     confirmPassword: 'Parolni tasdiqlash',
   },
-
   modules: {
     prepared: 'Modul tayyorlandi',
-    preparedDescription:
-      'Marshrut, layout va asosiy komponentlar ulandi. CRUD interfeysi tegishli bosqichda amalga oshiriladi.',
+    preparedDescription: 'Marshrut, layout va asosiy komponentlar ulandi. CRUD interfeysi tegishli bosqichda amalga oshiriladi.',
     demoMode: 'Namoyish rejimi',
-    createLater:
-      'Yaratish formasi CRUD bosqichida qo‘shiladi.',
+    createLater: 'Yaratish formasi CRUD bosqichida qo‘shiladi.',
     returnHome: 'Bosh sahifaga qaytish',
-
-    departmentsDescription:
-      'Kafedralar va tashkiliy tuzilmani boshqarish.',
-    teachersDescription:
-      'O‘qituvchilar, stavkalar, ilmiy darajalar va unvonlar ma’lumotnomasi.',
-    studentsDescription:
-      'Akademik guruhlar va talabalar kontingentini boshqarish.',
+    departmentsDescription: 'Kafedralar va tashkiliy tuzilmani boshqarish.',
+    teachersDescription: 'O‘qituvchilar, stavkalar, ilmiy darajalar va unvonlar ma’lumotnomasi.',
+    studentsDescription: 'Akademik guruhlar va talabalar kontingentini boshqarish.',
     disciplinesDescription: 'O‘quv fanlari ma’lumotnomasi.',
-    curriculaDescription:
-      'Ta’lim dasturlari o‘quv rejalarini shakllantirish va yuritish.',
-    workloadDescription:
-      'O‘quv yuklamasini hisoblash va o‘qituvchilar o‘rtasida taqsimlash.',
-    schedulesDescription:
-      'Dars jadvalini rejalashtirish va ko‘rish.',
-    reportsDescription:
-      'Tahliliy hisobotlar, PDF va Excel hujjatlarini shakllantirish.',
-    settingsDescription:
-      'Foydalanuvchilar, rollar, huquqlar va tizim parametrlarini boshqarish.',
+    curriculaDescription: 'Ta’lim dasturlari o‘quv rejalarini shakllantirish va yuritish.',
+    workloadDescription: 'O‘quv yuklamasini hisoblash va o‘qituvchilar o‘rtasida taqsimlash.',
+    schedulesDescription: 'Dars jadvalini rejalashtirish va ko‘rish.',
+    reportsDescription: 'Tahliliy hisobotlar, PDF va Excel hujjatlarini shakllantirish.',
+    settingsDescription: 'Foydalanuvchilar, rollar, huquqlar va tizim parametrlarini boshqarish.',
   },
-
   errors: {
     notFoundTitle: 'Sahifa topilmadi',
-    notFoundDescription:
-      'So‘ralgan sahifa mavjud emas, ko‘chirilgan yoki o‘chirilgan.',
+    notFoundDescription: 'So‘ralgan sahifa mavjud emas, ko‘chirilgan yoki o‘chirilgan.',
     unexpected: 'Kutilmagan xatolik yuz berdi',
     serverUnavailable: 'Serverga ulanib bo‘lmadi',
     timeout: 'Server javobini kutish vaqti tugadi',
     forbiddenTitle: 'Kirish taqiqlangan',
-
-    forbiddenDescription:
-      'Sizning hisobingiz ushbu bo‘limni ko‘rish uchun yetarli huquqlarga ega emas.',
+    forbiddenDescription: 'Sizning hisobingiz ushbu bo‘limni ko‘rish uchun yetarli huquqlarga ega emas.',
   },
-
   confirm: {
     deleteHeader: 'O‘chirishni tasdiqlash',
-    deleteMessage:
-      'Tanlangan yozuvni o‘chirishni xohlaysizmi? Bu amalni bekor qilib bo‘lmaydi.',
+    deleteMessage: 'Tanlangan yozuvni o‘chirishni xohlaysizmi? Bu amalni bekor qilib bo‘lmaydi.',
     deleteAccept: 'O‘chirish',
     actionHeader: 'Amalni tasdiqlash',
   },
-
   emptyState: {
     title: 'Ma’lumotlar mavjud emas',
     description: 'Ko‘rsatish uchun ma’lumotlar mavjud emas.',
   },
-
   access: {
-    debugTitle:
-      'Kirish huquqlari',
-
-    debugDescription:
-      'Joriy foydalanuvchining guruhlari va ruxsatlari haqidagi diagnostika ma’lumotlari.',
-
-    userInformation:
-      'Foydalanuvchi',
-
-    groups:
-      'Guruhlar',
-
-    permissions:
-      'Ruxsatlar',
-
-    noGroups:
-      'Guruhlar mavjud emas',
-
-    noGroupsDescription:
-      'Foydalanuvchi hech qanday guruhga kiritilmagan.',
-
-    noPermissions:
-      'Ruxsatlar mavjud emas',
-
-    noPermissionsDescription:
-      'Foydalanuvchi uchun alohida ruxsatlar qaytarilmadi.',
+    debugTitle: 'Kirish huquqlari',
+    debugDescription: 'Joriy foydalanuvchining guruhlari va ruxsatlari haqidagi diagnostika ma’lumotlari.',
+    userInformation: 'Foydalanuvchi',
+    groups: 'Guruhlar',
+    permissions: 'Ruxsatlar',
+    noGroups: 'Guruhlar mavjud emas',
+    noGroupsDescription: 'Foydalanuvchi hech qanday guruhga kiritilmagan.',
+    noPermissions: 'Ruxsatlar mavjud emas',
+    noPermissionsDescription: 'Foydalanuvchi uchun alohida ruxsatlar qaytarilmadi.',
   },
-
   crud: {
-    emptyTitle:
-      'Yozuvlar topilmadi',
-
+    emptyTitle: 'Yozuvlar topilmadi',
     emptyDescription:
       'Berilgan shartlar bo‘yicha yozuvlar mavjud emas.',
-
     paginationReport:
       '{first}–{last} / {totalRecords} ta ko‘rsatildi',
 
@@ -1789,17 +1723,175 @@ const uz = {
         graduationSupervision:
           'Bitiruv malakaviy ishiga rahbarlik',
 
-        graduationDefense:
-          'Bitiruv malakaviy ishini himoya qilish',
+        graduationDefense: 'Bitiruv malakaviy ishini himoya qilish',
 
-        rating:
-          'Reyting',
+        rating: 'Reyting',
 
-        other:
-          'Boshqa',
+        other: 'Boshqa',
       },
     },
   },
+  curricula: {
+  title: 'O‘quv rejalari',
+  description: 'Ta’lim yo‘nalishlari va ta’lim shakllari o‘quv rejalarining versiyalarini boshqarish.',
+  create: 'O‘quv rejasi qo‘shish',
+  createTitle: 'O‘quv rejasini yaratish',
+  editTitle: 'O‘quv rejasini tahrirlash',
+
+  detailsTitle:
+    'O‘quv rejasi',
+
+  archive:
+    'Arxivlash',
+
+  archiveTitle:
+    'O‘quv rejasini arxivlash',
+
+  archiveConfirm:
+    '«{code}» o‘quv rejasini arxivlaysizmi?',
+
+  archived:
+    'O‘quv rejasi arxivga ko‘chirildi',
+
+  searchPlaceholder:
+    'Reja kodi yoki ta’lim yo‘nalishi bo‘yicha qidirish...',
+
+  currentAcademicYear:
+    'Joriy o‘quv yili',
+
+  closedAcademicYear:
+    'Yopilgan o‘quv yili',
+
+  noStudyForms:
+    'Tanlangan yo‘nalish darajasi uchun ta’lim shakllari sozlanmagan.',
+
+  durationInfo:
+    'Daraja: {level}. Me’yoriy davomiylik: {months} oy, {semesters} semestr.',
+
+  statuses: {
+    draft:
+      'Qoralama',
+
+    approved:
+      'Tasdiqlangan',
+
+    archived:
+      'Eskirgan versiya',
+  },
+
+  filters: {
+    allUniversities:
+      'Barcha universitetlar',
+
+    allPrograms:
+      'Barcha yo‘nalishlar',
+
+    allStudyForms:
+      'Barcha ta’lim shakllari',
+
+    allAcademicYears:
+      'Barcha o‘quv yillari',
+
+    allStatuses:
+      'Barcha holatlar',
+
+    allActivity:
+      'Barcha faollik holatlari',
+  },
+
+  sections: {
+    general:
+      'Asosiy ma’lumotlar',
+
+    approval:
+      'Tasdiqlash',
+
+    audit:
+      'O‘zgarishlar tarixi',
+  },
+
+  fields: {
+    code:
+      'O‘quv rejasi kodi',
+
+    version:
+      'Versiya',
+
+    studyProgram:
+      'Ta’lim yo‘nalishi',
+
+    educationLevel:
+      'Ta’lim darajasi',
+
+    studyForm:
+      'Ta’lim shakli',
+
+    effectiveAcademicYear:
+      'Amal qilish boshlanadigan o‘quv yili',
+
+    semestersCount:
+      'Semestrlar soni',
+
+    semestersCountShort:
+      'Sem.',
+
+    disciplinesCount:
+      'Fanlar soni',
+
+    disciplinesCountShort:
+      'Fanlar',
+
+    status:
+      'Holat',
+
+    approvedAt:
+      'Tasdiqlangan sana',
+
+    approvalDocument:
+      'Tasdiqlash hujjati',
+
+    active:
+      'Faol',
+
+    notes:
+      'Izoh',
+
+    createdAt:
+      'Yaratilgan',
+
+    createdBy:
+      'Yaratgan',
+
+    updatedAt:
+      'O‘zgartirilgan',
+
+    updatedBy:
+      'O‘zgartirgan',
+  },
+
+  validation: {
+    codeRequired:
+      'O‘quv rejasi kodini kiriting',
+
+    version:
+      'Versiya raqami 1 dan kam bo‘lmasligi kerak',
+
+    programRequired:
+      'Ta’lim yo‘nalishini tanlang',
+
+    studyFormRequired:
+      'Ta’lim shaklini tanlang',
+
+    academicYearRequired:
+      'O‘quv rejasining boshlanish yilini tanlang',
+
+    approvalDateRequired:
+      'Tasdiqlangan o‘quv rejasi uchun tasdiqlash sanasi majburiy',
+
+    durationMissing:
+      'Tanlangan ta’lim darajasi va shakli uchun me’yoriy davomiylik sozlanmagan',
+  },
+},
 
 }
 
