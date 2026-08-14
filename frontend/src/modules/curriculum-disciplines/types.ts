@@ -1,3 +1,5 @@
+import type { CurriculumWorkload, } from './workload-types'
+
 export type CurriculumComponentType =
   | 'required'
   | 'elective'
@@ -15,29 +17,31 @@ export type SemesterSeason =
   | 'autumn'
   | 'spring'
 
-export interface NestedCurriculumWorkload
-  extends Record<string, unknown> {
-  id: number
+export type NestedCurriculumWorkload = CurriculumWorkload
 
-  curriculum_discipline: number
-
-  workload_type: number
-  workload_type_name: string
-
-  calculation_mode: string
-  calculation_mode_name: string
-
-  base_hours: string
-
-  students_per_unit:
-    number | null
-
-  is_active: boolean
-
-  notes: string
-
-  is_archived: boolean
-}
+// export interface NestedCurriculumWorkload
+//   extends Record<string, unknown> {
+//   id: number
+//
+//   curriculum_discipline: number
+//
+//   workload_type: number
+//   workload_type_name: string
+//
+//   calculation_mode: string
+//   calculation_mode_name: string
+//
+//   base_hours: string
+//
+//   students_per_unit:
+//     number | null
+//
+//   is_active: boolean
+//
+//   notes: string
+//
+//   is_archived: boolean
+// }
 
 export interface CurriculumDiscipline
   extends Record<string, unknown> {
@@ -82,8 +86,7 @@ export interface CurriculumDiscipline
 
   notes: string
 
-  workload_items:
-    NestedCurriculumWorkload[]
+  workload_items: NestedCurriculumWorkload[]
 
   created_at: string
   updated_at: string

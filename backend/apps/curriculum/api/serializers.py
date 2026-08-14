@@ -149,7 +149,7 @@ class WorkloadTypeSerializer(
             "archived_by",
         )
 
-class CurriculumWorkloadSerializer(AuditFieldsSerializer):
+class CurriculumWorkloadSerializer(LocalizedNameMixin, AuditFieldsSerializer):
     calculation_mode = serializers.ChoiceField(
         choices=(
             WorkloadType
@@ -158,10 +158,7 @@ class CurriculumWorkloadSerializer(AuditFieldsSerializer):
         ),
         required=False,
     )
-    workload_type_name = serializers.CharField(
-        source="workload_type.name_ru",
-        read_only=True,
-    )
+    workload_type_name = serializers.SerializerMethodField()
     calculation_mode_name = serializers.CharField(
         source="get_calculation_mode_display",
         read_only=True,
@@ -203,6 +200,13 @@ class CurriculumWorkloadSerializer(AuditFieldsSerializer):
             "archived_at",
             "archived_by",
         )
+
+    @extend_schema_field(serializers.CharField())
+    def get_workload_type_name(self, obj) -> str:
+        if not obj.workload_type:
+            return ""
+
+        return self.get_display_name(obj.workload_type)
 
     def validate(self, attrs):
         instance = self.instance

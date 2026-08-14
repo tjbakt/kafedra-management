@@ -2046,10 +2046,97 @@ const ru = {
 
       independentExceedsTotal:
         'Самостоятельные часы не могут превышать общий академический объём',
-
-      weeks:
-        'Количество учебных недель должно быть не меньше 1',
+      weeks: 'Количество учебных недель должно быть не меньше 1',
     },
+    workloads: 'Виды нагрузки',
+  },
+
+  curriculumWorkloads: {
+    title:
+      'Виды нагрузки',
+
+    create:
+      'Добавить вид нагрузки',
+
+    createTitle:
+      'Добавление вида нагрузки',
+
+    editTitle:
+      'Редактирование вида нагрузки',
+
+    archive:
+      'Архивировать',
+
+    disciplineInfo:
+      '{semester} семестр · {department}',
+
+    empty:
+      'Для дисциплины виды нагрузки ещё не заданы.',
+
+    loadError:
+      'Не удалось загрузить виды нагрузки.',
+
+    active:
+      'Активна',
+
+    inactive:
+      'Неактивна',
+
+    total:
+      'Всего базовых часов:',
+
+    archiveTitle:
+      'Архивирование вида нагрузки',
+
+    archiveConfirm:
+      'Архивировать вид нагрузки «{workload}»?',
+
+    archived:
+      'Вид нагрузки архивирован.',
+
+    fields: {
+      workloadType:
+        'Вид учебной работы',
+
+      calculationMode:
+        'Способ расчёта',
+
+      baseHours:
+        'Базовые часы',
+
+      studentsPerUnit:
+        'Студентов на расчётную единицу',
+
+      studentsPerUnitShort:
+        'Студентов',
+
+      notes:
+        'Примечание',
+    },
+
+    calculationModes: {
+      fixed:
+        'Фиксированные часы',
+
+      perGroup:
+        'На учебную группу',
+
+      perSubgroup:
+        'На подгруппу',
+
+      perStudent:
+        'На одного студента',
+    },
+
+    validation: {
+      workloadTypeRequired:
+        'Выберите вид учебной работы.',
+
+      baseHoursNonNegative:
+        'Количество часов не может быть отрицательным.',
+      studentsPerUnitRequired: 'Укажите количество студентов на расчётную единицу.',
+    },
+    activeField: 'Вид нагрузки активен',
   },
 
 };

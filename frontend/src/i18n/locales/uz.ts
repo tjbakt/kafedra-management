@@ -1996,12 +1996,98 @@ const uz = {
       nonNegative:
         'Qiymat manfiy bo‘lishi mumkin emas',
 
-      independentExceedsTotal:
-        'Mustaqil ish soatlari umumiy akademik hajmdan oshmasligi kerak',
-
-      weeks:
-        'O‘quv haftalari soni 1 dan kam bo‘lmasligi kerak',
+      independentExceedsTotal: 'Mustaqil ish soatlari umumiy akademik hajmdan oshmasligi kerak',
+      weeks: 'O‘quv haftalari soni 1 dan kam bo‘lmasligi kerak',
     },
+    workloads: 'Yuklama turlari',
+  },
+
+  curriculumWorkloads: {
+    title:
+      'Yuklama turlari',
+
+    create:
+      'Yuklama turini qo‘shish',
+
+    createTitle:
+      'Yuklama turini qo‘shish',
+
+    editTitle:
+      'Yuklama turini tahrirlash',
+
+    archive:
+      'Arxivlash',
+
+    disciplineInfo:
+      '{semester}-semestr · {department}',
+
+    empty:
+      'Fan uchun yuklama turlari hali belgilanmagan.',
+
+    loadError:
+      'Yuklama turlarini yuklab bo‘lmadi.',
+
+    active:
+      'Faol',
+
+    inactive:
+      'Faol emas',
+
+    total:
+      'Jami asosiy soatlar:',
+
+    archiveTitle:
+      'Yuklama turini arxivlash',
+
+    archiveConfirm:
+      '«{workload}» yuklama turini arxivlaysizmi?',
+
+    archived:
+      'Yuklama turi arxivlandi.',
+
+    fields: {
+      workloadType:
+        'O‘quv ishi turi',
+
+      calculationMode:
+        'Hisoblash usuli',
+
+      baseHours:
+        'Asosiy soatlar',
+
+      studentsPerUnit:
+        'Hisoblash birligiga talabalar soni',
+
+      studentsPerUnitShort:
+        'Talabalar',
+
+      notes:
+        'Izoh',
+    },
+
+    calculationModes: {
+      fixed:
+        'Belgilangan soatlar',
+
+      perGroup:
+        'O‘quv guruhi bo‘yicha',
+
+      perSubgroup:
+        'Kichik guruh bo‘yicha',
+
+      perStudent:
+        'Bir talaba bo‘yicha',
+    },
+
+    validation: {
+      workloadTypeRequired:
+        'O‘quv ishi turini tanlang.',
+
+      baseHoursNonNegative:
+        'Soatlar soni manfiy bo‘lishi mumkin emas.',
+      studentsPerUnitRequired: 'Hisoblash birligiga talabalar sonini kiriting.',
+    },
+    activeField: 'Yuklama turi faol',
   },
 
 }
