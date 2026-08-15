@@ -86,51 +86,52 @@ class TeachingStreamFilter(filters.FilterSet):
     academic_year = filters.NumberFilter(
         field_name="academic_year_id",
     )
+
     academic_semester = filters.NumberFilter(
         field_name="academic_semester_id",
     )
+
     curriculum = filters.NumberFilter(
+        field_name="curriculum_id",
+    )
+
+    study_program = filters.NumberFilter(
         field_name=(
-            "curriculum_discipline__curriculum_id"
+            "curriculum__study_program_id"
         ),
     )
-    curriculum_discipline = filters.NumberFilter(
-        field_name="curriculum_discipline_id",
-    )
-    discipline = filters.NumberFilter(
+
+    study_form = filters.NumberFilter(
         field_name=(
-            "curriculum_discipline__discipline_id"
+            "curriculum__study_form_id"
         ),
     )
-    workload_type = filters.NumberFilter(
-        field_name=(
-            "curriculum_workload__workload_type_id"
-        ),
-    )
-    teaching_department = filters.NumberFilter(
-        field_name="teaching_department_id",
-    )
+
+    semester_number = filters.NumberFilter()
+
     student_group = filters.NumberFilter(
         field_name=(
             "stream_groups__group_semester__"
             "group_curriculum__student_group_id"
         ),
     )
+
     status = filters.ChoiceFilter(
         choices=TeachingStream.Status.choices,
     )
+
     is_active = filters.BooleanFilter()
 
     class Meta:
         model = TeachingStream
+
         fields = (
             "academic_year",
             "academic_semester",
             "curriculum",
-            "curriculum_discipline",
-            "discipline",
-            "workload_type",
-            "teaching_department",
+            "study_program",
+            "study_form",
+            "semester_number",
             "student_group",
             "status",
             "is_active",
@@ -174,9 +175,19 @@ class PlannedWorkloadFilter(filters.FilterSet):
     )
     discipline = filters.NumberFilter(
         field_name=(
-            "teaching_stream__curriculum_discipline__"
+            "curriculum_workload__"
+            "curriculum_discipline__"
             "discipline_id"
         ),
+    )
+    curriculum = filters.NumberFilter(
+        field_name=(
+            "teaching_stream__curriculum_id"
+        ),
+    )
+
+    teaching_stream = filters.NumberFilter(
+        field_name="teaching_stream_id",
     )
     workload_type = filters.NumberFilter(
         field_name=(
@@ -190,6 +201,8 @@ class PlannedWorkloadFilter(filters.FilterSet):
     class Meta:
         model = PlannedWorkload
         fields = (
+            "teaching_stream",
+            "curriculum",
             "academic_year",
             "academic_semester",
             "teaching_department",

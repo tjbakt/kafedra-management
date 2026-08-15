@@ -25,6 +25,7 @@ from tests.factories import (
     TeachingStreamGroupFactory,
     UserFactory,
     WorkloadTypeFactory,
+    CurriculumFactory
 )
 
 
@@ -131,12 +132,7 @@ class TeachingStreamApiTests(
     TeachingApiBase
 ):
     def test_create_stream(self):
-        discipline = (
-            CurriculumDisciplineFactory()
-        )
-        workload = CurriculumWorkloadFactory(
-            curriculum_discipline=discipline,
-        )
+        curriculum = CurriculumFactory()
         year = AcademicYearFactory()
         semester = AcademicSemesterFactory(
             academic_year=year,
@@ -147,16 +143,8 @@ class TeachingStreamApiTests(
             {
                 "academic_year": year.pk,
                 "academic_semester": semester.pk,
-                "curriculum_discipline": (
-                    discipline.pk
-                ),
-                "curriculum_workload": (
-                    workload.pk
-                ),
-                "teaching_department": (
-                    discipline
-                    .teaching_department_id
-                ),
+                "curriculum": curriculum.pk,
+                "semester_number": 1,
                 "code": " stream-api ",
                 "name": "API поток",
                 "is_active": True,
@@ -175,33 +163,24 @@ class TeachingStreamApiTests(
 
     def test_calculate_stream(self):
         workload_type = WorkloadTypeFactory(
-            calculation_mode=(
-                WorkloadType
-                .CalculationMode
-                .PER_GROUP
-            ),
+            calculation_mode=WorkloadType.CalculationMode.PER_GROUP,
         )
-        workload = CurriculumWorkloadFactory(
+        curriculum = CurriculumFactory()
+        discipline = CurriculumDisciplineFactory(
+            curriculum=curriculum,
+            semester_number=1,
+        )
+        CurriculumWorkloadFactory(
+            curriculum_discipline=discipline,
             workload_type=workload_type,
-            calculation_mode=(
-                WorkloadType
-                .CalculationMode
-                .PER_GROUP
-            ),
+            calculation_mode=WorkloadType.CalculationMode.PER_GROUP,
             base_hours=Decimal("30.00"),
         )
-        stream = TeachingStreamFactory(
-            curriculum_discipline=(
-                workload.curriculum_discipline
-            ),
-            curriculum_workload=workload,
-            teaching_department=(
-                workload
-                .curriculum_discipline
-                .teaching_department
-            ),
-        )
 
+        stream = TeachingStreamFactory(
+            curriculum=curriculum,
+            semester_number=1,
+        )
         TeachingStreamGroupFactory.create_batch(
             2,
             teaching_stream=stream,
@@ -220,13 +199,59 @@ class TeachingStreamApiTests(
             response.status_code,
             status.HTTP_200_OK,
         )
+        # если API отдаёт список / сумму — подстройте ключ под ваш view
+        # пример для total_hours одного planned workload:
+        data = response.data.get("data", response.data)
+        if isinstance(data, list):
+            total = sum(
+                Decimal(item["total_hours"]) for item in data
+            )
+        else:
+            total = Decimal(data["total_hours"])
+
+        self.assertEqual(total, Decimal("60.00"))
+
+    def test_calculate_all(self):
+        workload_type = WorkloadTypeFactory(
+            calculation_mode=WorkloadType.CalculationMode.PER_GROUP,
+        )
+        curriculum = CurriculumFactory()
+        discipline = CurriculumDisciplineFactory(
+            curriculum=curriculum,
+            semester_number=1,
+        )
+        CurriculumWorkloadFactory(
+            curriculum_discipline=discipline,
+            workload_type=workload_type,
+            calculation_mode=WorkloadType.CalculationMode.PER_GROUP,
+            base_hours=Decimal("30.00"),
+        )
+
+        valid = TeachingStreamFactory(
+            curriculum=curriculum,
+            semester_number=1,
+        )
+        TeachingStreamGroupFactory(teaching_stream=valid)
+
+        TeachingStreamFactory()  # без групп / workload → ошибка
+
+        response = self.client.post(
+            reverse("teaching-stream-calculate-all"),
+            {},
+            format="json",
+        )
+
         self.assertEqual(
-            Decimal(
-                response.data["data"][
-                    "total_hours"
-                ]
-            ),
-            Decimal("60.00"),
+            response.status_code,
+            status.HTTP_200_OK,
+        )
+        self.assertGreaterEqual(
+            response.data["calculated_count"],
+            1,
+        )
+        self.assertGreaterEqual(
+            response.data["errors_count"],
+            1,
         )
 
     def test_calculate_without_groups_rejected(
@@ -298,12 +323,8 @@ class PlannedWorkloadApiTests(
             total_hours=Decimal("30.00"),
         )
         PlannedWorkloadFactory(
-            teaching_stream=(
-                TeachingStreamFactory(
-                    teaching_department=(
-                        first.teaching_department
-                    ),
-                )
+            teaching_department=(
+                first.teaching_department
             ),
             total_hours=Decimal("20.00"),
         )

@@ -175,15 +175,18 @@ const moduleRoutes: RouteRecordRaw[] = [
     path: 'workload',
     name: 'workload',
     component: () =>
-      import('@/views/ModulePlaceholderView.vue'),
+      import('@/modules/teaching-workload/TeachingWorkloadView.vue'),
     meta: {
       requiresAuth: true,
-      titleKey: 'navigation.workload',
+      requiredPermissions: [
+        'teaching.view_teachingstream',
+      ],
+      titleKey: 'navigation.teachingWorkload',
       descriptionKey:
         'modules.workloadDescription',
       icon: 'pi pi-chart-bar',
       breadcrumbKeys: [
-        'navigation.workload',
+        'navigation.teachingWorkload',
       ],
     },
   },

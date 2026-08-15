@@ -102,17 +102,17 @@ class TeachingStreamAdmin(
     list_display = (
         "code",
         "name",
+        "curriculum",
+        "semester_number",
         "academic_year",
         "academic_semester",
-        "workload_type",
-        "teaching_department",
         "status",
     )
     list_filter = (
         "academic_year",
         "academic_semester",
-        "teaching_department",
-        "curriculum_workload__workload_type",
+        "curriculum",
+        "semester_number",
         "status",
         "is_active",
         "is_archived",
@@ -120,14 +120,14 @@ class TeachingStreamAdmin(
     search_fields = (
         "code",
         "name",
-        "curriculum_discipline__discipline__name_ru",
+        "curriculum__code",
+        "curriculum__study_program__name_ru",
+        "curriculum__study_program__name_uz",
     )
     autocomplete_fields = (
         "academic_year",
         "academic_semester",
-        "curriculum_discipline",
-        "curriculum_workload",
-        "teaching_department",
+        "curriculum",
     )
     inlines = (TeachingStreamGroupInline,)
 
@@ -174,8 +174,12 @@ class PlannedWorkloadAdmin(
     search_fields = (
         "teaching_stream__code",
         "teaching_stream__name",
-        "teaching_stream__curriculum_discipline__"
+        "curriculum_workload__"
+        "curriculum_discipline__"
         "discipline__name_ru",
+        "curriculum_workload__"
+        "curriculum_discipline__"
+        "discipline__name_uz",
     )
     readonly_fields = (
         *ArchiveAdminMixin.readonly_fields,

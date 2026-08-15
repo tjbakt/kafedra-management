@@ -150,9 +150,9 @@ class TeachingStreamViewSet(
     search_fields = (
         "code",
         "name",
-        "curriculum_discipline__discipline__name_ru",
-        "curriculum_discipline__discipline__name_uz",
-        "teaching_department__name_ru",
+        "curriculum__code",
+        "curriculum__study_program__name_ru",
+        "curriculum__study_program__name_uz",
     )
     ordering_fields = (
         "code",
@@ -172,20 +172,16 @@ class TeachingStreamViewSet(
             .select_related(
                 "academic_year",
                 "academic_semester",
-                "curriculum_discipline",
-                "curriculum_discipline__curriculum",
-                "curriculum_discipline__discipline",
-                "curriculum_workload",
-                "curriculum_workload__workload_type",
-                "teaching_department",
+                "curriculum",
+                "curriculum__study_program",
+                "curriculum__study_form",
             )
             .prefetch_related(
                 "stream_groups",
                 "stream_groups__group_semester",
-                "stream_groups__group_semester__"
-                "group_curriculum",
-                "stream_groups__group_semester__"
-                "group_curriculum__student_group",
+                "stream_groups__group_semester__group_curriculum",
+                "stream_groups__group_semester__group_curriculum__student_group",
+                "planned_workloads",
             )
             .distinct()
         )
@@ -197,17 +193,19 @@ class TeachingStreamViewSet(
     )
     def calculate(self, request, pk=None):
         stream = self.get_object()
+
         ClosedAcademicYearMutationGuard.ensure_open(
             academic_year=stream.academic_year,
         )
 
         try:
-            calculator = TeachingStreamWorkloadCalculator(
-                stream
-            )
-            planned_workload = calculator.calculate(
-                teaching_stream=stream,
-                user=request.user
+            calculated = (
+                TeachingStreamWorkloadCalculator(
+                    stream
+                ).calculate(
+                    teaching_stream=stream,
+                    user=request.user,
+                )
             )
         except ValueError as exc:
             return Response(
@@ -218,13 +216,20 @@ class TeachingStreamViewSet(
             )
 
         serializer = PlannedWorkloadSerializer(
-            planned_workload,
+            calculated,
+            many=True,
             context=self.get_serializer_context(),
         )
 
         return Response(
             {
-                "detail": "Плановая нагрузка рассчитана.",
+                "detail": (
+                    "Плановая нагрузка "
+                    "учебного потока рассчитана."
+                ),
+                "calculated_count": len(
+                    calculated
+                ),
                 "data": serializer.data,
             },
             status=status.HTTP_200_OK,
@@ -255,7 +260,7 @@ class TeachingStreamViewSet(
                         )
                     )
 
-                    workload = (
+                    workloads = (
                         TeachingStreamWorkloadCalculator(
                             stream
                         ).calculate(
@@ -264,8 +269,9 @@ class TeachingStreamViewSet(
                         )
                     )
 
-                    calculated.append(
+                    calculated.extend(
                         workload.id
+                        for workload in workloads
                     )
 
                 except DjangoValidationError as exc:
@@ -295,7 +301,9 @@ class TeachingStreamViewSet(
 
         return Response(
             {
-                "calculated_count": len(calculated),
+                "calculated_count": len(
+                    calculated
+                ),
                 "calculated_ids": calculated,
                 "errors_count": len(errors),
                 "errors": errors,
@@ -322,9 +330,15 @@ class PlannedWorkloadViewSet(
     search_fields = (
         "teaching_stream__code",
         "teaching_stream__name",
-        "teaching_stream__curriculum_discipline__"
+        "teaching_stream__curriculum__code",
+        "curriculum_workload__"
+        "curriculum_discipline__"
         "discipline__name_ru",
+        "curriculum_workload__"
+        "curriculum_discipline__"
+        "discipline__name_uz",
         "teaching_department__name_ru",
+        "teaching_department__name_uz",
     )
     ordering_fields = (
         "total_hours",
@@ -350,16 +364,22 @@ class PlannedWorkloadViewSet(
                 "через расчёт учебного потока."
             ),
         )
+
     def get_queryset(self):
-        return PlannedWorkload.objects.select_related(
-            "teaching_stream",
-            "teaching_stream__curriculum_discipline",
-            "teaching_stream__curriculum_discipline__discipline",
-            "academic_year",
-            "academic_semester",
-            "teaching_department",
-            "curriculum_workload",
-            "curriculum_workload__workload_type",
+        return (
+            PlannedWorkload.objects
+            .select_related(
+                "teaching_stream",
+                "teaching_stream__curriculum",
+                "academic_year",
+                "academic_semester",
+                "teaching_department",
+                "curriculum_workload",
+                "curriculum_workload__workload_type",
+                "curriculum_workload__curriculum_discipline",
+                "curriculum_workload__curriculum_discipline__discipline",
+                "curriculum_workload__curriculum_discipline__teaching_department",
+            )
         )
 
     @action(

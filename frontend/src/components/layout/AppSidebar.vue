@@ -147,10 +147,12 @@ const menuDefinitions: TranslatedSidebarItem[] = [
       },
       {
         label: '',
-        labelKey: 'navigation.workload',
+        labelKey: 'navigation.teachingWorkload',
         icon: 'pi pi-chart-bar',
         route: '/workload',
-        badge: '!',
+        permissions: [
+          'teaching.view_teachingstream',
+        ],
       },
       {
         label: '',

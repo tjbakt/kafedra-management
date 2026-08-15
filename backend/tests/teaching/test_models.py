@@ -14,6 +14,7 @@ from apps.curriculum.models import (
 from apps.teaching.models import (
     GroupCurriculumAssignment,
     GroupSemester,
+    TeachingStream
 )
 from tests.factories import (
     AcademicSemesterFactory,
@@ -204,101 +205,62 @@ class TeachingStreamModelTests(TestCase):
             )
         )
 
-        self.assertEqual(
-            stream.groups_count,
-            2,
-        )
+        self.assertEqual(stream.groups_count, 2)
         self.assertEqual(
             stream.students_count,
-            (
-                first.group_semester.students_count
-                + 15
-            ),
+            first.group_semester.students_count + 15,
         )
         self.assertEqual(
             stream.subgroups_count,
-            (
-                first.group_semester.subgroup_count
-                + 2
-            ),
+            first.group_semester.subgroup_count + 2,
         )
 
-    def test_workload_must_belong_to_discipline(
-            self,
-    ):
-        discipline = (
-            CurriculumDisciplineFactory()
-        )
-
-        other_workload = (
-            CurriculumWorkloadFactory()
-        )
-
+    def test_odd_semester_requires_autumn(self):
         academic_year = AcademicYearFactory()
-
-        academic_semester = (
-            AcademicSemesterFactory(
-                academic_year=academic_year,
-            )
+        spring = AcademicSemesterFactory.spring(
+            academic_year=academic_year,
         )
 
         stream = TeachingStreamFactory.build(
-            curriculum_discipline=discipline,
-            curriculum_workload=other_workload,
-            teaching_department=(
-                discipline.teaching_department
-            ),
             academic_year=academic_year,
-            academic_semester=academic_semester,
+            academic_semester=spring,
+            semester_number=1,
+            curriculum=CurriculumFactory(),
         )
 
-        with self.assertRaises(
-                ValidationError
-        ) as context:
+        with self.assertRaises(ValidationError) as ctx:
             stream.full_clean()
 
         self.assertIn(
-            "curriculum_workload",
-            context.exception.message_dict,
+            "academic_semester",
+            ctx.exception.message_dict,
         )
 
-    def test_department_must_match_discipline(
-            self,
-    ):
-        discipline = (
-            CurriculumDisciplineFactory()
-        )
+    def test_semester_cannot_exceed_duration(self):
+        from apps.teaching.models import TeachingStream
 
-        workload = CurriculumWorkloadFactory(
-            curriculum_discipline=discipline,
-        )
-
+        curriculum = CurriculumFactory()
         academic_year = AcademicYearFactory()
-
-        academic_semester = (
-            AcademicSemesterFactory(
-                academic_year=academic_year,
-            )
+        academic_semester = AcademicSemesterFactory(
+            academic_year=academic_year,
+            season="autumn",
         )
 
-        stream = TeachingStreamFactory.build(
-            curriculum_discipline=discipline,
-            curriculum_workload=workload,
-            teaching_department=(
-                DepartmentFactory()
-            ),
+        stream = TeachingStream(
+            curriculum=curriculum,
             academic_year=academic_year,
             academic_semester=academic_semester,
+            semester_number=99,
+            code="STREAM-OVER",
+            name="Переполнение",
         )
 
-        with self.assertRaises(
-                ValidationError
-        ) as context:
+        with self.assertRaises(ValidationError) as ctx:
             stream.full_clean()
 
         self.assertIn(
-            "teaching_department",
-            context.exception.message_dict,
+            "semester_number",
+            ctx.exception.message_dict,
         )
 
 

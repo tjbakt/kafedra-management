@@ -80,6 +80,7 @@ const uz = {
     curriculumReferences: 'O‘quv rejasi ma’lumotnomalari',
     curriculumDisciplines: 'O‘quv rejasi tarkibi',
     teachingSetup: 'O‘quv guruhlarini tayyorlash',
+    teachingWorkload: 'O‘quv oqimlari va yuklama',
   },
   profile: {
     profile: 'Profil',
@@ -2297,6 +2298,292 @@ const uz = {
 
         subgroups:
           'Kichik guruhlar soni 1 dan 100 gacha bo‘lishi kerak',
+      },
+    },
+  },
+
+  teachingWorkload: {
+    title:
+      'O‘quv oqimlari va yuklama',
+
+    description:
+      'O‘quv oqimlarini shakllantirish, guruhlarni birlashtirish va rejalashtirilgan o‘quv yuklamasini hisoblash.',
+
+    calculate:
+      'Yuklamani hisoblash',
+
+    calculateAll:
+      'Barchasini hisoblash',
+
+    calculateError:
+      'Rejalashtirilgan yuklamani hisoblab bo‘lmadi.',
+
+    calculateAllSuccess:
+      'Muvaffaqiyatli hisoblangan oqimlar: {count}.',
+
+    calculatePartialTitle:
+      'Hisoblash xatolar bilan yakunlandi',
+
+    calculatePartial:
+      'Hisoblandi: {calculated}. Xatolar: {errors}.',
+
+    tabs: {
+      streams:
+        'O‘quv oqimlari',
+
+      planned:
+        'Rejalashtirilgan yuklama',
+    },
+
+    common: {
+      active:
+        'Faol',
+
+      inactive:
+        'Faol emas',
+
+      archive:
+        'Arxivlash',
+
+      notes:
+        'Izoh',
+    },
+
+    calculationModes: {
+      fixed:
+        'Belgilangan soatlar',
+
+      perGroup:
+        'Guruhga',
+
+      perSubgroup:
+        'Kichik guruhga',
+
+      perStudent:
+        'Talabaga',
+    },
+
+    filters: {
+      allYears:
+        'Barcha o‘quv yillari',
+
+      allSemesters:
+        'Barcha semestrlar',
+
+      allStatuses:
+        'Barcha holatlar',
+
+      allActivity:
+        'Barcha faollik holatlari',
+
+      allDistribution:
+        'Barcha taqsimotlar',
+
+      fullyDistributed:
+        'To‘liq taqsimlangan',
+
+      notFullyDistributed:
+        'Qoldiq mavjud',
+    },
+
+    streams: {
+      create:
+        'Oqim qo‘shish',
+
+      createTitle:
+        'O‘quv oqimini yaratish',
+
+      editTitle:
+        'O‘quv oqimini tahrirlash',
+
+      searchPlaceholder:
+        'Kod, nom, fan yoki kafedra bo‘yicha qidirish...',
+
+      disciplineDescription:
+        '{semester}-semestr · {department}',
+
+      archiveTitle:
+        'O‘quv oqimini arxivlash',
+
+      archiveConfirm:
+        '«{code}» o‘quv oqimini arxivlaysizmi?',
+
+      archived:
+        'O‘quv oqimi arxivga ko‘chirildi.',
+
+      statuses: {
+        draft:
+          'Qoralama',
+
+        calculated:
+          'Yuklama hisoblangan',
+
+        approved:
+          'Tasdiqlangan',
+
+        cancelled:
+          'Bekor qilingan',
+      },
+
+      fields: {
+        academicYear:
+          'O‘quv yili',
+
+        academicSemester:
+          'Akademik semestr',
+
+        discipline:
+          'O‘quv rejasi fani',
+
+        workloadType:
+          'Yuklama turi',
+
+        department:
+          'Ta’minlovchi kafedra',
+
+        code:
+          'Oqim kodi',
+
+        name:
+          'Oqim nomi',
+
+        groups:
+          'Guruhlar',
+
+        students:
+          'Talabalar',
+
+        subgroups: 'Kichik guruhlar',
+        status: 'Holat',
+        curriculum: 'O‘quv rejasi',
+        studyProgram: 'Ta’lim yo‘nalishi',
+        semesterNumber: 'O‘quv rejasi semestri',
+        positions: 'Pozitsiyalar',
+        totalHours: 'Soatlar',
+      },
+
+      validation: {
+        yearRequired:
+          'O‘quv yilini tanlang.',
+
+        semesterRequired:
+          'Akademik semestrni tanlang.',
+
+        disciplineRequired:
+          'O‘quv rejasi fanini tanlang.',
+
+        workloadRequired:
+          'Yuklama turini tanlang.',
+        departmentRequired: 'Ta’minlovchi kafedra aniqlanmagan.',
+        codeRequired: 'O‘quv oqimi kodini kiriting.',
+        nameRequired: 'O‘quv oqimi nomini kiriting.',
+        curriculumRequired: 'O‘quv rejasini tanlang.',
+        semesterNumberRequired: 'O‘quv rejasi semestrini tanlang.',
+      },
+    },
+
+    seasons: {
+      autumn: 'Kuzgi',
+      spring: 'Bahorgi',
+    },
+
+    streamGroups: {
+      title:
+        'O‘quv oqimi guruhlari',
+
+      selectGroup:
+        'O‘quv guruhini tanlang',
+
+      add:
+        'Qo‘shish',
+
+      added:
+        'O‘quv guruhi oqimga qo‘shildi.',
+
+      archive:
+        'Oqimdan chiqarish',
+
+      archiveTitle:
+        'Guruhni chiqarish',
+
+      archiveConfirm:
+        '«{group}» guruhini o‘quv oqimidan chiqarasizmi?',
+
+      archived:
+        'O‘quv guruhi oqimdan chiqarildi.',
+
+      empty:
+        'O‘quv oqimida hali guruhlar yo‘q.',
+
+      groups:
+        'Guruhlar',
+
+      students:
+        'Talabalar',
+
+      subgroups:
+        'Kichik guruhlar',
+
+      groupDescription:
+        'Talabalar: {students} · kichik guruhlar: {subgroups}',
+    },
+
+    planned: {
+      searchPlaceholder:
+        'Oqim, fan yoki kafedra bo‘yicha qidirish...',
+
+      statuses: {
+        calculated:
+          'Hisoblangan',
+
+        approved:
+          'Tasdiqlangan',
+
+        partially_distributed:
+          'Qisman taqsimlangan',
+
+        distributed:
+          'To‘liq taqsimlangan',
+
+        cancelled:
+          'Bekor qilingan',
+      },
+
+      fields: {
+        stream:
+          'Oqim',
+
+        discipline:
+          'Fan',
+
+        workloadType:
+          'Yuklama turi',
+
+        baseHours:
+          'Asosiy soatlar',
+
+        quantity:
+          'Miqdor',
+
+        totalHours:
+          'Jami soatlar',
+
+        remainingHours:
+          'Qoldiq',
+
+        distribution:
+          'Taqsimot',
+
+        status:
+          'Holat',
+      },
+
+      summary: {
+        totalHours:
+          'Rejalashtirilgan yuklamaning umumiy hajmi',
+
+        records:
+          'Yuklama pozitsiyalari',
       },
     },
   },

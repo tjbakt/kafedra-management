@@ -3,9 +3,7 @@ from decimal import Decimal
 from django.test import TestCase
 
 from apps.audit.models import AuditEvent
-from apps.curriculum.models import (
-    WorkloadType,
-)
+from apps.curriculum.models import WorkloadType
 from apps.teaching.models import (
     PlannedWorkload,
     TeachingStream,
@@ -14,6 +12,8 @@ from apps.teaching.services.workload_calculator import (
     TeachingStreamWorkloadCalculator,
 )
 from tests.factories import (
+    CurriculumDisciplineFactory,
+    CurriculumFactory,
     CurriculumWorkloadFactory,
     TeachingStreamFactory,
     TeachingStreamGroupFactory,
@@ -22,59 +22,41 @@ from tests.factories import (
 )
 
 
-class TeachingStreamWorkloadCalculatorTests(
-    TestCase
-):
+class TeachingStreamWorkloadCalculatorTests(TestCase):
     def setUp(self):
         self.user = UserFactory()
 
-    def create_stream(
-        self,
-        *,
-        mode,
-        base_hours,
-    ):
+    def create_stream(self, *, mode, base_hours):
         workload_type = WorkloadTypeFactory(
             calculation_mode=mode,
         )
+        curriculum = CurriculumFactory()
 
-        workload = CurriculumWorkloadFactory(
+        discipline = CurriculumDisciplineFactory(
+            curriculum=curriculum,
+            semester_number=1,
+        )
+        CurriculumWorkloadFactory(
+            curriculum_discipline=discipline,
             workload_type=workload_type,
             calculation_mode=mode,
             base_hours=Decimal(base_hours),
         )
 
         return TeachingStreamFactory(
-            curriculum_discipline=(
-                workload.curriculum_discipline
-            ),
-            curriculum_workload=workload,
-            teaching_department=(
-                workload
-                .curriculum_discipline
-                .teaching_department
-            ),
+            curriculum=curriculum,
+            semester_number=1,
         )
 
     def test_rejects_stream_without_groups(self):
         stream = self.create_stream(
-            mode=(
-                WorkloadType
-                .CalculationMode
-                .PER_GROUP
-            ),
+            mode=WorkloadType.CalculationMode.PER_GROUP,
             base_hours="30.00",
         )
 
-        calculator = (
-            TeachingStreamWorkloadCalculator(
-                stream
-            )
-        )
+        calculator = TeachingStreamWorkloadCalculator(stream)
 
-        with self.assertRaises(
-            ValueError
-        ):
+        with self.assertRaises(ValueError):
             calculator.calculate(
                 teaching_stream=stream,
                 user=self.user,
@@ -82,11 +64,7 @@ class TeachingStreamWorkloadCalculatorTests(
 
     def test_per_group_calculation(self):
         stream = self.create_stream(
-            mode=(
-                WorkloadType
-                .CalculationMode
-                .PER_GROUP
-            ),
+            mode=WorkloadType.CalculationMode.PER_GROUP,
             base_hours="30.00",
         )
 
@@ -95,14 +73,15 @@ class TeachingStreamWorkloadCalculatorTests(
             teaching_stream=stream,
         )
 
-        result = (
-            TeachingStreamWorkloadCalculator(
-                stream
-            ).calculate(
-                teaching_stream=stream,
-                user=self.user,
-            )
+        results = TeachingStreamWorkloadCalculator(
+            stream
+        ).calculate(
+            teaching_stream=stream,
+            user=self.user,
         )
+
+        self.assertEqual(len(results), 1)
+        result = results[0]
 
         self.assertEqual(
             result.calculation_quantity,
@@ -112,13 +91,9 @@ class TeachingStreamWorkloadCalculatorTests(
             result.total_hours,
             Decimal("60.00"),
         )
-        self.assertEqual(
-            result.groups_count,
-            2,
-        )
+        self.assertEqual(result.groups_count, 2)
 
         stream.refresh_from_db()
-
         self.assertEqual(
             stream.status,
             TeachingStream.Status.CALCULATED,
@@ -126,11 +101,7 @@ class TeachingStreamWorkloadCalculatorTests(
 
     def test_per_student_calculation(self):
         stream = self.create_stream(
-            mode=(
-                WorkloadType
-                .CalculationMode
-                .PER_STUDENT
-            ),
+            mode=WorkloadType.CalculationMode.PER_STUDENT,
             base_hours="0.50",
         )
 
@@ -142,14 +113,15 @@ class TeachingStreamWorkloadCalculatorTests(
             update_fields=("students_count",)
         )
 
-        result = (
-            TeachingStreamWorkloadCalculator(
-                stream
-            ).calculate(
-                teaching_stream=stream,
-                user=self.user,
-            )
+        results = TeachingStreamWorkloadCalculator(
+            stream
+        ).calculate(
+            teaching_stream=stream,
+            user=self.user,
         )
+
+        self.assertEqual(len(results), 1)
+        result = results[0]
 
         self.assertEqual(
             result.calculation_quantity,
@@ -162,11 +134,7 @@ class TeachingStreamWorkloadCalculatorTests(
 
     def test_recalculation_updates_record(self):
         stream = self.create_stream(
-            mode=(
-                WorkloadType
-                .CalculationMode
-                .PER_GROUP
-            ),
+            mode=WorkloadType.CalculationMode.PER_GROUP,
             base_hours="10.00",
         )
 
@@ -174,49 +142,35 @@ class TeachingStreamWorkloadCalculatorTests(
             teaching_stream=stream,
         )
 
-        first = (
-            TeachingStreamWorkloadCalculator(
-                stream
-            ).calculate(
-                teaching_stream=stream,
-                user=self.user,
-            )
+        first_results = TeachingStreamWorkloadCalculator(
+            stream
+        ).calculate(
+            teaching_stream=stream,
+            user=self.user,
         )
+        first = first_results[0]
 
-        stream.curriculum_workload.base_hours = (
-            Decimal("20.00")
-        )
-        stream.curriculum_workload.save(
-            update_fields=("base_hours",)
-        )
+        workload = first.curriculum_workload
+        workload.base_hours = Decimal("20.00")
+        workload.save(update_fields=("base_hours",))
 
-        second = (
-            TeachingStreamWorkloadCalculator(
-                stream
-            ).calculate(
-                teaching_stream=stream,
-                user=self.user,
-            )
+        second_results = TeachingStreamWorkloadCalculator(
+            stream
+        ).calculate(
+            teaching_stream=stream,
+            user=self.user,
         )
+        second = second_results[0]
 
-        self.assertEqual(
-            first.pk,
-            second.pk,
-        )
+        self.assertEqual(first.pk, second.pk)
         self.assertEqual(
             second.total_hours,
             Decimal("20.00"),
         )
 
-    def test_calculation_creates_audit_event(
-        self,
-    ):
+    def test_calculation_creates_audit_event(self):
         stream = self.create_stream(
-            mode=(
-                WorkloadType
-                .CalculationMode
-                .FIXED
-            ),
+            mode=WorkloadType.CalculationMode.FIXED,
             base_hours="24.00",
         )
 
@@ -224,21 +178,18 @@ class TeachingStreamWorkloadCalculatorTests(
             teaching_stream=stream,
         )
 
-        result = (
-            TeachingStreamWorkloadCalculator(
-                stream
-            ).calculate(
-                teaching_stream=stream,
-                user=self.user,
-            )
+        results = TeachingStreamWorkloadCalculator(
+            stream
+        ).calculate(
+            teaching_stream=stream,
+            user=self.user,
         )
+        result = results[0]
 
         self.assertTrue(
             AuditEvent.objects.filter(
                 actor=self.user,
-                action=(
-                    AuditEvent.Action.CALCULATE
-                ),
+                action=AuditEvent.Action.CALCULATE,
                 object_id=str(result.pk),
             ).exists()
         )

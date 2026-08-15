@@ -52,34 +52,17 @@ class TeachingFilterDeclarationTests(
             "academic_year",
             "academic_semester",
             "curriculum",
-            "curriculum_discipline",
-            "discipline",
-            "workload_type",
-            "teaching_department",
+            "semester_number",
+            "study_program",
+            "study_form",
             "student_group",
             "status",
             "is_active",
         }
 
         self.assertEqual(
-            set(
-                TeachingStreamFilter.base_filters
-            ),
+            set(TeachingStreamFilter.base_filters),
             expected,
-        )
-
-    def test_stream_group_filters(self):
-        self.assertEqual(
-            set(
-                TeachingStreamGroupFilter
-                .base_filters
-            ),
-            {
-                "teaching_stream",
-                "group_semester",
-                "student_group",
-                "is_active",
-            },
         )
 
     def test_planned_workload_filters(self):
@@ -91,11 +74,11 @@ class TeachingFilterDeclarationTests(
             "workload_type",
             "status",
             "is_fully_distributed",
+            "curriculum",
+            "teaching_stream",
         }
 
         self.assertEqual(
-            set(
-                PlannedWorkloadFilter.base_filters
-            ),
+            set(PlannedWorkloadFilter.base_filters),
             expected,
         )

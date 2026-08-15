@@ -2,9 +2,7 @@ from decimal import Decimal
 
 import factory
 
-from apps.curriculum.models import (
-    WorkloadType,
-)
+from apps.curriculum.models import WorkloadType
 from apps.teaching.models import (
     GroupCurriculumAssignment,
     GroupSemester,
@@ -53,10 +51,8 @@ class GroupCurriculumAssignmentFactory(
         )
     )
 
-    start_academic_year = (
-        factory.SubFactory(
-            AcademicYearFactory
-        )
+    start_academic_year = factory.SubFactory(
+        AcademicYearFactory
     )
     end_academic_year = None
 
@@ -116,22 +112,8 @@ class TeachingStreamFactory(
     class Meta:
         model = TeachingStream
 
-    curriculum_discipline = (
-        factory.SubFactory(
-            CurriculumDisciplineFactory,
-            semester_number=1,
-        )
-    )
-
-    curriculum_workload = (
-        factory.SubFactory(
-            CurriculumWorkloadFactory,
-            curriculum_discipline=(
-                factory.SelfAttribute(
-                    "..curriculum_discipline"
-                )
-            ),
-        )
+    curriculum = factory.SubFactory(
+        CurriculumFactory
     )
 
     academic_year = factory.SubFactory(
@@ -147,22 +129,13 @@ class TeachingStreamFactory(
         )
     )
 
-    teaching_department = (
-        factory.SelfAttribute(
-            "curriculum_discipline."
-            "teaching_department"
-        )
-    )
+    semester_number = 1
 
     code = factory.Sequence(
-        lambda number: (
-            f"STREAM-{number:05d}"
-        )
+        lambda number: f"STREAM-{number:05d}"
     )
     name = factory.Sequence(
-        lambda number: (
-            f"Тестовый поток {number}"
-        )
+        lambda number: f"Тестовый поток {number}"
     )
 
     status = TeachingStream.Status.DRAFT
@@ -170,10 +143,10 @@ class TeachingStreamFactory(
     notes = ""
 
     created_by = factory.SelfAttribute(
-        "curriculum_discipline.created_by"
+        "curriculum.created_by"
     )
     updated_by = factory.SelfAttribute(
-        "curriculum_discipline.updated_by"
+        "curriculum.updated_by"
     )
 
 
@@ -192,9 +165,7 @@ class TeachingStreamGroupFactory(
             group_curriculum=(
                 GroupCurriculumAssignmentFactory(
                     curriculum=(
-                        obj.teaching_stream
-                        .curriculum_discipline
-                        .curriculum
+                        obj.teaching_stream.curriculum
                     ),
                     created_by=(
                         obj.teaching_stream.created_by
@@ -208,13 +179,10 @@ class TeachingStreamGroupFactory(
                 obj.teaching_stream.academic_year
             ),
             academic_semester=(
-                obj.teaching_stream
-                .academic_semester
+                obj.teaching_stream.academic_semester
             ),
             semester_number=(
-                obj.teaching_stream
-                .curriculum_discipline
-                .semester_number
+                obj.teaching_stream.semester_number
             ),
             created_by=(
                 obj.teaching_stream.created_by
@@ -252,17 +220,23 @@ class PlannedWorkloadFactory(
     academic_semester = factory.SelfAttribute(
         "teaching_stream.academic_semester"
     )
-    teaching_department = factory.SelfAttribute(
-        "teaching_stream.teaching_department"
+
+    # если в вашей локальной PlannedWorkload
+    # эти поля ещё есть — оставляем так
+    curriculum_workload = factory.SubFactory(
+        CurriculumWorkloadFactory
     )
-    curriculum_workload = factory.SelfAttribute(
-        "teaching_stream.curriculum_workload"
+    teaching_department = factory.LazyAttribute(
+        lambda obj: (
+            obj.curriculum_workload
+            .curriculum_discipline
+            .teaching_department
+        )
     )
 
     calculation_mode = factory.LazyAttribute(
         lambda obj: (
-            obj.curriculum_workload
-            .calculation_mode
+            obj.curriculum_workload.calculation_mode
         )
     )
     base_hours = factory.LazyAttribute(

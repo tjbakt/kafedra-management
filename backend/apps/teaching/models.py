@@ -300,7 +300,16 @@ class GroupSemester(BaseModel):
 
 class TeachingStream(BaseModel):
     """
-    Учебный поток групп по конкретному виду учебной работы.
+    Учебный поток одного учебного плана
+    в конкретном академическом семестре.
+
+    Один поток объединяет учебные группы,
+    обучающиеся по одному Curriculum.
+
+    При расчёте нагрузка формируется
+    по всем дисциплинам соответствующего
+    semester_number и всем их активным
+    CurriculumWorkload.
     """
 
     class Status(models.TextChoices):
@@ -315,39 +324,38 @@ class TeachingStream(BaseModel):
         related_name="teaching_streams",
         on_delete=models.PROTECT,
     )
+
     academic_semester = models.ForeignKey(
         AcademicSemester,
         verbose_name=_("Академический семестр"),
         related_name="teaching_streams",
         on_delete=models.PROTECT,
     )
-    curriculum_discipline = models.ForeignKey(
-        CurriculumDiscipline,
-        verbose_name=_("Дисциплина учебного плана"),
+
+    curriculum = models.ForeignKey(
+        Curriculum,
+        verbose_name=_("Учебный план"),
         related_name="teaching_streams",
         on_delete=models.PROTECT,
     )
-    curriculum_workload = models.ForeignKey(
-        CurriculumWorkload,
-        verbose_name=_("Вид нагрузки дисциплины"),
-        related_name="teaching_streams",
-        on_delete=models.PROTECT,
+
+    semester_number = models.PositiveSmallIntegerField(
+        _("Номер семестра по учебному плану"),
+        validators=[MinValueValidator(1)],
+        db_index=True,
     )
-    teaching_department = models.ForeignKey(
-        Department,
-        verbose_name=_("Обеспечивающая кафедра"),
-        related_name="teaching_streams",
-        on_delete=models.PROTECT,
-    )
+
     code = models.CharField(
         _("Код потока"),
         max_length=100,
         db_index=True,
     )
+
     name = models.CharField(
         _("Название потока"),
         max_length=255,
     )
+
     status = models.CharField(
         _("Статус"),
         max_length=20,
@@ -355,11 +363,13 @@ class TeachingStream(BaseModel):
         default=Status.DRAFT,
         db_index=True,
     )
+
     is_active = models.BooleanField(
         _("Активен"),
         default=True,
         db_index=True,
     )
+
     notes = models.TextField(
         _("Примечание"),
         blank=True,
@@ -375,11 +385,14 @@ class TeachingStream(BaseModel):
     class Meta:
         verbose_name = _("Учебный поток")
         verbose_name_plural = _("Учебные потоки")
+
         ordering = (
             "-academic_year__start_year",
             "academic_semester__season",
+            "curriculum__code",
             "code",
         )
+
         constraints = [
             models.UniqueConstraint(
                 fields=(
@@ -389,11 +402,20 @@ class TeachingStream(BaseModel):
                 ),
                 name="unique_teaching_stream_code",
             ),
+            models.UniqueConstraint(
+                fields=(
+                    "academic_year",
+                    "academic_semester",
+                    "curriculum",
+                    "semester_number",
+                ),
+                condition=models.Q(
+                    is_active=True,
+                    is_archived=False,
+                ),
+                name="unique_active_curriculum_stream_semester",
+            ),
         ]
-
-    @property
-    def workload_type(self):
-        return self.curriculum_workload.workload_type
 
     @property
     def groups_count(self):
@@ -422,6 +444,14 @@ class TeachingStream(BaseModel):
             ).select_related("group_semester")
         )
 
+    @property
+    def season(self):
+        return (
+            AcademicSemester.Season.AUTUMN
+            if self.semester_number % 2
+            else AcademicSemester.Season.SPRING
+        )
+
     def clean(self):
         super().clean()
 
@@ -434,58 +464,49 @@ class TeachingStream(BaseModel):
             raise ValidationError(
                 {
                     "academic_semester": _(
-                        "Семестр должен относиться к выбранному "
-                        "учебному году."
+                        "Семестр должен относиться "
+                        "к выбранному учебному году."
                     )
                 }
             )
 
-        if (
-            self.curriculum_workload_id
-            and self.curriculum_discipline_id
-            and self.curriculum_workload.curriculum_discipline_id
-            != self.curriculum_discipline_id
-        ):
-            raise ValidationError(
-                {
-                    "curriculum_workload": _(
-                        "Вид нагрузки не относится к выбранной "
-                        "дисциплине учебного плана."
-                    )
-                }
-            )
-
-        if (
-            self.curriculum_discipline_id
-            and self.teaching_department_id
-            and self.curriculum_discipline.teaching_department_id
-            != self.teaching_department_id
-        ):
-            raise ValidationError(
-                {
-                    "teaching_department": _(
-                        "Кафедра потока должна совпадать с кафедрой, "
-                        "обеспечивающей дисциплину учебного плана."
-                    )
-                }
-            )
-
-        if (
-            self.curriculum_discipline_id
-            and self.academic_semester_id
-        ):
+        if self.academic_semester_id:
             expected_season = (
                 AcademicSemester.Season.AUTUMN
-                if self.curriculum_discipline.semester_number % 2
+                if self.semester_number % 2
                 else AcademicSemester.Season.SPRING
             )
 
-            if self.academic_semester.season != expected_season:
+            if (
+                self.academic_semester.season
+                != expected_season
+            ):
                 raise ValidationError(
                     {
                         "academic_semester": _(
-                            "Сезон потока не соответствует номеру "
-                            "семестра дисциплины."
+                            "Нечётный семестр учебного плана "
+                            "должен быть осенним, "
+                            "а чётный — весенним."
+                        )
+                    }
+                )
+
+        if self.curriculum_id:
+            semesters_count = (
+                self.curriculum.semesters_count
+            )
+
+            if (
+                semesters_count is not None
+                and self.semester_number
+                > semesters_count
+            ):
+                raise ValidationError(
+                    {
+                        "semester_number": _(
+                            "Номер семестра превышает "
+                            "продолжительность обучения "
+                            "по учебному плану."
                         )
                     }
                 )
@@ -557,8 +578,8 @@ class TeachingStreamGroup(BaseModel):
             )
 
         if (
-            group_semester.academic_semester_id
-            != stream.academic_semester_id
+                group_semester.academic_semester_id
+                != stream.academic_semester_id
         ):
             raise ValidationError(
                 {
@@ -570,27 +591,29 @@ class TeachingStreamGroup(BaseModel):
             )
 
         if (
-            group_semester.semester_number
-            != stream.curriculum_discipline.semester_number
+                group_semester.curriculum.id
+                != stream.curriculum_id
         ):
             raise ValidationError(
                 {
                     "group_semester": _(
-                        "Номер семестра группы не совпадает "
-                        "с семестром дисциплины."
+                        "Учебный план группы "
+                        "не совпадает с учебным "
+                        "планом потока."
                     )
                 }
             )
 
         if (
-            group_semester.curriculum.id
-            != stream.curriculum_discipline.curriculum_id
+                group_semester.semester_number
+                != stream.semester_number
         ):
             raise ValidationError(
                 {
                     "group_semester": _(
-                        "Учебный план группы не совпадает "
-                        "с учебным планом дисциплины."
+                        "Номер семестра группы "
+                        "не совпадает с номером "
+                        "семестра потока."
                     )
                 }
             )
@@ -616,10 +639,10 @@ class PlannedWorkload(BaseModel):
         DISTRIBUTED = "distributed", _("Полностью распределена")
         CANCELLED = "cancelled", _("Отменена")
 
-    teaching_stream = models.OneToOneField(
+    teaching_stream = models.ForeignKey(
         TeachingStream,
         verbose_name=_("Учебный поток"),
-        related_name="planned_workload",
+        related_name="planned_workloads",
         on_delete=models.CASCADE,
     )
     academic_year = models.ForeignKey(
@@ -702,6 +725,15 @@ class PlannedWorkload(BaseModel):
             "teaching_department",
             "teaching_stream__code",
         )
+        constraints = [
+            models.UniqueConstraint(
+                fields=(
+                    "teaching_stream",
+                    "curriculum_workload",
+                ),
+                name="unique_stream_curriculum_workload",
+            ),
+        ]
 
     def __str__(self):
         return (

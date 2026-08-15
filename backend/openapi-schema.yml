@@ -13881,6 +13881,10 @@ paths:
         schema:
           type: number
       - in: query
+        name: curriculum
+        schema:
+          type: number
+      - in: query
         name: discipline
         schema:
           type: number
@@ -13934,6 +13938,10 @@ paths:
         schema:
           type: number
       - in: query
+        name: teaching_stream
+        schema:
+          type: number
+      - in: query
         name: workload_type
         schema:
           type: number
@@ -13957,17 +13965,6 @@ paths:
         глобальным custom_exception_handler.
       tags:
       - teaching
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PlannedWorkloadRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PlannedWorkloadRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PlannedWorkloadRequest'
       security:
       - jwtAuth: []
       responses:
@@ -14019,17 +14016,6 @@ paths:
         required: true
       tags:
       - teaching
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedPlannedWorkloadRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedPlannedWorkloadRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedPlannedWorkloadRequest'
       security:
       - jwtAuth: []
       responses:
@@ -14639,14 +14625,6 @@ paths:
         schema:
           type: number
       - in: query
-        name: curriculum_discipline
-        schema:
-          type: number
-      - in: query
-        name: discipline
-        schema:
-          type: number
-      - in: query
         name: is_active
         schema:
           type: boolean
@@ -14675,6 +14653,10 @@ paths:
         schema:
           type: string
       - in: query
+        name: semester_number
+        schema:
+          type: integer
+      - in: query
         name: status
         schema:
           type: string
@@ -14694,11 +14676,11 @@ paths:
         schema:
           type: number
       - in: query
-        name: teaching_department
+        name: study_form
         schema:
           type: number
       - in: query
-        name: workload_type
+        name: study_program
         schema:
           type: number
       tags:
@@ -24676,17 +24658,6 @@ components:
           minimum: 0
           format: int64
           title: Порядок сортировки
-    PatchedPlannedWorkloadRequest:
-      type: object
-      description: Базовый сериализатор для моделей с полями аудита.
-      properties:
-        status:
-          allOf:
-          - $ref: '#/components/schemas/PlannedWorkloadStatusEnum'
-          title: Статус
-        notes:
-          type: string
-          title: Примечание
     PatchedStaffEmploymentAcademicYearRequest:
       type: object
       description: Базовый сериализатор для моделей с полями аудита.
@@ -25034,15 +25005,15 @@ components:
         academic_semester:
           type: integer
           title: Академический семестр
-        curriculum_discipline:
+        curriculum:
           type: integer
-          title: Дисциплина учебного плана
-        curriculum_workload:
+          title: Учебный план
+        semester_number:
           type: integer
-          title: Вид нагрузки дисциплины
-        teaching_department:
-          type: integer
-          title: Обеспечивающая кафедра
+          maximum: 9223372036854775807
+          minimum: 1
+          format: int64
+          title: Номер семестра по учебному плану
         code:
           type: string
           minLength: 1
@@ -25059,6 +25030,7 @@ components:
           title: Статус
         is_active:
           type: boolean
+          default: true
           title: Активен
         notes:
           type: string
@@ -25318,6 +25290,21 @@ components:
         teaching_stream_name:
           type: string
           readOnly: true
+        curriculum:
+          type: integer
+          readOnly: true
+        curriculum_code:
+          type: string
+          readOnly: true
+        curriculum_discipline:
+          type: integer
+          readOnly: true
+        discipline_code:
+          type: string
+          readOnly: true
+        discipline_name:
+          type: string
+          readOnly: true
         academic_year:
           type: integer
           readOnly: true
@@ -25337,9 +25324,6 @@ components:
           readOnly: true
           title: Обеспечивающая кафедра
         department_name:
-          type: string
-          readOnly: true
-        discipline_name:
           type: string
           readOnly: true
         curriculum_workload:
@@ -25385,7 +25369,7 @@ components:
         distribution_percent:
           type: string
           format: decimal
-          pattern: ^-?\d{0,6}(?:\.\d{0,2})?$
+          pattern: ^-?\d{0,5}(?:\.\d{0,2})?$
           readOnly: true
         is_fully_distributed:
           type: boolean
@@ -25405,6 +25389,7 @@ components:
         status:
           allOf:
           - $ref: '#/components/schemas/PlannedWorkloadStatusEnum'
+          readOnly: true
           title: Статус
         status_name:
           type: string
@@ -25416,6 +25401,7 @@ components:
           title: Дата и время расчёта
         notes:
           type: string
+          readOnly: true
           title: Примечание
         created_at:
           type: string
@@ -25464,17 +25450,6 @@ components:
           type: string
           nullable: true
           readOnly: true
-    PlannedWorkloadRequest:
-      type: object
-      description: Базовый сериализатор для моделей с полями аудита.
-      properties:
-        status:
-          allOf:
-          - $ref: '#/components/schemas/PlannedWorkloadStatusEnum'
-          title: Статус
-        notes:
-          type: string
-          title: Примечание
     PlannedWorkloadStatusEnum:
       enum:
       - calculated
@@ -27189,33 +27164,24 @@ components:
         academic_semester_name:
           type: string
           readOnly: true
-        curriculum_discipline:
+        curriculum:
           type: integer
-          title: Дисциплина учебного плана
-        discipline_name:
+          title: Учебный план
+        curriculum_code:
+          type: string
+          readOnly: true
+        study_program_name:
+          type: string
+          readOnly: true
+        study_form_name:
           type: string
           readOnly: true
         semester_number:
           type: integer
-          readOnly: true
-        curriculum_workload:
-          type: integer
-          title: Вид нагрузки дисциплины
-        workload_type:
-          type: integer
-          readOnly: true
-        workload_type_name:
-          type: string
-          readOnly: true
-        calculation_mode:
-          type: string
-          readOnly: true
-        teaching_department:
-          type: integer
-          title: Обеспечивающая кафедра
-        teaching_department_name:
-          type: string
-          readOnly: true
+          maximum: 9223372036854775807
+          minimum: 1
+          format: int64
+          title: Номер семестра по учебному плану
         code:
           type: string
           title: Код потока
@@ -27233,6 +27199,14 @@ components:
         subgroups_count:
           type: integer
           readOnly: true
+        planned_workloads_count:
+          type: integer
+          readOnly: true
+        total_planned_hours:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+          readOnly: true
         status:
           allOf:
           - $ref: '#/components/schemas/TeachingStreamStatusEnum'
@@ -27242,6 +27216,7 @@ components:
           readOnly: true
         is_active:
           type: boolean
+          default: true
           title: Активен
         notes:
           type: string
@@ -27282,6 +27257,7 @@ components:
         is_archived:
           type: boolean
           readOnly: true
+          default: false
           title: В архиве
         archived_at:
           type: string
@@ -27302,10 +27278,9 @@ components:
       - academic_semester
       - academic_year
       - code
-      - curriculum_discipline
-      - curriculum_workload
+      - curriculum
       - name
-      - teaching_department
+      - semester_number
     TeachingStreamGroup:
       type: object
       description: Базовый сериализатор для моделей с полями аудита.
@@ -27416,15 +27391,15 @@ components:
         academic_semester:
           type: integer
           title: Академический семестр
-        curriculum_discipline:
+        curriculum:
           type: integer
-          title: Дисциплина учебного плана
-        curriculum_workload:
+          title: Учебный план
+        semester_number:
           type: integer
-          title: Вид нагрузки дисциплины
-        teaching_department:
-          type: integer
-          title: Обеспечивающая кафедра
+          maximum: 9223372036854775807
+          minimum: 1
+          format: int64
+          title: Номер семестра по учебному плану
         code:
           type: string
           minLength: 1
@@ -27441,6 +27416,7 @@ components:
           title: Статус
         is_active:
           type: boolean
+          default: true
           title: Активен
         notes:
           type: string
@@ -27449,10 +27425,9 @@ components:
       - academic_semester
       - academic_year
       - code
-      - curriculum_discipline
-      - curriculum_workload
+      - curriculum
       - name
-      - teaching_department
+      - semester_number
     TeachingStreamStatusEnum:
       enum:
       - draft

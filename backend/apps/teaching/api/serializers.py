@@ -422,124 +422,204 @@ class TeachingStreamGroupSerializer(
 
         if (
             group_semester.curriculum.id
-            != stream.curriculum_discipline.curriculum_id
+            != stream.curriculum_id
         ):
             raise serializers.ValidationError(
                 {
                     "group_semester": (
-                        "Учебный план группы не совпадает с учебным планом дисциплины."
+                        "Учебный план группы "
+                        "не совпадает с учебным "
+                        "планом потока."
                     )
                 }
             )
 
         if (
             group_semester.semester_number
-            != stream.curriculum_discipline.semester_number
+            != stream.semester_number
         ):
             raise serializers.ValidationError(
                 {
                     "group_semester": (
-                        "Номер семестра группы не совпадает с номером семестра дисциплины."
+                        "Номер семестра группы "
+                        "не совпадает с номером "
+                        "семестра потока."
                     )
                 }
             )
 
         return attrs
 
-class TeachingStreamSerializer(AuditFieldsSerializer):
+class TeachingStreamSerializer(
+    LocalizedNameMixin,
+    AuditFieldsSerializer,
+):
     academic_year_name = serializers.CharField(
         source="academic_year.name",
         read_only=True,
     )
+
     academic_semester_name = serializers.CharField(
         source="academic_semester.get_season_display",
         read_only=True,
     )
-    discipline_name = serializers.CharField(
-        source="curriculum_discipline.discipline.name_ru",
+
+    curriculum_code = serializers.CharField(
+        source="curriculum.code",
         read_only=True,
     )
-    semester_number = serializers.IntegerField(
-        source="curriculum_discipline.semester_number",
+
+    study_program_name = serializers.SerializerMethodField()
+
+    study_form_name = serializers.SerializerMethodField()
+
+    groups_count = serializers.IntegerField(
         read_only=True,
     )
-    workload_type = serializers.IntegerField(
-        source="curriculum_workload.workload_type_id",
+
+    students_count = serializers.IntegerField(
         read_only=True,
     )
-    workload_type_name = serializers.CharField(
-        source="curriculum_workload.workload_type.name_ru",
+
+    subgroups_count = serializers.IntegerField(
         read_only=True,
     )
-    calculation_mode = serializers.CharField(
-        source="curriculum_workload.calculation_mode",
-        read_only=True,
-    )
-    teaching_department_name = serializers.CharField(
-        source="teaching_department.name_ru",
-        read_only=True,
-    )
-    groups_count = serializers.IntegerField(read_only=True)
-    students_count = serializers.IntegerField(read_only=True)
-    subgroups_count = serializers.IntegerField(read_only=True)
+
     status_name = serializers.CharField(
         source="get_status_display",
         read_only=True,
     )
+
     stream_groups = TeachingStreamGroupSerializer(
         many=True,
         read_only=True,
     )
 
+    planned_workloads_count = serializers.SerializerMethodField()
+
+    total_planned_hours = serializers.SerializerMethodField()
+
+    @extend_schema_field(serializers.CharField())
+    def get_study_program_name(
+        self,
+        obj,
+    ) -> str:
+        return self.get_localized_name(
+            obj.curriculum.study_program
+        )
+
+    @extend_schema_field(serializers.CharField())
+    def get_study_form_name(
+        self,
+        obj,
+    ) -> str:
+        return self.get_localized_name(
+            obj.curriculum.study_form
+        )
+
+    @extend_schema_field(serializers.IntegerField())
+    def get_planned_workloads_count(
+        self,
+        obj,
+    ) -> int:
+        return obj.planned_workloads.filter(
+            is_archived=False,
+        ).count()
+
+    @extend_schema_field(
+        serializers.DecimalField(
+            max_digits=14,
+            decimal_places=2,
+        )
+    )
+    def get_total_planned_hours(
+        self,
+        obj,
+    ):
+        from django.db.models import Sum
+
+        return (
+            obj.planned_workloads
+            .filter(
+                is_archived=False,
+            )
+            .aggregate(
+                total=Sum(
+                    "total_hours"
+                )
+            )["total"]
+            or 0
+        )
+
     class Meta:
         model = TeachingStream
+
         fields = (
             "id",
+
             "academic_year",
             "academic_year_name",
+
             "academic_semester",
             "academic_semester_name",
-            "curriculum_discipline",
-            "discipline_name",
+
+            "curriculum",
+            "curriculum_code",
+
+            "study_program_name",
+            "study_form_name",
+
             "semester_number",
-            "curriculum_workload",
-            "workload_type",
-            "workload_type_name",
-            "calculation_mode",
-            "teaching_department",
-            "teaching_department_name",
+
             "code",
             "name",
+
             "groups_count",
             "students_count",
             "subgroups_count",
+
+            "planned_workloads_count",
+            "total_planned_hours",
+
             "status",
             "status_name",
+
             "is_active",
             "notes",
+
             "stream_groups",
+
             "created_at",
             "updated_at",
+
             "created_by",
             "created_by_name",
+
             "updated_by",
             "updated_by_name",
+
             "is_archived",
             "archived_at",
             "archived_by",
             "archived_by_name",
         )
+
         read_only_fields = (
             "id",
-            "workload_type",
-            "calculation_mode",
+
             "groups_count",
             "students_count",
             "subgroups_count",
+
+            "planned_workloads_count",
+            "total_planned_hours",
+
             "created_at",
             "updated_at",
+
             "created_by",
             "updated_by",
+
             "is_archived",
             "archived_at",
             "archived_by",
@@ -551,18 +631,6 @@ class TeachingStreamSerializer(AuditFieldsSerializer):
     def validate(self, attrs):
         instance = self.instance
 
-        discipline = attrs.get(
-            "curriculum_discipline",
-            getattr(instance, "curriculum_discipline", None),
-        )
-        workload = attrs.get(
-            "curriculum_workload",
-            getattr(instance, "curriculum_workload", None),
-        )
-        department = attrs.get(
-            "teaching_department",
-            getattr(instance, "teaching_department", None),
-        )
         academic_year = attrs.get(
             "academic_year",
             getattr(
@@ -571,6 +639,7 @@ class TeachingStreamSerializer(AuditFieldsSerializer):
                 None,
             ),
         )
+
         academic_semester = attrs.get(
             "academic_semester",
             getattr(
@@ -580,35 +649,23 @@ class TeachingStreamSerializer(AuditFieldsSerializer):
             ),
         )
 
-        if (
-            discipline
-            and workload
-            and workload.curriculum_discipline_id
-            != discipline.id
-        ):
-            raise serializers.ValidationError(
-                {
-                    "curriculum_workload": (
-                        "Выбранный вид нагрузки не относится "
-                        "к дисциплине."
-                    )
-                }
-            )
+        curriculum = attrs.get(
+            "curriculum",
+            getattr(
+                instance,
+                "curriculum",
+                None,
+            ),
+        )
 
-        if (
-            discipline
-            and department
-            and discipline.teaching_department_id
-            != department.id
-        ):
-            raise serializers.ValidationError(
-                {
-                    "teaching_department": (
-                        "Кафедра потока должна совпадать "
-                        "с обеспечивающей кафедрой дисциплины."
-                    )
-                }
-            )
+        semester_number = attrs.get(
+            "semester_number",
+            getattr(
+                instance,
+                "semester_number",
+                None,
+            ),
+        )
 
         if (
             academic_year
@@ -619,16 +676,19 @@ class TeachingStreamSerializer(AuditFieldsSerializer):
             raise serializers.ValidationError(
                 {
                     "academic_semester": (
-                        "Семестр должен относиться "
+                        "Семестр не относится "
                         "к выбранному учебному году."
                     )
                 }
             )
 
-        if discipline and academic_semester:
+        if (
+            academic_semester
+            and semester_number
+        ):
             expected_season = (
                 "autumn"
-                if discipline.semester_number % 2
+                if semester_number % 2
                 else "spring"
             )
 
@@ -639,131 +699,204 @@ class TeachingStreamSerializer(AuditFieldsSerializer):
                 raise serializers.ValidationError(
                     {
                         "academic_semester": (
-                            "Сезон потока не соответствует "
-                            "номеру семестра дисциплины."
+                            "Нечётный семестр должен "
+                            "быть осенним, "
+                            "чётный — весенним."
+                        )
+                    }
+                )
+
+        if curriculum and semester_number:
+            semesters_count = (
+                curriculum.semesters_count
+            )
+
+            if (
+                semesters_count is not None
+                and semester_number
+                > semesters_count
+            ):
+                raise serializers.ValidationError(
+                    {
+                        "semester_number": (
+                            "Номер семестра превышает "
+                            "продолжительность обучения "
+                            "по учебному плану."
                         )
                     }
                 )
         return attrs
 
-class PlannedWorkloadSerializer(AuditFieldsSerializer):
+class PlannedWorkloadSerializer(LocalizedNameMixin, AuditFieldsSerializer):
     teaching_stream_code = serializers.CharField(
         source="teaching_stream.code",
         read_only=True,
     )
+
     teaching_stream_name = serializers.CharField(
         source="teaching_stream.name",
         read_only=True,
     )
+
     academic_year_name = serializers.CharField(
         source="academic_year.name",
         read_only=True,
     )
+
     academic_semester_name = serializers.CharField(
         source="academic_semester.get_season_display",
         read_only=True,
     )
-    department_name = serializers.CharField(
-        source="teaching_department.name_ru",
-        read_only=True,
-    )
-    discipline_name = serializers.CharField(
-        source=(
-            "teaching_stream.curriculum_discipline."
-            "discipline.name_ru"
-        ),
-        read_only=True,
-    )
-    workload_type_name = serializers.CharField(
-        source="curriculum_workload.workload_type.name_ru",
-        read_only=True,
-    )
-    status_name = serializers.CharField(
-        source="get_status_display",
+
+    curriculum = serializers.IntegerField(
+        source="teaching_stream.curriculum_id",
         read_only=True,
     )
 
-    class Meta:
-        model = PlannedWorkload
-        fields = (
-            "id",
-            "teaching_stream",
-            "teaching_stream_code",
-            "teaching_stream_name",
-            "academic_year",
-            "academic_year_name",
-            "academic_semester",
-            "academic_semester_name",
-            "teaching_department",
-            "department_name",
-            "discipline_name",
-            "curriculum_workload",
-            "workload_type_name",
-            "calculation_mode",
-            "base_hours",
-            "calculation_quantity",
-            "total_hours",
-            "distributed_hours",
-            "remaining_hours",
-            "distribution_percent",
-            "is_fully_distributed",
-            "groups_count",
-            "subgroups_count",
-            "students_count",
-            "status",
-            "status_name",
-            "calculated_at",
-            "notes",
-            "created_at",
-            "updated_at",
-            "created_by",
-            "created_by_name",
-            "updated_by",
-            "updated_by_name",
-            "is_archived",
-            "archived_at",
-            "archived_by",
-            "archived_by_name",
-        )
-        read_only_fields = (
-            "id",
-            "teaching_stream",
-            "academic_year",
-            "academic_semester",
-            "teaching_department",
-            "curriculum_workload",
-            "calculation_mode",
-            "base_hours",
-            "calculation_quantity",
-            "total_hours",
-            "groups_count",
-            "subgroups_count",
-            "students_count",
-            "calculated_at",
-            "created_at",
-            "updated_at",
-            "created_by",
-            "updated_by",
-            "is_archived",
-            "archived_at",
-            "archived_by",
-        )
+    curriculum_code = serializers.CharField(
+        source="teaching_stream.curriculum.code",
+        read_only=True,
+    )
+
+    curriculum_discipline = serializers.IntegerField(
+        source="curriculum_workload.curriculum_discipline_id",
+        read_only=True,
+    )
+
+    discipline_code = serializers.CharField(
+        source=(
+            "curriculum_workload."
+            "curriculum_discipline."
+            "discipline.code"
+        ),
+        read_only=True,
+    )
+
+    department_name = serializers.SerializerMethodField()
+    discipline_name = serializers.SerializerMethodField()
+    workload_type_name = serializers.SerializerMethodField()
 
     distributed_hours = serializers.DecimalField(
         max_digits=12,
         decimal_places=2,
         read_only=True,
     )
+
     remaining_hours = serializers.DecimalField(
         max_digits=12,
         decimal_places=2,
         read_only=True,
     )
+
     distribution_percent = serializers.DecimalField(
-        max_digits=8,
+        max_digits=7,
         decimal_places=2,
         read_only=True,
     )
+
     is_fully_distributed = serializers.BooleanField(
         read_only=True,
     )
+
+    status_name = serializers.CharField(
+        source="get_status_display",
+        read_only=True,
+    )
+
+    @extend_schema_field(serializers.CharField())
+    def get_department_name(
+            self,
+            obj,
+    ) -> str:
+        return self.get_localized_name(
+            obj.teaching_department
+        )
+
+    @extend_schema_field(serializers.CharField())
+    def get_discipline_name(
+            self,
+            obj,
+    ) -> str:
+        return self.get_localized_name(
+            obj.curriculum_workload
+            .curriculum_discipline
+            .discipline
+        )
+
+    @extend_schema_field(serializers.CharField())
+    def get_workload_type_name(
+            self,
+            obj,
+    ) -> str:
+        return self.get_localized_name(
+            obj.curriculum_workload
+            .workload_type
+        )
+
+    class Meta:
+        model = PlannedWorkload
+
+        fields = (
+            "id",
+
+            "teaching_stream",
+            "teaching_stream_code",
+            "teaching_stream_name",
+
+            "curriculum",
+            "curriculum_code",
+
+            "curriculum_discipline",
+            "discipline_code",
+            "discipline_name",
+
+            "academic_year",
+            "academic_year_name",
+
+            "academic_semester",
+            "academic_semester_name",
+
+            "teaching_department",
+            "department_name",
+
+            "curriculum_workload",
+            "workload_type_name",
+
+            "calculation_mode",
+
+            "base_hours",
+            "calculation_quantity",
+            "total_hours",
+
+            "distributed_hours",
+            "remaining_hours",
+            "distribution_percent",
+            "is_fully_distributed",
+
+            "groups_count",
+            "subgroups_count",
+            "students_count",
+
+            "status",
+            "status_name",
+
+            "calculated_at",
+
+            "notes",
+
+            "created_at",
+            "updated_at",
+
+            "created_by",
+            "created_by_name",
+
+            "updated_by",
+            "updated_by_name",
+
+            "is_archived",
+            "archived_at",
+            "archived_by",
+            "archived_by_name",
+        )
+
+        read_only_fields = fields

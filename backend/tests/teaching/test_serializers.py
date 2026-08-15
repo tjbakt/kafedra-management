@@ -129,16 +129,9 @@ class GroupSemesterSerializerTests(
         )
 
 
-class TeachingStreamSerializerTests(
-    TestCase
-):
+class TeachingStreamSerializerTests(TestCase):
     def test_code_is_normalized(self):
-        discipline = (
-            CurriculumDisciplineFactory()
-        )
-        workload = CurriculumWorkloadFactory(
-            curriculum_discipline=discipline,
-        )
+        curriculum = CurriculumFactory()
         year = AcademicYearFactory()
         semester = AcademicSemesterFactory(
             academic_year=year,
@@ -148,16 +141,8 @@ class TeachingStreamSerializerTests(
             data={
                 "academic_year": year.pk,
                 "academic_semester": semester.pk,
-                "curriculum_discipline": (
-                    discipline.pk
-                ),
-                "curriculum_workload": (
-                    workload.pk
-                ),
-                "teaching_department": (
-                    discipline
-                    .teaching_department_id
-                ),
+                "curriculum": curriculum.pk,
+                "semester_number": 1,
                 "code": " stream-test ",
                 "name": "Тестовый поток",
                 "is_active": True,
@@ -173,15 +158,8 @@ class TeachingStreamSerializerTests(
             "STREAM-TEST",
         )
 
-    def test_rejects_wrong_academic_year(
-        self,
-    ):
-        discipline = (
-            CurriculumDisciplineFactory()
-        )
-        workload = CurriculumWorkloadFactory(
-            curriculum_discipline=discipline,
-        )
+    def test_rejects_wrong_academic_year(self):
+        curriculum = CurriculumFactory()
 
         serializer = TeachingStreamSerializer(
             data={
@@ -191,24 +169,14 @@ class TeachingStreamSerializerTests(
                 "academic_semester": (
                     AcademicSemesterFactory().pk
                 ),
-                "curriculum_discipline": (
-                    discipline.pk
-                ),
-                "curriculum_workload": (
-                    workload.pk
-                ),
-                "teaching_department": (
-                    discipline
-                    .teaching_department_id
-                ),
+                "curriculum": curriculum.pk,
+                "semester_number": 1,
                 "code": "STREAM-WRONG-YEAR",
                 "name": "Поток",
             }
         )
 
-        self.assertFalse(
-            serializer.is_valid()
-        )
+        self.assertFalse(serializer.is_valid())
         self.assertIn(
             "academic_semester",
             serializer.errors,

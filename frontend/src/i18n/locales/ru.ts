@@ -83,6 +83,7 @@ const ru = {
     curriculumReferences: 'Справочники учебного плана',
     curriculumDisciplines: 'Состав учебного плана',
     teachingSetup: 'Подготовка учебных групп',
+    teachingWorkload: 'Учебные потоки и нагрузка',
   },
 
   profile: {
@@ -2339,6 +2340,305 @@ const ru = {
 
         subgroups:
           'Количество подгрупп должно быть от 1 до 100',
+      },
+    },
+  },
+
+  teachingWorkload: {
+    title:
+      'Учебные потоки и нагрузка',
+
+    description:
+      'Формирование учебных потоков, объединение групп и расчёт плановой учебной нагрузки.',
+
+    calculate:
+      'Рассчитать нагрузку',
+
+    calculateAll:
+      'Рассчитать все',
+
+    calculateError:
+      'Не удалось рассчитать плановую нагрузку.',
+
+    calculateAllSuccess:
+      'Успешно рассчитано потоков: {count}.',
+
+    calculatePartialTitle:
+      'Расчёт завершён с ошибками',
+
+    calculatePartial:
+      'Рассчитано: {calculated}. Ошибок: {errors}.',
+
+    tabs: {
+      streams:
+        'Учебные потоки',
+
+      planned:
+        'Плановая нагрузка',
+    },
+
+    common: {
+      active:
+        'Активен',
+
+      inactive:
+        'Неактивен',
+
+      archive:
+        'Архивировать',
+
+      notes:
+        'Примечание',
+    },
+
+    calculationModes: {
+      fixed:
+        'Фиксированные часы',
+
+      perGroup:
+        'На группу',
+
+      perSubgroup:
+        'На подгруппу',
+
+      perStudent:
+        'На студента',
+    },
+
+    filters: {
+      allYears:
+        'Все учебные годы',
+
+      allSemesters:
+        'Все семестры',
+
+      allStatuses:
+        'Все статусы',
+
+      allActivity:
+        'Все по активности',
+
+      allDistribution:
+        'Любое распределение',
+
+      fullyDistributed:
+        'Полностью распределена',
+
+      notFullyDistributed:
+        'Есть остаток',
+    },
+
+    streams: {
+      create:
+        'Добавить поток',
+
+      createTitle:
+        'Создание учебного потока',
+
+      editTitle:
+        'Редактирование учебного потока',
+
+      searchPlaceholder:
+        'Поиск по коду, названию, дисциплине или кафедре...',
+
+      disciplineDescription:
+        '{semester} семестр · {department}',
+
+      archiveTitle:
+        'Архивирование учебного потока',
+
+      archiveConfirm:
+        'Архивировать учебный поток «{code}»?',
+
+      archived:
+        'Учебный поток перемещён в архив.',
+
+      statuses: {
+        draft:
+          'Черновик',
+
+        calculated:
+          'Нагрузка рассчитана',
+
+        approved:
+          'Утверждён',
+
+        cancelled:
+          'Отменён',
+      },
+
+      fields: {
+        academicYear:
+          'Учебный год',
+
+        academicSemester:
+          'Академический семестр',
+
+        discipline:
+          'Дисциплина учебного плана',
+
+        workloadType:
+          'Вид нагрузки',
+
+        department:
+          'Обеспечивающая кафедра',
+
+        code:
+          'Код потока',
+
+        name:
+          'Название потока',
+
+        groups:
+          'Группы',
+
+        students:
+          'Студенты',
+
+        subgroups:
+          'Подгруппы',
+
+        status: 'Статус',
+        curriculum: 'Учебный план',
+
+        studyProgram:
+          'Направление подготовки',
+
+        semesterNumber:
+          'Семестр по учебному плану',
+
+        positions:
+          'Позиций',
+        totalHours: 'Часов',
+      },
+
+      validation: {
+        yearRequired:
+          'Выберите учебный год.',
+
+        semesterRequired:
+          'Выберите академический семестр.',
+
+        disciplineRequired:
+          'Выберите дисциплину учебного плана.',
+
+        workloadRequired:
+          'Выберите вид нагрузки.',
+
+        departmentRequired:
+          'Не определена обеспечивающая кафедра.',
+
+        codeRequired:
+          'Введите код учебного потока.',
+
+        nameRequired: 'Введите название учебного потока.',
+        curriculumRequired: 'Выберите учебный план.',
+        semesterNumberRequired: 'Выберите номер семестра учебного плана.',
+      },
+    },
+
+    seasons: {
+      autumn: 'Осенний',
+      spring: 'Весенний',
+    },
+
+    streamGroups: {
+      title:
+        'Группы учебного потока',
+
+      selectGroup:
+        'Выберите учебную группу',
+
+      add:
+        'Добавить',
+
+      added:
+        'Учебная группа добавлена в поток.',
+
+      archive:
+        'Исключить из потока',
+
+      archiveTitle:
+        'Исключение группы',
+
+      archiveConfirm:
+        'Исключить группу «{group}» из учебного потока?',
+
+      archived:
+        'Учебная группа исключена из потока.',
+
+      empty:
+        'В учебном потоке пока нет групп.',
+
+      groups:
+        'Групп',
+
+      students:
+        'Студентов',
+
+      subgroups:
+        'Подгрупп',
+
+      groupDescription:
+        'Студентов: {students} · подгрупп: {subgroups}',
+    },
+
+    planned: {
+      searchPlaceholder:
+        'Поиск по потоку, дисциплине или кафедре...',
+
+      statuses: {
+        calculated:
+          'Рассчитана',
+
+        approved:
+          'Утверждена',
+
+        partially_distributed:
+          'Частично распределена',
+
+        distributed:
+          'Полностью распределена',
+
+        cancelled:
+          'Отменена',
+      },
+
+      fields: {
+        stream:
+          'Поток',
+
+        discipline:
+          'Дисциплина',
+
+        workloadType:
+          'Вид нагрузки',
+
+        baseHours:
+          'Базовые часы',
+
+        quantity:
+          'Количество',
+
+        totalHours:
+          'Всего часов',
+
+        remainingHours:
+          'Остаток',
+
+        distribution:
+          'Распределение',
+
+        status:
+          'Статус',
+      },
+
+      summary: {
+        totalHours:
+          'Общий объём плановой нагрузки',
+
+        records:
+          'Позиций нагрузки',
       },
     },
   },
