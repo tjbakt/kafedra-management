@@ -88,22 +88,7 @@ const moduleRoutes: RouteRecordRaw[] = [
       ],
     },
   },
-  {
-    path: 'disciplines',
-    name: 'disciplines',
-    component: () =>
-      import('@/views/ModulePlaceholderView.vue'),
-    meta: {
-      requiresAuth: true,
-      titleKey: 'navigation.disciplines',
-      descriptionKey:
-        'modules.disciplinesDescription',
-      icon: 'pi pi-bookmark',
-      breadcrumbKeys: [
-        'navigation.disciplines',
-      ],
-    },
-  },
+
   {
     path: 'curriculum-references',
     name: 'curriculum-references',
@@ -161,6 +146,27 @@ const moduleRoutes: RouteRecordRaw[] = [
       breadcrumbKeys: [
         'navigation.curricula',
         'navigation.curriculumDisciplines',
+      ],
+    },
+  },
+
+  {
+    path: 'teaching-setup',
+    name: 'teaching-setup',
+    component: () =>
+      import(
+        '@/modules/teaching-setup/TeachingSetupView.vue'
+        ),
+
+    meta: {
+      requiresAuth: true,
+      requiredPermissions: [
+        'teaching.view_groupcurriculumassignment',
+      ],
+      titleKey: 'navigation.teachingSetup',
+      icon: 'pi pi-sitemap',
+      breadcrumbKeys: [
+        'navigation.teachingSetup',
       ],
     },
   },

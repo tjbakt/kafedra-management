@@ -575,15 +575,10 @@ watch(
 
       <BaseFormActions
         :loading="loading"
-        :submit-label="
-          t('common.save')
-        "
-        :cancel-label="
-          t('common.cancel')
-        "
-        @cancel="
-          visible = false
-        "
+        :save-label="t('common.save')"
+        :cancel-label="t('common.cancel')"
+        @submit="submit"
+        @cancel="visible = false"
       />
     </form>
   </BaseDialog>

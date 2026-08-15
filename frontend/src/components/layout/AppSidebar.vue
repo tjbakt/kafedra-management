@@ -138,6 +138,15 @@ const menuDefinitions: TranslatedSidebarItem[] = [
       },
       {
         label: '',
+        labelKey: 'navigation.teachingSetup',
+        icon: 'pi pi-sitemap',
+        route: '/teaching-setup',
+        permissions: [
+          'teaching.view_groupcurriculumassignment',
+        ],
+      },
+      {
+        label: '',
         labelKey: 'navigation.workload',
         icon: 'pi pi-chart-bar',
         route: '/workload',

@@ -82,6 +82,7 @@ const ru = {
     studyPrograms: 'Направления подготовки',
     curriculumReferences: 'Справочники учебного плана',
     curriculumDisciplines: 'Состав учебного плана',
+    teachingSetup: 'Подготовка учебных групп',
   },
 
   profile: {
@@ -2129,14 +2130,217 @@ const ru = {
     },
 
     validation: {
-      workloadTypeRequired:
-        'Выберите вид учебной работы.',
-
-      baseHoursNonNegative:
-        'Количество часов не может быть отрицательным.',
+      workloadTypeRequired: 'Выберите вид учебной работы.',
+      baseHoursNonNegative: 'Количество часов не может быть отрицательным.',
       studentsPerUnitRequired: 'Укажите количество студентов на расчётную единицу.',
     },
     activeField: 'Вид нагрузки активен',
+  },
+
+  teachingSetup: {
+    title:
+      'Подготовка учебных групп',
+
+    description:
+      'Назначение учебных планов группам и ведение состояния групп по учебным семестрам.',
+
+    currentYear:
+      'Текущий учебный год',
+
+    closedYear:
+      'Закрытый учебный год',
+
+    tabs: {
+      groupCurricula:
+        'Учебные планы групп',
+
+      groupSemesters:
+        'Семестры групп',
+    },
+
+    seasons: {
+      autumn:
+        'Осенний',
+
+      spring:
+        'Весенний',
+    },
+
+    common: {
+      active:
+        'Активно',
+
+      inactive:
+        'Неактивно',
+
+      status:
+        'Статус',
+
+      notes:
+        'Примечание',
+    },
+
+    filters: {
+      all:
+        'Все',
+
+      allYears:
+        'Все учебные годы',
+
+      allStatuses:
+        'Все статусы',
+
+      primary:
+        'Основной план',
+    },
+
+    groupCurricula: {
+      create:
+        'Назначить учебный план',
+
+      createTitle:
+        'Назначение учебного плана группе',
+
+      editTitle:
+        'Редактирование назначения учебного плана',
+
+      searchPlaceholder:
+        'Поиск по группе, учебному плану или направлению...',
+
+      archiveTitle:
+        'Архивирование назначения',
+
+      archiveConfirm:
+        'Архивировать назначение плана «{curriculum}» группе «{group}»?',
+
+      archived:
+        'Назначение учебного плана перемещено в архив',
+
+      fields: {
+        group:
+          'Учебная группа',
+
+        curriculum:
+          'Учебный план',
+
+        studyProgram:
+          'Направление подготовки',
+
+        studyForm:
+          'Форма обучения',
+
+        startYear:
+          'Начало применения',
+
+        endYear:
+          'Окончание применения',
+
+        primary:
+          'Основной учебный план',
+      },
+
+      validation: {
+        groupRequired: 'Выберите учебную группу',
+        curriculumRequired: 'Выберите учебный план',
+        startYearRequired: 'Выберите учебный год начала применения',
+        endYear: 'Учебный год окончания не может быть раньше года начала',
+      },
+    },
+
+    groupSemesters: {
+      create:
+        'Добавить семестр группы',
+
+      createTitle:
+        'Создание семестра учебной группы',
+
+      editTitle:
+        'Редактирование семестра учебной группы',
+
+      searchPlaceholder:
+        'Поиск по группе или коду учебного плана...',
+
+      semesterOption:
+        '{semester} семестр — {season}',
+
+      archiveTitle:
+        'Архивирование семестра группы',
+
+      archiveConfirm:
+        'Архивировать {semester} семестр группы «{group}»?',
+
+      archived:
+        'Семестр учебной группы перемещён в архив',
+
+      statuses: {
+        planned:
+          'Запланирован',
+
+        active:
+          'Обучение идёт',
+
+        completed:
+          'Завершён',
+
+        cancelled:
+          'Отменён',
+      },
+
+      fields: {
+        assignment:
+          'Учебный план группы',
+
+        group:
+          'Группа',
+
+        curriculum:
+          'Учебный план',
+
+        academicYear:
+          'Учебный год',
+
+        semesterNumber:
+          'Номер семестра',
+
+        academicSemester:
+          'Календарный семестр',
+
+        studentsCount:
+          'Количество студентов',
+
+        studentsCountShort:
+          'Студенты',
+
+        subgroupCount:
+          'Количество подгрупп',
+
+        subgroupCountShort:
+          'Подгруппы',
+
+        status:
+          'Статус',
+      },
+
+      validation: {
+        assignmentRequired:
+          'Выберите назначение учебного плана',
+
+        yearRequired:
+          'Выберите учебный год',
+
+        semesterNumberRequired:
+          'Выберите номер семестра',
+
+        academicSemesterRequired:
+          'Выберите календарный академический семестр',
+
+        students:
+          'Количество студентов должно быть от 0 до 1000',
+
+        subgroups:
+          'Количество подгрупп должно быть от 1 до 100',
+      },
+    },
   },
 
 };

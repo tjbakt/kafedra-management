@@ -1,4 +1,6 @@
 from rest_framework import serializers
+from django.utils.translation import get_language
+from drf_spectacular.utils import extend_schema_field
 
 from apps.common.api.serializers import AuditFieldsSerializer
 from apps.teaching.models import (
@@ -9,8 +11,27 @@ from apps.teaching.models import (
     TeachingStreamGroup,
 )
 
+class LocalizedNameMixin:
+    def get_localized_name(self, obj) -> str:
+        request = self.context.get("request")
+
+        if (
+            request
+            and request.user
+            and request.user.is_authenticated
+        ):
+            language = request.user.interface_language
+        else:
+            language = (get_language() or "ru")[:2]
+
+        if language == "uz":
+            return obj.name_uz or obj.name_ru
+
+        return obj.name_ru or obj.name_uz
+
 class GroupCurriculumAssignmentSerializer(
-    AuditFieldsSerializer
+    LocalizedNameMixin,
+    AuditFieldsSerializer,
 ):
     student_group_code = serializers.CharField(
         source="student_group.code",
@@ -20,14 +41,8 @@ class GroupCurriculumAssignmentSerializer(
         source="curriculum.code",
         read_only=True,
     )
-    study_program_name = serializers.CharField(
-        source="curriculum.study_program.name_ru",
-        read_only=True,
-    )
-    study_form_name = serializers.CharField(
-        source="curriculum.study_form.name_ru",
-        read_only=True,
-    )
+    study_program_name = serializers.SerializerMethodField()
+    study_form_name = serializers.SerializerMethodField()
     start_academic_year_name = serializers.CharField(
         source="start_academic_year.name",
         read_only=True,
@@ -37,6 +52,18 @@ class GroupCurriculumAssignmentSerializer(
         read_only=True,
         allow_null=True,
     )
+
+    @extend_schema_field(serializers.CharField())
+    def get_study_program_name(self, obj) -> str:
+        return self.get_localized_name(
+            obj.curriculum.study_program
+        )
+
+    @extend_schema_field(serializers.CharField())
+    def get_study_form_name(self, obj) -> str:
+        return self.get_localized_name(
+            obj.curriculum.study_form
+        )
 
     class Meta:
         model = GroupCurriculumAssignment

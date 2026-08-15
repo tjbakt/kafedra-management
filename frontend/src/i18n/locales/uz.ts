@@ -79,6 +79,7 @@ const uz = {
     studyPrograms: 'Ta’lim yo‘nalishlari',
     curriculumReferences: 'O‘quv rejasi ma’lumotnomalari',
     curriculumDisciplines: 'O‘quv rejasi tarkibi',
+    teachingSetup: 'O‘quv guruhlarini tayyorlash',
   },
   profile: {
     profile: 'Profil',
@@ -2080,14 +2081,224 @@ const uz = {
     },
 
     validation: {
-      workloadTypeRequired:
-        'O‘quv ishi turini tanlang.',
-
-      baseHoursNonNegative:
-        'Soatlar soni manfiy bo‘lishi mumkin emas.',
+      workloadTypeRequired: 'O‘quv ishi turini tanlang.',
+      baseHoursNonNegative: 'Soatlar soni manfiy bo‘lishi mumkin emas.',
       studentsPerUnitRequired: 'Hisoblash birligiga talabalar sonini kiriting.',
     },
     activeField: 'Yuklama turi faol',
+  },
+
+  teachingSetup: {
+    title:
+      'O‘quv guruhlarini tayyorlash',
+
+    description:
+      'Guruhlarga o‘quv rejalarini biriktirish va guruhlarning o‘quv semestrlari bo‘yicha holatini yuritish.',
+
+    currentYear:
+      'Joriy o‘quv yili',
+
+    closedYear:
+      'Yopilgan o‘quv yili',
+
+    tabs: {
+      groupCurricula:
+        'Guruhlarning o‘quv rejalari',
+
+      groupSemesters:
+        'Guruh semestrlari',
+    },
+
+    seasons: {
+      autumn:
+        'Kuzgi',
+
+      spring:
+        'Bahorgi',
+    },
+
+    common: {
+      active:
+        'Faol',
+
+      inactive:
+        'Faol emas',
+
+      status:
+        'Holat',
+
+      notes:
+        'Izoh',
+    },
+
+    filters: {
+      all:
+        'Barchasi',
+
+      allYears:
+        'Barcha o‘quv yillari',
+
+      allStatuses:
+        'Barcha holatlar',
+
+      primary:
+        'Asosiy reja',
+    },
+
+    groupCurricula: {
+      create:
+        'O‘quv rejasini biriktirish',
+
+      createTitle:
+        'Guruhga o‘quv rejasini biriktirish',
+
+      editTitle:
+        'O‘quv rejasi biriktirilishini tahrirlash',
+
+      searchPlaceholder:
+        'Guruh, o‘quv rejasi yoki yo‘nalish bo‘yicha qidirish...',
+
+      archiveTitle:
+        'Biriktirishni arxivlash',
+
+      archiveConfirm:
+        '«{curriculum}» rejasining «{group}» guruhiga biriktirilishini arxivlaysizmi?',
+
+      archived:
+        'O‘quv rejasi biriktirilishi arxivga ko‘chirildi',
+
+      fields: {
+        group:
+          'O‘quv guruhi',
+
+        curriculum:
+          'O‘quv rejasi',
+
+        studyProgram:
+          'Ta’lim yo‘nalishi',
+
+        studyForm:
+          'Ta’lim shakli',
+
+        startYear:
+          'Amal qilish boshlanishi',
+
+        endYear:
+          'Amal qilish tugashi',
+
+        primary:
+          'Asosiy o‘quv rejasi',
+      },
+
+      validation: {
+        groupRequired:
+          'O‘quv guruhini tanlang',
+
+        curriculumRequired:
+          'O‘quv rejasini tanlang',
+
+        startYearRequired:
+          'Amal qilish boshlanadigan o‘quv yilini tanlang',
+
+        endYear:
+          'Tugash o‘quv yili boshlanish yilidan oldin bo‘lishi mumkin emas',
+      },
+    },
+
+    groupSemesters: {
+      create:
+        'Guruh semestrini qo‘shish',
+
+      createTitle:
+        'O‘quv guruhi semestrini yaratish',
+
+      editTitle:
+        'O‘quv guruhi semestrini tahrirlash',
+
+      searchPlaceholder:
+        'Guruh yoki o‘quv rejasi kodi bo‘yicha qidirish...',
+
+      semesterOption:
+        '{semester}-semestr — {season}',
+
+      archiveTitle:
+        'Guruh semestrini arxivlash',
+
+      archiveConfirm:
+        '«{group}» guruhining {semester}-semestrini arxivlaysizmi?',
+
+      archived:
+        'O‘quv guruhi semestri arxivga ko‘chirildi',
+
+      statuses: {
+        planned:
+          'Rejalashtirilgan',
+
+        active:
+          'Ta’lim davom etmoqda',
+
+        completed:
+          'Yakunlangan',
+
+        cancelled:
+          'Bekor qilingan',
+      },
+
+      fields: {
+        assignment:
+          'Guruh o‘quv rejasi',
+
+        group:
+          'Guruh',
+
+        curriculum:
+          'O‘quv rejasi',
+
+        academicYear:
+          'O‘quv yili',
+
+        semesterNumber:
+          'Semestr raqami',
+
+        academicSemester:
+          'Kalendar semestr',
+
+        studentsCount:
+          'Talabalar soni',
+
+        studentsCountShort:
+          'Talabalar',
+
+        subgroupCount:
+          'Kichik guruhlar soni',
+
+        subgroupCountShort:
+          'Kichik guruhlar',
+
+        status:
+          'Holat',
+      },
+
+      validation: {
+        assignmentRequired:
+          'Guruh o‘quv rejasini tanlang',
+
+        yearRequired:
+          'O‘quv yilini tanlang',
+
+        semesterNumberRequired:
+          'Semestr raqamini tanlang',
+
+        academicSemesterRequired:
+          'Kalendar akademik semestrni tanlang',
+
+        students:
+          'Talabalar soni 0 dan 1000 gacha bo‘lishi kerak',
+
+        subgroups:
+          'Kichik guruhlar soni 1 dan 100 gacha bo‘lishi kerak',
+      },
+    },
   },
 
 }
