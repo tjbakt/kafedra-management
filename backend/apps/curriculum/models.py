@@ -79,7 +79,8 @@ class WorkloadType(BaseModel):
         CREDIT = "credit", _("Зачёт")
         COURSE_WORK = "course_work", _("Курсовая работа")
         COURSE_PROJECT = "course_project", _("Курсовой проект")
-
+        COURSE_WORK_SUPERVISION = ( "course_work_supervision", _("Руководство курсовой работой"), )
+        COURSE_PROJECT_SUPERVISION = ( "course_project_supervision", _("Руководство курсовым проектом"), )
         COURSE_WORK_PROJECT_DEFENSE = ( "course_work_project_defense", _("Защита курсовой работы/проекта"), )
         SCIENTIFIC_PRACTICE = ( "scientific_practice", _("Научная практика"), )
         QUALIFICATION_PRACTICE = ( "qualification_practice", _("Квалификационная практика"), )
@@ -87,6 +88,7 @@ class WorkloadType(BaseModel):
         MASTER_DISSERTATION_DEFENSE = ( "master_dissertation_defense", _("Защита магистерской диссертации"), )
         GRADUATION_WORK_SUPERVISION = ( "graduation_work_supervision", _("Руководство выпускной квалификационной работой"), )
         GRADUATION_WORK_DEFENSE = ( "graduation_work_defense", _("Защита выпускной квалификационной работы"), )
+        RATING = ( "rating", _("Рейтинг"), )
         INDEPENDENT_WORK = ( "independent_work", _("Самостоятельная работа"), )
         OTHER = ( "other", _("Другой вид работы"), )
 
@@ -143,47 +145,16 @@ class WorkloadType(BaseModel):
         LECTURE = "lecture", _("Лекции")
         PRACTICE = "practice", _("Практические занятия")
         LABORATORY = "laboratory", _("Лабораторные занятия")
-
-        COURSE_WORK_SUPERVISION = (
-            "course_work_supervision",
-            _("Руководство курсовой работой"),
-        )
-        COURSE_PROJECT_SUPERVISION = (
-            "course_project_supervision",
-            _("Руководство курсовым проектом"),
-        )
-        COURSE_WORK_PROJECT_DEFENSE = (
-            "course_work_project_defense",
-            _("Защита курсовой работы/проекта"),
-        )
-
-        SCIENTIFIC_PRACTICE = (
-            "scientific_practice",
-            _("Научная практика"),
-        )
-        QUALIFICATION_PRACTICE = (
-            "qualification_practice",
-            _("Квалификационная практика"),
-        )
-
-        MASTER_DISSERTATION_SUPERVISION = (
-            "master_dissertation_supervision",
-            _("Руководство магистерской диссертацией"),
-        )
-        MASTER_DISSERTATION_DEFENSE = (
-            "master_dissertation_defense",
-            _("Защита магистерской диссертации"),
-        )
-
-        GRADUATION_WORK_SUPERVISION = (
-            "graduation_work_supervision",
-            _("Руководство выпускной квалификационной работой"),
-        )
-        GRADUATION_WORK_DEFENSE = (
-            "graduation_work_defense",
-            _("Защита выпускной квалификационной работы"),
-        )
-
+        COURSE_WORK_SUPERVISION = ( "course_work_supervision", _("Руководство курсовой работой"), )
+        COURSE_PROJECT_SUPERVISION = ( "course_project_supervision", _("Руководство курсовым проектом"), )
+        COURSE_WORK_DEFENSE = ( "course_work_defense", _("Защита курсовой работы"), )
+        COURSE_PROJECT_DEFENSE = ( "course_project_defense", _("Защита курсовой проекта"), )
+        SCIENTIFIC_PRACTICE = ( "scientific_practice", _("Научная практика"), )
+        QUALIFICATION_PRACTICE = ( "qualification_practice", _("Квалификационная практика"), )
+        MASTER_DISSERTATION_SUPERVISION = ( "master_dissertation_supervision", _("Руководство магистерской диссертацией"), )
+        MASTER_DISSERTATION_DEFENSE = ( "master_dissertation_defense", _("Защита магистерской диссертации"), )
+        GRADUATION_WORK_SUPERVISION = ( "graduation_work_supervision", _("Руководство выпускной квалификационной работой"), )
+        GRADUATION_WORK_DEFENSE = ( "graduation_work_defense", _("Защита выпускной квалификационной работы"), )
         RATING = "rating", _("Рейтинг")
         OTHER = "other", _("Другое")
 
@@ -194,6 +165,27 @@ class WorkloadType(BaseModel):
         default=ReportCategory.OTHER,
         db_index=True,
     )
+
+    CURRICULUM_RULE_CATEGORIES = frozenset(
+        {
+            ReportCategory.RATING,
+            ReportCategory.COURSE_WORK_SUPERVISION,
+            ReportCategory.COURSE_PROJECT_SUPERVISION,
+            ReportCategory.COURSE_WORK_DEFENSE,
+            ReportCategory.COURSE_PROJECT_DEFENSE,
+            ReportCategory.MASTER_DISSERTATION_SUPERVISION,
+            ReportCategory.MASTER_DISSERTATION_DEFENSE,
+            ReportCategory.GRADUATION_WORK_SUPERVISION,
+            ReportCategory.GRADUATION_WORK_DEFENSE,
+        }
+    )
+
+    @property
+    def uses_curriculum_rule(self) -> bool:
+        return (
+            self.report_category
+            in self.CURRICULUM_RULE_CATEGORIES
+        )
 
     def __str__(self) -> str:
         return self.name_ru
@@ -336,6 +328,149 @@ class Curriculum(BaseModel):
     def __str__(self) -> str:
         return f"{self.code} — {self.study_program}"
 
+class CurriculumWorkloadRule(BaseModel):
+    """
+    Единая норма расчёта вида работы для всего учебного плана.
+
+    Например: рейтинг = 0.5 часа на студента.
+
+    Все дисциплины этого учебного плана, для которых включён рейтинг, используют именно эту норму.
+    """
+
+    curriculum = models.ForeignKey(
+        Curriculum,
+        verbose_name=_("Учебный план"),
+        related_name="workload_rules",
+        on_delete=models.CASCADE,
+    )
+
+    workload_type = models.ForeignKey(
+        WorkloadType,
+        verbose_name=_("Вид учебной работы"),
+        related_name="curriculum_rules",
+        on_delete=models.PROTECT,
+    )
+
+    calculation_mode = models.CharField(
+        _("Способ расчёта"),
+        max_length=20,
+        choices=WorkloadType.CalculationMode.choices,
+    )
+
+    base_hours = models.DecimalField(
+        _("Базовое количество часов"),
+        max_digits=8,
+        decimal_places=2,
+        validators=[
+            MinValueValidator(
+                Decimal("0.00")
+            )
+        ],
+    )
+
+    students_per_unit = models.PositiveSmallIntegerField(
+        _("Количество студентов на одну расчётную единицу"),
+        null=True,
+        blank=True,
+    )
+
+    is_active = models.BooleanField(
+        _("Активна"),
+        default=True,
+        db_index=True,
+    )
+
+    notes = models.TextField(
+        _("Примечание"),
+        blank=True,
+    )
+
+    class Meta:
+        verbose_name = _( "Норма нагрузки учебного плана" )
+        verbose_name_plural = _( "Нормы нагрузки учебного плана" )
+        ordering = (
+            "curriculum",
+            "workload_type__sort_order",
+        )
+        constraints = [
+            models.UniqueConstraint(
+                fields=(
+                    "curriculum",
+                    "workload_type",
+                ),
+                name=(
+                    "unique_curriculum_"
+                    "workload_rule"
+                ),
+            ),
+        ]
+
+    def clean(self):
+        super().clean()
+
+        if (
+            self.workload_type_id
+            and not
+            self.workload_type
+            .uses_curriculum_rule
+        ):
+            raise ValidationError(
+                {
+                    "workload_type": _(
+                        "Для данного вида работы  не используется единая норма учебного плана."
+                    )
+                }
+            )
+
+        if (
+            self.calculation_mode
+            == WorkloadType
+            .CalculationMode
+            .PER_STUDENT
+            and self.base_hours <= 0
+        ):
+            raise ValidationError(
+                {
+                    "base_hours": _(
+                        "Для расчёта на студента количество часов должно быть больше нуля."
+                    )
+                }
+            )
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+
+        result = super().save( *args, **kwargs,)
+
+        #
+        # Синхронизируем все уже добавленные нагрузки учебного плана.
+        #
+        CurriculumWorkload.all_objects.filter(
+            curriculum_discipline__curriculum_id=(
+                self.curriculum_id
+            ),
+            workload_type_id=(
+                self.workload_type_id
+            ),
+            is_archived=False,
+        ).update(
+            calculation_mode=(
+                self.calculation_mode
+            ),
+            base_hours=self.base_hours,
+            students_per_unit=(
+                self.students_per_unit
+            ),
+        )
+
+        return result
+
+    def __str__(self) -> str:
+        return (
+            f"{self.curriculum.code}: "
+            f"{self.workload_type.name_ru}"
+        )
+
 class CurriculumDiscipline(BaseModel):
     """
     Дисциплина в определённом семестре учебного плана.
@@ -460,13 +595,24 @@ class CurriculumDiscipline(BaseModel):
 
     @property
     def planned_contact_hours(self):
+        classroom_codes = (
+            WorkloadType.Code.LECTURE,
+            WorkloadType.Code.PRACTICE,
+            WorkloadType.Code.LABORATORY,
+            WorkloadType.Code.SEMINAR,
+        )
+
         return sum(
             (
                 item.base_hours
-                for item in self.workload_items.filter(
-                    is_archived=False,
-                    is_active=True,
-                )
+                for item
+                in self.workload_items.filter(
+                is_archived=False,
+                is_active=True,
+                workload_type__code__in=(
+                    classroom_codes
+                ),
+            )
             ),
             Decimal("0.00"),
         )

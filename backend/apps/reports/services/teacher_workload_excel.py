@@ -40,7 +40,9 @@ class TeacherWorkloadExcelService(
 
         WorkloadType.ReportCategory.COURSE_WORK_SUPERVISION: 14,
         WorkloadType.ReportCategory.COURSE_PROJECT_SUPERVISION: 14,
-        WorkloadType.ReportCategory.COURSE_WORK_PROJECT_DEFENSE: 15,
+
+        WorkloadType.ReportCategory.COURSE_WORK_DEFENSE: 15,
+        WorkloadType.ReportCategory.COURSE_PROJECT_DEFENSE: 15,
 
         WorkloadType.ReportCategory.SCIENTIFIC_PRACTICE: 17,
         WorkloadType.ReportCategory.MASTER_DISSERTATION_SUPERVISION: 18,
@@ -598,20 +600,19 @@ class TeacherWorkloadExcelService(
             column=7,
         ).value = item["groups_count"]
 
-        for category, hours in item["hours"].items():
-            column = cls.CATEGORY_COLUMNS.get(
-                category
-            )
+        hours_by_column: dict[int, Decimal] = defaultdict(lambda: ZERO_HOURS)
 
+        for category, hours in item["hours"].items():
+            column = cls.CATEGORY_COLUMNS.get(category)
             if column is None:
                 continue
+            hours_by_column[column] += Decimal(hours or ZERO_HOURS)
 
+        for column, hours in hours_by_column.items():
             worksheet.cell(
                 row=row,
                 column=column,
-            ).value = cls.hours_or_empty(
-                hours
-            )
+            ).value = cls.hours_or_empty(hours)
         # Y — всего по строке.
         worksheet.cell(
             row=row,

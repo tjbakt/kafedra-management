@@ -1812,15 +1812,29 @@ const uz = {
     semesterNumber:
       '{semester}-sem.',
 
-    contactHoursHint:
-      'Mustaqil ishsiz hisoblangan hajm: {hours} soat. Rejadagi kontakt soatlari yuklama turlaridan shakllantiriladi.',
+    contactHoursHint: 'Mustaqil ishsiz hisoblangan hajm: {hours} soat. Rejadagi kontakt soatlari yuklama turlaridan shakllantiriladi.',
+    departmentFromDiscipline:
+      'Обеспечивающая кафедра определяется дисциплиной: {department}',
+
+    auditoriumTotal:
+      'Итого аудиторных часов',
+
+    totalAcademic:
+      'Всего часов',
+
+    grandTotal:
+      'Итого по выбранным семестрам',
+
+    curriculumRuleApplied:
+      'Используется единая норма учебного плана',
+
+    curriculumRuleMissing:
+      'Сначала задайте единую норму учебного плана',
 
     seasons: {
-      autumn:
-        'Kuzgi',
+      autumn: 'Kuzgi',
 
-      spring:
-        'Bahorgi',
+      spring: 'Bahorgi',
     },
 
     componentTypes: {
@@ -1930,14 +1944,10 @@ const uz = {
       weeks:
         'O‘quv haftalari',
 
-      active:
-        'Yozuv faol',
-
-      status:
-        'Holat',
-
-      notes:
-        'Izoh',
+      active: 'Yozuv faol',
+      status: 'Holat',
+      notes: 'Izoh',
+      semesters: 'Semestrlar',
     },
 
     validation: {
@@ -1958,6 +1968,8 @@ const uz = {
 
       independentExceedsTotal: 'Mustaqil ish soatlari umumiy akademik hajmdan oshmasligi kerak',
       weeks: 'O‘quv haftalari soni 1 dan kam bo‘lmasligi kerak',
+      semestersRequired: 'Kamida bitta semestrni tanlang.',
+      disciplineDepartmentRequired: 'Tanlangan fan uchun kafedra belgilanmagan.',
     },
     workloads: 'Yuklama turlari',
   },

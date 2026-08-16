@@ -114,12 +114,6 @@ const menuDefinitions: TranslatedSidebarItem[] = [
     children: [
       {
         label: '',
-        labelKey: 'navigation.disciplines',
-        icon: 'pi pi-bookmark',
-        route: '/disciplines',
-      },
-      {
-        label: '',
         labelKey: 'navigation.curriculumReferences',
         icon: 'pi pi-book',
         route: '/curriculum-references',

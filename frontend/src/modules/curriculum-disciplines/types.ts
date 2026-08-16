@@ -1,4 +1,5 @@
 import type { CurriculumWorkload, } from './workload-types'
+import type { WorkloadCalculationMode, } from './workload-types'
 
 export type CurriculumComponentType =
   | 'required'
@@ -42,6 +43,58 @@ export type NestedCurriculumWorkload = CurriculumWorkload
 //
 //   is_archived: boolean
 // }
+
+export interface CurriculumBundleWorkloadPayload {
+  workload_type: number
+
+  calculation_mode?:
+    WorkloadCalculationMode
+
+  base_hours?: number
+
+  students_per_unit?:
+    number | null
+
+  is_active: boolean
+
+  notes: string
+}
+
+export interface CurriculumBundleSemesterPayload {
+  semester_number: number
+
+  credits: number
+
+  weeks_count: number
+
+  is_active: boolean
+
+  notes: string
+
+  workloads:
+    CurriculumBundleWorkloadPayload[]
+}
+
+export interface CurriculumDisciplineBundlePayload {
+  curriculum: number
+
+  discipline: number
+
+  component_type:
+    CurriculumComponentType
+
+  semesters:
+    CurriculumBundleSemesterPayload[]
+
+  replace_semesters: boolean
+}
+
+export interface CurriculumDisciplineBundleResponse {
+  detail: string
+
+  data:
+    CurriculumDiscipline[]
+}
 
 export interface CurriculumDiscipline
   extends Record<string, unknown> {

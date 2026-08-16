@@ -14,6 +14,11 @@ import type {
   WorkloadType,
 } from './workload-types'
 
+import type {
+  CurriculumWorkloadRule,
+  CurriculumWorkloadRulePayload,
+} from './workload-types'
+
 export const workloadTypesApi =
   createCrudApi<
     WorkloadType,
@@ -72,4 +77,32 @@ export async function getCurriculumWorkloads(
     )
 
   return response.data
+}
+
+export const curriculumWorkloadRulesApi =
+  createCrudApi<
+    CurriculumWorkloadRule,
+    CurriculumWorkloadRulePayload,
+    CurriculumWorkloadRulePayload
+  >(
+    '/curriculum/curriculum-workload-rules/',
+  )
+
+
+export async function getCurriculumWorkloadRules(
+  curriculumId: number,
+): Promise<
+  PaginatedResponse<CurriculumWorkloadRule>
+> {
+  return curriculumWorkloadRulesApi.list({
+    curriculum:
+      curriculumId,
+
+    page_size: 500,
+
+    is_active: true,
+
+    ordering:
+      'workload_type__sort_order',
+  })
 }

@@ -31,29 +31,38 @@ import CurriculumWorkloadPanel from '@/modules/curriculum-disciplines/components
 import {
   curriculumDisciplinesApi,
   getCurriculum,
-  getDepartments,
   getDisciplines,
-  getStudyProgram,
+  configureCurriculumDiscipline,
+  getDisciplineSemesters,
+  getWorkloadTypes,
 } from '@/modules/curriculum-disciplines/api'
+
+import {
+  getCurriculumWorkloadRules,
+} from '@/modules/curriculum-disciplines/workload-api'
+
+import type {
+  CurriculumWorkloadRule,
+} from '@/modules/curriculum-disciplines/workload-types'
 
 import type {
   Curriculum,
 } from '@/modules/curricula/types'
 
 import type {
-  DepartmentLookup,
   Discipline,
+  WorkloadType,
 } from '@/modules/curriculum-references/types'
 
-import type {
-  StudyProgram,
-} from '@/modules/study-programs/types'
+// import type {
+//   StudyProgram,
+// } from '@/modules/study-programs/types'
 
 import type {
   CurriculumComponentType,
   CurriculumControlForm,
   CurriculumDiscipline,
-  CurriculumDisciplinePayload,
+  CurriculumDisciplineBundlePayload,
   SelectOption,
 } from '@/modules/curriculum-disciplines/types'
 
@@ -115,16 +124,13 @@ const curriculum =
     null,
   )
 
-const studyProgram =
-  ref<StudyProgram | null>(
-    null,
-  )
+// const studyProgram =
+//   ref<StudyProgram | null>(
+//     null,
+//   )
 
 const disciplines =
   ref<Discipline[]>([])
-
-const departments =
-  ref<DepartmentLookup[]>([])
 
 const selectedRecord =
   ref<
@@ -690,6 +696,12 @@ const {
     },
   )
 
+const workloadTypes = ref<WorkloadType[]>([])
+
+const workloadRules = ref<CurriculumWorkloadRule[]>([])
+
+const existingEntries = ref<CurriculumDiscipline[]>([])
+
 function clearFormErrors(): void {
   fieldErrors.value = {}
 
@@ -715,37 +727,27 @@ async function loadMetadata(): Promise<void> {
       currentCurriculum
 
     const [
-      program,
-      disciplineResponse,
-      departmentResponse,
+      disciplinesResponse,
+      workloadTypesResponse,
+      workloadRulesResponse,
     ] = await Promise.all([
-      getStudyProgram(
-        currentCurriculum
-          .study_program,
-      ),
-
       getDisciplines(),
-
-      getDepartments(),
+      getWorkloadTypes(),
+      getCurriculumWorkloadRules(curriculumId,),
     ])
 
-    studyProgram.value =
-      program
+    disciplines.value = disciplinesResponse.results
 
-    disciplines.value =
-      disciplineResponse.results
+    workloadTypes.value = workloadTypesResponse.results
 
-    departments.value =
-      departmentResponse.results
+    workloadRules.value = workloadRulesResponse.results
   } catch (loadError) {
-    const normalized =
-      normalizeApiError(
-        loadError,
-        t('crud.loadError'),
-      )
+    const normalized = normalizeApiError(
+      loadError,
+      t('crud.loadError'),
+    )
 
-    metadataError.value =
-      normalized.message
+    metadataError.value = normalized.message
 
     toast.error(
       t('common.error'),
@@ -758,27 +760,34 @@ async function loadMetadata(): Promise<void> {
 }
 
 function openCreate(): void {
-  if (!curriculum.value) {
-    return
-  }
-
-  selectedRecord.value =
-    null
-
+  selectedRecord.value = null
+  existingEntries.value = []
   clearFormErrors()
-
-  formVisible.value =
-    true
+  formVisible.value = true
 }
 
-function openEdit(
+async function openEdit(
   record:
     CurriculumDiscipline,
-): void {
+): Promise<void> {
   selectedRecord.value =
     record
 
   clearFormErrors()
+
+  try {
+    const response =
+      await getDisciplineSemesters(
+        curriculumId,
+        record.discipline,
+      )
+
+    existingEntries.value =
+      response.results
+  } catch {
+    existingEntries.value =
+      [record]
+  }
 
   formVisible.value =
     true
@@ -820,42 +829,33 @@ async function handleWorkloadChanged(): Promise<void> {
 
 async function saveRecord(
   payload:
-    CurriculumDisciplinePayload,
+    CurriculumDisciplineBundlePayload,
 ): Promise<void> {
   saving.value = true
 
   clearFormErrors()
 
   try {
-    if (
+    await configureCurriculumDiscipline(
+      payload,
+    )
+
+    toast.success(
+      t('common.success'),
+
       selectedRecord.value
-    ) {
-      await curriculumDisciplinesApi
-        .update(
-          selectedRecord.value.id,
-
-          payload,
-        )
-
-      toast.success(
-        t('common.success'),
-        t('crud.updated'),
-      )
-    } else {
-      await curriculumDisciplinesApi
-        .create(payload)
-
-      toast.success(
-        t('common.success'),
-        t('crud.created'),
-      )
-    }
+        ? t('crud.updated')
+        : t('crud.created'),
+    )
 
     formVisible.value =
       false
 
     selectedRecord.value =
       null
+
+    existingEntries.value =
+      []
 
     await refresh()
   } catch (saveError) {
@@ -874,7 +874,8 @@ async function saveRecord(
     generalFormError.value =
       normalized.message
   } finally {
-    saving.value = false
+    saving.value =
+      false
   }
 }
 
@@ -1253,32 +1254,20 @@ onMounted(
         "
         :error="error"
         :first="first"
-        :rows="
-          query.pageSize
-        "
-        :total-records="
-          totalRecords
-        "
+        :rows="query.pageSize"
+        :total-records="totalRecords"
         show-row-actions
         @page="handlePage"
         @sort="handleSort"
         @retry="refresh"
       >
-        <template
-          #semester="{ row }"
-        >
-          <div
-            class="
-              semester-cell
-            "
-          >
+        <template #semester="{ row }" >
+          <div class="semester-cell" >
             <strong>
               {{
-                t(
-                  'curriculumDisciplines.semesterNumber',
+                t('curriculumDisciplines.semesterNumber',
                   {
-                    semester:
-                      row.semester_number,
+                    semester: row.semester_number,
                   },
                 )
               }}
@@ -1286,22 +1275,14 @@ onMounted(
 
             <small>
               {{
-                seasonLabel(
-                  row.semester_number,
-                )
+                seasonLabel(row.semester_number,)
               }}
             </small>
           </div>
         </template>
 
-        <template
-          #discipline="{ row }"
-        >
-          <div
-            class="
-              discipline-cell
-            "
-          >
+        <template #discipline="{ row }" >
+          <div class="discipline-cell" >
             <strong>
               {{
                 row.discipline_code
@@ -1316,26 +1297,14 @@ onMounted(
           </div>
         </template>
 
-        <template
-          #componentType="{ row }"
-        >
+        <template #componentType="{ row }">
           <Tag
-            :value="
-              componentTypeLabel(
-                row.component_type,
-              )
-            "
-            :severity="
-              componentSeverity(
-                row.component_type,
-              )
-            "
+            :value="componentTypeLabel(row.component_type,)"
+            :severity="componentSeverity(row.component_type,)"
           />
         </template>
 
-        <template
-          #controlForm="{ row }"
-        >
+        <template #controlForm="{ row }" >
           {{
             controlFormLabel(
               row.control_form,
@@ -1343,9 +1312,7 @@ onMounted(
           }}
         </template>
 
-        <template
-          #contactHours="{ row }"
-        >
+        <template #contactHours="{ row }" >
           <Tag
             :value="
               row.planned_contact_hours
@@ -1378,23 +1345,15 @@ onMounted(
         <template
           #actions="{ row }"
         >
-          <Button
-            v-if="
-      canViewWorkloads
-    "
-            v-tooltip.bottom="
-      t(
-        'curriculumDisciplines.workloads',
-      )
-    "
-            icon="pi pi-clock"
-            severity="info"
-            text
-            rounded
-            @click.stop="
-      openWorkloads(row)
-    "
-          />
+<!--          <Button-->
+<!--            v-if=" canViewWorkloads "-->
+<!--            v-tooltip.bottom=" t( 'curriculumDisciplines.workloads', ) "-->
+<!--            icon="pi pi-clock"-->
+<!--            severity="info"-->
+<!--            text-->
+<!--            rounded-->
+<!--            @click.stop=" openWorkloads(row) "-->
+<!--          />-->
 
           <Button
             v-if="canEdit"
@@ -1444,39 +1403,37 @@ onMounted(
     </BaseCard>
 
     <CurriculumDisciplineFormDialog
-      v-if="
-        curriculum &&
-        studyProgram
-      "
+      v-if="curriculum"
       v-model="formVisible"
-      :curriculum="
-        curriculum
-      "
-      :study-program="
-        studyProgram
-      "
+      :curriculum="curriculum"
       :record="
-        selectedRecord
-      "
+    selectedRecord
+  "
+      :existing-entries="
+    existingEntries
+  "
       :disciplines="
-        disciplines
-      "
-      :departments="
-        departments
-      "
+    disciplines
+  "
+      :workload-types="
+    workloadTypes
+  "
+      :workload-rules="
+    workloadRules
+  "
       :loading="saving"
       :field-errors="
-        fieldErrors
-      "
+    fieldErrors
+  "
       :non-field-errors="
-        nonFieldErrors
-      "
+    nonFieldErrors
+  "
       :general-error="
-        generalFormError
-      "
+    generalFormError
+  "
       @submit="
-        saveRecord
-      "
+    saveRecord
+  "
     />
 
     <BaseDialog

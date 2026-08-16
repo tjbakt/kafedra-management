@@ -4,6 +4,7 @@ from apps.curriculum.models import (
     Curriculum,
     CurriculumDiscipline,
     CurriculumWorkload,
+    CurriculumWorkloadRule,
     Discipline,
     WorkloadType,
 )
@@ -113,6 +114,32 @@ class CurriculumAdmin(
         "effective_academic_year",
     )
 
+@admin.register(
+    CurriculumWorkloadRule
+)
+class CurriculumWorkloadRuleAdmin(
+    ArchiveAdminMixin,
+    admin.ModelAdmin,
+):
+    list_display = (
+        "curriculum",
+        "workload_type",
+        "calculation_mode",
+        "base_hours",
+        "is_active",
+    )
+
+    list_filter = (
+        "curriculum",
+        "calculation_mode",
+        "is_active",
+        "is_archived",
+    )
+
+    autocomplete_fields = (
+        "curriculum",
+        "workload_type",
+    )
 
 @admin.register(CurriculumDiscipline)
 class CurriculumDisciplineAdmin(

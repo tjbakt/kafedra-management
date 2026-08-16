@@ -1858,11 +1858,25 @@ const ru = {
     semesterOption:
       '{semester} семестр — {season}',
 
-    semesterNumber:
-      '{semester} сем.',
+    semesterNumber: '{semester} сем.',
+    contactHoursHint: 'Расчётный объём без самостоятельной работы: {hours} ч. Плановые контактные часы будут сформированы из видов нагрузки.',
+    departmentFromDiscipline:
+      'Обеспечивающая кафедра определяется дисциплиной: {department}',
 
-    contactHoursHint:
-      'Расчётный объём без самостоятельной работы: {hours} ч. Плановые контактные часы будут сформированы из видов нагрузки.',
+    auditoriumTotal:
+      'Итого аудиторных часов',
+
+    totalAcademic:
+      'Всего часов',
+
+    grandTotal:
+      'Итого по выбранным семестрам',
+
+    curriculumRuleApplied:
+      'Используется единая норма учебного плана',
+
+    curriculumRuleMissing:
+      'Сначала задайте единую норму учебного плана',
 
     seasons: {
       autumn:
@@ -1982,11 +1996,9 @@ const ru = {
       active:
         'Запись активна',
 
-      status:
-        'Статус',
-
-      notes:
-        'Примечание',
+      status: 'Статус',
+      notes: 'Примечание',
+      semesters: 'Семестры',
     },
 
     validation: {
@@ -2005,9 +2017,10 @@ const ru = {
       nonNegative:
         'Значение не может быть отрицательным',
 
-      independentExceedsTotal:
-        'Самостоятельные часы не могут превышать общий академический объём',
+      independentExceedsTotal: 'Самостоятельные часы не могут превышать общий академический объём',
       weeks: 'Количество учебных недель должно быть не меньше 1',
+      semestersRequired: 'Выберите хотя бы один семестр.',
+      disciplineDepartmentRequired: 'Для выбранной дисциплины не задана кафедра.',
     },
     workloads: 'Виды нагрузки',
   },

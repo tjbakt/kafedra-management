@@ -21,7 +21,7 @@ import type {
 } from '@/modules/curricula/types'
 
 import type {
-  DepartmentLookup,
+  WorkloadType,
   Discipline,
 } from '@/modules/curriculum-references/types'
 
@@ -37,6 +37,15 @@ import type {
 import type {
   PaginatedResponse,
 } from '@/types/api'
+
+import {
+  workloadTypesApi,
+} from '@/modules/curriculum-references/api'
+
+import type {
+  CurriculumDisciplineBundlePayload,
+  CurriculumDisciplineBundleResponse,
+} from '@/modules/curriculum-disciplines/types'
 
 export const curriculumDisciplinesApi =
   createCrudApi<
@@ -72,25 +81,75 @@ export async function getDisciplines(): Promise<
   })
 }
 
-export async function getDepartments(): Promise<
-  PaginatedResponse<DepartmentLookup>
+export async function getWorkloadTypes(): Promise<
+  PaginatedResponse<WorkloadType>
+> {
+  return workloadTypesApi.list({
+    page_size: 500,
+    is_active: true,
+    ordering:
+      'sort_order,name_ru',
+  })
+}
+
+
+export async function getDisciplineSemesters(
+  curriculumId: number,
+  disciplineId: number,
+): Promise<
+  PaginatedResponse<CurriculumDiscipline>
+> {
+  return curriculumDisciplinesApi.list({
+    curriculum:
+      curriculumId,
+
+    discipline:
+      disciplineId,
+
+    page_size: 100,
+
+    ordering:
+      'semester_number',
+  })
+}
+
+
+export async function configureCurriculumDiscipline(
+  payload:
+    CurriculumDisciplineBundlePayload,
+): Promise<
+  CurriculumDisciplineBundleResponse
 > {
   const response =
-    await http.get<
-      PaginatedResponse<DepartmentLookup>
+    await http.post<
+      CurriculumDisciplineBundleResponse
     >(
-      '/organizations/departments/',
-      {
-        params: {
-          page_size: 500,
-
-          is_active: true,
-
-          ordering:
-            'sort_order,name_ru',
-        },
-      },
+      '/curriculum/curriculum-disciplines/configure/',
+      payload,
     )
 
   return response.data
 }
+
+// export async function getDepartments(): Promise<
+//   PaginatedResponse<DepartmentLookup>
+// > {
+//   const response =
+//     await http.get<
+//       PaginatedResponse<DepartmentLookup>
+//     >(
+//       '/organizations/departments/',
+//       {
+//         params: {
+//           page_size: 500,
+//
+//           is_active: true,
+//
+//           ordering:
+//             'sort_order,name_ru',
+//         },
+//       },
+//     )
+//
+//   return response.data
+// }

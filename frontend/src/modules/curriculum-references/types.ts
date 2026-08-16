@@ -101,6 +101,8 @@ export interface WorkloadType extends Record<string, unknown> {
   report_category: ReportCategory
   report_category_name: string
 
+  uses_curriculum_rule: boolean
+
   is_classroom: boolean
   is_teaching_load: boolean
 

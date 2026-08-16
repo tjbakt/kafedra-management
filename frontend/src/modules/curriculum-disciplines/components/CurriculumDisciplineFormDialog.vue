@@ -1,9 +1,11 @@
 <script setup lang="ts">
+// import Button from 'primevue/button'
 import Checkbox from 'primevue/checkbox'
 import InputNumber from 'primevue/inputnumber'
 import Message from 'primevue/message'
+import MultiSelect from 'primevue/multiselect'
 import Select from 'primevue/select'
-import Textarea from 'primevue/textarea'
+// import Textarea from 'primevue/textarea'
 
 import {
   computed,
@@ -21,31 +23,25 @@ import BaseFormField from '@/components/base/BaseFormField.vue'
 
 import FormValidationSummary from '@/components/forms/FormValidationSummary.vue'
 
-import {
-  useLocaleStore,
-} from '@/stores/locale'
-
 import type {
   Curriculum,
 } from '@/modules/curricula/types'
 
 import type {
-  DepartmentLookup,
   Discipline,
+  WorkloadType,
 } from '@/modules/curriculum-references/types'
 
 import type {
-  StudyProgram,
-} from '@/modules/study-programs/types'
+  CurriculumDiscipline,
+  CurriculumDisciplineBundlePayload,
+  CurriculumComponentType,
+} from '@/modules/curriculum-disciplines/types'
 
 import type {
-  CurriculumComponentType,
-  CurriculumControlForm,
-  CurriculumDiscipline,
-  CurriculumDisciplinePayload,
-  SelectOption,
-  SemesterOption,
-} from '@/modules/curriculum-disciplines/types'
+  CurriculumWorkloadRule,
+  WorkloadCalculationMode,
+} from '@/modules/curriculum-disciplines/workload-types'
 
 import type {
   FieldErrors,
@@ -55,6 +51,29 @@ import {
   getFieldError,
 } from '@/utils/api-errors'
 
+interface WorkloadFormRow {
+  enabled: boolean
+  workload_type: number
+  calculation_mode: WorkloadCalculationMode
+  base_hours: number
+  students_per_unit:
+    number | null
+  notes: string
+}
+
+interface SemesterForm {
+  semester_number: number
+  credits: number
+  weeks_count: number
+  is_active: boolean
+  notes: string
+  workloads:
+    Record<
+      number,
+      WorkloadFormRow
+    >
+}
+
 const visible =
   defineModel<boolean>({
     default: false,
@@ -63,35 +82,22 @@ const visible =
 const props = withDefaults(
   defineProps<{
     curriculum: Curriculum
-
-    studyProgram:
-      StudyProgram | null
-
-    record?:
-      CurriculumDiscipline | null
-
+    record?: CurriculumDiscipline | null
+    existingEntries?: CurriculumDiscipline[]
     disciplines: Discipline[]
-
-    departments:
-      DepartmentLookup[]
-
+    workloadTypes: WorkloadType[]
+    workloadRules: CurriculumWorkloadRule[]
     loading?: boolean
-
     fieldErrors?: FieldErrors
-
     nonFieldErrors?: string[]
-
     generalError?: string
   }>(),
   {
     record: null,
-
+    existingEntries: () => [],
     loading: false,
-
     fieldErrors: () => ({}),
-
     nonFieldErrors: () => [],
-
     generalError: '',
   },
 )
@@ -99,470 +105,576 @@ const props = withDefaults(
 const emit = defineEmits<{
   submit: [
     payload:
-      CurriculumDisciplinePayload,
+      CurriculumDisciplineBundlePayload,
   ]
 }>()
 
 const { t } = useI18n()
 
-const localeStore =
-  useLocaleStore()
+const form =
+  reactive({
+    discipline:
+      null as number | null,
 
-const form = reactive({
-  discipline:
-    null as number | null,
+    component_type: 'required' as CurriculumComponentType,
 
-  semester_number:
-    null as number | null,
+    semesters: [] as number[],
+  })
 
-  teaching_department:
-    null as number | null,
+const semesterForms = reactive< Record<number, SemesterForm> >({})
 
-  component_type:
-    'required' as CurriculumComponentType,
+const localErrors = reactive< Record<string, string> >({})
 
-  control_form:
-    'none' as CurriculumControlForm,
+const selectedDiscipline =
+  computed(
+    () =>
+      props.disciplines.find(
+        (item) =>
+          item.id ===
+          form.discipline,
+      ) ?? null,
+  )
 
-  credits:
-    0 as number | null,
+const title =
+  computed(
+    () =>
+      props.record
+        ? t(
+            'curriculumDisciplines.editTitle',
+          )
+        : t(
+            'curriculumDisciplines.createTitle',
+          ),
+  )
 
-  total_academic_hours:
-    0 as number | null,
-
-  independent_hours:
-    0 as number | null,
-
-  weeks_count:
-    15 as number | null,
-
-  is_active: true,
-
-  notes: '',
-})
-
-const localErrors =
-  reactive<
-    Record<string, string>
-  >({})
-
-const title = computed(
-  () =>
-    props.record
-      ? t(
-          'curriculumDisciplines.editTitle',
+const disciplineOptions =
+  computed(
+    () =>
+      props.disciplines
+        .filter(
+          (item) =>
+            item.is_active &&
+            !item.is_archived,
         )
-      : t(
-          'curriculumDisciplines.createTitle',
+        .map(
+          (item) => ({
+            value:
+              item.id,
+
+            label:
+              `${item.code} — ${item.display_name}`,
+
+            description:
+              item.default_department_name,
+          }),
         ),
-)
+  )
 
-function localizedName(
-  ru: string | null | undefined,
-  uz: string | null | undefined,
-): string {
-  if (
-    localeStore.locale === 'uz'
-  ) {
-    return (
-      uz?.trim() ||
-      ru?.trim() ||
-      '—'
-    )
-  }
+const semesterOptions =
+  computed(
+    () =>
+      Array.from(
+        {
+          length:
+            props.curriculum
+              .semesters_count ??
+            0,
+        },
 
+        (_, index) => {
+          const value =
+            index + 1
+
+          return {
+            value,
+
+            label:
+              `${value} — ${
+                value % 2 === 1
+                  ? t(
+                      'curriculumDisciplines.seasons.autumn',
+                    )
+                  : t(
+                      'curriculumDisciplines.seasons.spring',
+                    )
+              }`,
+          }
+        },
+      ),
+  )
+
+const componentOptions =
+  computed(
+    () => [
+      {
+        value: 'required',
+
+        label:
+          t(
+            'curriculumDisciplines.componentTypes.required',
+          ),
+      },
+      {
+        value: 'elective',
+
+        label:
+          t(
+            'curriculumDisciplines.componentTypes.elective',
+          ),
+      },
+      {
+        value: 'optional',
+
+        label:
+          t(
+            'curriculumDisciplines.componentTypes.optional',
+          ),
+      },
+    ],
+  )
+
+const calculationModeOptions =
+  computed(
+    () => [
+      {
+        value: 'fixed',
+
+        label:
+          t(
+            'curriculumWorkloads.calculationModes.fixed',
+          ),
+      },
+      {
+        value: 'per_group',
+
+        label:
+          t(
+            'curriculumWorkloads.calculationModes.perGroup',
+          ),
+      },
+      {
+        value: 'per_subgroup',
+
+        label:
+          t(
+            'curriculumWorkloads.calculationModes.perSubgroup',
+          ),
+      },
+      {
+        value: 'per_student',
+
+        label:
+          t(
+            'curriculumWorkloads.calculationModes.perStudent',
+          ),
+      },
+    ],
+  )
+
+function ruleFor(
+  workloadTypeId: number,
+): CurriculumWorkloadRule | null {
   return (
-    ru?.trim() ||
-    uz?.trim() ||
-    '—'
+    props.workloadRules.find(
+      (item) =>
+        item.workload_type ===
+          workloadTypeId &&
+        item.is_active &&
+        !item.is_archived,
+    ) ?? null
   )
 }
 
-const semesterOptions =
-  computed<
-    SemesterOption[]
-  >(() => {
-    const count =
-      props.curriculum
-        .semesters_count ?? 0
-
-    return Array.from(
-      {
-        length: count,
-      },
-
-      (_, index) => {
-        const semester =
-          index + 1
-
-        const season =
-          semester % 2 === 1
-            ? 'autumn'
-            : 'spring'
-
-        return {
-          value:
-            semester,
-
-          season,
-
-          seasonLabel:
-            season ===
-            'autumn'
-              ? t(
-                  'curriculumDisciplines.seasons.autumn',
-                )
-              : t(
-                  'curriculumDisciplines.seasons.spring',
-                ),
-
-          label:
-            t(
-              'curriculumDisciplines.semesterOption',
-              {
-                semester,
-
-                season:
-                  season ===
-                  'autumn'
-                    ? t(
-                        'curriculumDisciplines.seasons.autumn',
-                      )
-                    : t(
-                        'curriculumDisciplines.seasons.spring',
-                      ),
-              },
-            ),
-        }
-      },
+function createWorkloadRow(
+  workloadType:
+    WorkloadType,
+): WorkloadFormRow {
+  const rule =
+    ruleFor(
+      workloadType.id,
     )
-  })
 
-const disciplineOptions =
-  computed<
-    SelectOption<number>[]
-  >(() => {
-    const result =
-      props.disciplines
-        .filter(
-          (discipline) =>
-            discipline.is_active &&
-            !discipline.is_archived,
-        )
-        .map(
-          (discipline) => ({
-            value:
-              discipline.id,
+  return {
+    enabled: false,
 
-            label:
-              `${discipline.code} — ${
-                localizedName(
-                  discipline.name_ru,
-                  discipline.name_uz,
-                )
-              }`,
+    workload_type: workloadType.id,
 
-            description:
-              discipline
-                .default_department_name ??
-              undefined,
-          }),
-        )
+    calculation_mode:
+      rule
+        ?.calculation_mode ??
+      workloadType.calculation_mode,
 
-    if (
-      props.record &&
-      !result.some(
-        (option) =>
-          option.value ===
-          props.record
-            ?.discipline,
-      )
-    ) {
-      result.unshift({
-        value: props.record.discipline,
-        label: `${props.record.discipline_code} — ${props.record.discipline_name}`,
-        description: '',
-      })
-    }
+    base_hours:
+      rule
+        ? Number(
+            rule.base_hours,
+          )
+        : 0,
 
-    return result
-  })
+    students_per_unit:
+      rule
+        ?.students_per_unit ??
+      null,
 
-const departmentOptions =
-  computed<
-    SelectOption<number>[]
-  >(() => {
-    const universityId =
-      props.studyProgram
-        ?.university
-
-    const result =
-      props.departments
-        .filter(
-          (department) =>
-            department.is_active &&
-            !department.is_archived &&
-            (
-              !universityId ||
-              department.university ===
-                universityId
-            ),
-        )
-        .map(
-          (department) => ({
-            value:
-              department.id,
-
-            label:
-              localizedName(
-                department.name_ru,
-                department.name_uz,
-              ),
-
-            description:
-              department.faculty_name,
-          }),
-        )
-
-    if (
-      props.record &&
-      !result.some(
-        (option) =>
-          option.value ===
-          props.record
-            ?.teaching_department,
-      )
-    ) {
-      result.unshift({
-        value: props.record.teaching_department,
-        label: props.record.teaching_department_name,
-        description: '',
-      })
-    }
-
-    return result
-  })
-
-const componentTypeOptions =
-  computed<
-    SelectOption<
-      CurriculumComponentType
-    >[]
-  >(() => [
-    {
-      value: 'required',
-
-      label:
-        t(
-          'curriculumDisciplines.componentTypes.required',
-        ),
-    },
-
-    {
-      value: 'elective',
-
-      label:
-        t(
-          'curriculumDisciplines.componentTypes.elective',
-        ),
-    },
-
-    {
-      value: 'optional',
-
-      label:
-        t(
-          'curriculumDisciplines.componentTypes.optional',
-        ),
-    },
-  ])
-
-const controlFormOptions =
-  computed<
-    SelectOption<
-      CurriculumControlForm
-    >[]
-  >(() => [
-    {
-      value: 'none',
-
-      label:
-        t(
-          'curriculumDisciplines.controlForms.none',
-        ),
-    },
-
-    {
-      value: 'exam',
-
-      label:
-        t(
-          'curriculumDisciplines.controlForms.exam',
-        ),
-    },
-
-    {
-      value: 'credit',
-
-      label:
-        t(
-          'curriculumDisciplines.controlForms.credit',
-        ),
-    },
-
-    {
-      value:
-        'graded_credit',
-
-      label:
-        t(
-          'curriculumDisciplines.controlForms.gradedCredit',
-        ),
-    },
-
-    {
-      value:
-        'course_work',
-
-      label:
-        t(
-          'curriculumDisciplines.controlForms.courseWork',
-        ),
-    },
-
-    {
-      value:
-        'course_project',
-
-      label:
-        t(
-          'curriculumDisciplines.controlForms.courseProject',
-        ),
-    },
-  ])
-
-// const selectedDiscipline =
-//   computed(
-//     () =>
-//       props.disciplines.find(
-//         (discipline) =>
-//           discipline.id ===
-//           form.discipline,
-//       ) ?? null,
-//   )
-
-const contactHours =
-  computed(() => {
-    const total =
-      Number(
-        form.total_academic_hours ??
-        0,
-      )
-
-    const independent =
-      Number(
-        form.independent_hours ??
-        0,
-      )
-
-    return Math.max(
-      0,
-      total - independent,
-    )
-  })
-
-function clearLocalErrors(): void {
-  Object.keys(localErrors)
-    .forEach(
-      (key) => {
-        delete localErrors[key]
-      },
-    )
+    notes: '',
+  }
 }
 
-function resetForm(): void {
-  form.discipline = null
-
-  form.semester_number =
-    null
-
-  form.teaching_department =
-    null
-
-  form.component_type =
-    'required'
-
-  form.control_form =
-    'none'
-
-  form.credits = 0
-
-  form.total_academic_hours =
-    0
-
-  form.independent_hours =
-    0
-
-  form.weeks_count =
-    15
-
-  form.is_active =
-    true
-
-  form.notes = ''
-
-  clearLocalErrors()
-}
-
-function fillForm(
-  record:
-    CurriculumDiscipline,
+function ensureSemester(
+  semesterNumber: number,
 ): void {
-  form.discipline =
-    record.discipline
+  if (
+    semesterForms[
+      semesterNumber
+    ]
+  ) {
+    return
+  }
 
-  form.semester_number =
-    record.semester_number
+  const workloads:
+    Record<
+      number,
+      WorkloadFormRow
+    > = {}
 
-  form.teaching_department =
-    record.teaching_department
+  for (
+    const workloadType
+    of props.workloadTypes
+  ) {
+    if (
+      !workloadType.is_active ||
+      workloadType.is_archived
+    ) {
+      continue
+    }
 
-  form.component_type =
-    record.component_type
+    workloads[
+      workloadType.id
+    ] =
+      createWorkloadRow(
+        workloadType,
+      )
+  }
 
-  form.control_form =
-    record.control_form
-
-  form.credits =
-    Number(record.credits)
-
-  form.total_academic_hours =
-    Number(
-      record.total_academic_hours,
-    )
-
-  form.independent_hours =
-    Number(
-      record.independent_hours,
-    )
-
-  form.weeks_count =
-    record.weeks_count
-
-  form.is_active =
-    record.is_active
-
-  form.notes =
-    record.notes
-
-  clearLocalErrors()
+  semesterForms[
+    semesterNumber
+  ] = {
+    semester_number: semesterNumber,
+    credits: 0,
+    weeks_count: 15,
+    is_active: true,
+    notes: '',
+    workloads,
+  }
 }
+
+function getSemesterForm(
+  semesterNumber: number,
+): SemesterForm {
+  ensureSemester(
+    semesterNumber,
+  )
+
+  const semester =
+    semesterForms[
+      semesterNumber
+    ]
+
+  if (!semester) {
+    throw new Error(
+      `Semester ${semesterNumber} was not initialized.`,
+    )
+  }
+
+  return semester
+}
+
+function getWorkloadRow(
+  semesterNumber: number,
+  workloadTypeId: number,
+): WorkloadFormRow {
+  const semester =
+    getSemesterForm(
+      semesterNumber,
+    )
+
+  const existingRow =
+    semester.workloads[
+      workloadTypeId
+    ]
+
+  if (existingRow) {
+    return existingRow
+  }
+
+  const type =
+    props.workloadTypes.find(
+      (item) =>
+        item.id ===
+        workloadTypeId,
+    )
+
+  if (!type) {
+    throw new Error(
+      `Workload type ${workloadTypeId} was not found.`,
+    )
+  }
+
+  const row =
+    createWorkloadRow(
+      type,
+    )
+
+  semester.workloads[
+    workloadTypeId
+  ] = row
+
+  return row
+}
+
+function workloadType(
+  id: number,
+): WorkloadType | null {
+  return (
+    props.workloadTypes.find(
+      (item) =>
+        item.id === id,
+    ) ?? null
+  )
+}
+
+function classroomHours(
+  semester:
+    SemesterForm,
+): number {
+  const classroomCodes =
+    new Set([
+      'lecture',
+      'practice',
+      'laboratory',
+      'seminar',
+    ])
+
+  return Object.values(
+    semester.workloads,
+  )
+    .filter(
+      (row) => {
+        if (!row.enabled) {
+          return false
+        }
+
+        const type =
+          workloadType(
+            row.workload_type,
+          )
+
+        return Boolean(
+          type &&
+          classroomCodes.has(
+            type.code,
+          ),
+        )
+      },
+    )
+    .reduce(
+      (
+        total,
+        row,
+      ) =>
+        total +
+        Number(
+          row.base_hours ||
+          0,
+        ),
+      0,
+    )
+}
+
+function independentHours(
+  semester:
+    SemesterForm,
+): number {
+  return Object.values(
+    semester.workloads,
+  )
+    .filter(
+      (row) => {
+        if (!row.enabled) {
+          return false
+        }
+
+        return (
+          workloadType(
+            row.workload_type,
+          )?.code ===
+          'independent_work'
+        )
+      },
+    )
+    .reduce(
+      (
+        total,
+        row,
+      ) =>
+        total +
+        Number(
+          row.base_hours ||
+          0,
+        ),
+      0,
+    )
+}
+
+function totalAcademicHours(
+  semester:
+    SemesterForm,
+): number {
+  return (
+    classroomHours(
+      semester,
+    ) +
+    independentHours(
+      semester,
+    )
+  )
+}
+
+const selectedSemesterForms =
+  computed(
+    () =>
+      form.semesters
+        .slice()
+        .sort(
+          (a, b) =>
+            a - b,
+        )
+        .map(
+          (
+            semesterNumber,
+          ) =>
+            getSemesterForm(
+              semesterNumber,
+            ),
+        ),
+  )
+
+const activeWorkloadTypes =
+  computed(
+    () =>
+      props.workloadTypes.filter(
+        (item) =>
+          item.is_active &&
+          !item.is_archived,
+      ),
+  )
+
+const footerTotals =
+  computed(
+    () => {
+      const totals =
+        new Map<
+          number,
+          number
+        >()
+
+      for (
+        const semester
+        of selectedSemesterForms.value
+      ) {
+        for (
+          const row
+          of Object.values(
+            semester.workloads,
+          )
+        ) {
+          if (!row.enabled) {
+            continue
+          }
+
+          totals.set(
+            row.workload_type,
+
+            (
+              totals.get(
+                row.workload_type,
+              ) ?? 0
+            ) +
+              Number(
+                row.base_hours ||
+                0,
+              ),
+          )
+        }
+      }
+
+      return activeWorkloadTypes.value
+        .filter(
+          (type) =>
+            totals.has(
+              type.id,
+            ),
+        )
+        .map(
+          (type) => ({
+            workloadType:
+              type,
+
+            hours:
+              totals.get(
+                type.id,
+              ) ?? 0,
+          }),
+        )
+    },
+  )
+
+const footerClassroom =
+  computed(
+    () =>
+      selectedSemesterForms.value.reduce(
+        (
+          total,
+          semester,
+        ) =>
+          total +
+          classroomHours(
+            semester,
+          ),
+        0,
+      ),
+  )
+
+const footerIndependent =
+  computed(
+    () =>
+      selectedSemesterForms.value.reduce(
+        (
+          total,
+          semester,
+        ) =>
+          total +
+          independentHours(
+            semester,
+          ),
+        0,
+      ),
+  )
+
+const footerTotal =
+  computed(
+    () =>
+      footerClassroom.value +
+      footerIndependent.value,
+  )
 
 function fieldError(
   field: string,
 ): string {
   return (
-    localErrors[field] ||
+    localErrors[
+      field
+    ] ||
     getFieldError(
       props.fieldErrors,
       field,
@@ -570,8 +682,137 @@ function fieldError(
   )
 }
 
+function clearErrors(): void {
+  for (
+    const key
+    of Object.keys(
+      localErrors,
+    )
+  ) {
+    delete localErrors[
+      key
+    ]
+  }
+}
+
+function reset(): void {
+  form.discipline =
+    null
+
+  form.component_type =
+    'required'
+
+  form.semesters = []
+
+  for (
+    const key
+    of Object.keys(
+      semesterForms,
+    )
+  ) {
+    delete semesterForms[
+      Number(key)
+    ]
+  }
+
+  clearErrors()
+}
+
+function loadExisting(): void {
+  reset()
+
+  const entries =
+    props.existingEntries
+      .length
+      ? props.existingEntries
+      : props.record
+        ? [props.record]
+        : []
+
+  if (!entries.length) {
+    return
+  }
+
+  const first =
+    entries[0]
+
+  if (!first) {
+    return
+  }
+
+  form.discipline =
+    first.discipline
+
+  form.component_type =
+    first.component_type
+
+  form.semesters =
+    entries
+      .map(
+        (entry) =>
+          entry.semester_number,
+      )
+      .sort(
+        (a, b) =>
+          a - b,
+      )
+
+  for (
+    const entry
+    of entries
+  ) {
+    const semester =
+      getSemesterForm(
+        entry.semester_number,
+      )
+
+    semester.credits =
+      Number(
+        entry.credits,
+      )
+
+    semester.weeks_count =
+      entry.weeks_count
+
+    semester.is_active =
+      entry.is_active
+
+    semester.notes =
+      entry.notes
+
+    for (
+      const workload
+      of entry.workload_items
+    ) {
+      const row =
+        getWorkloadRow(
+          entry.semester_number,
+          workload.workload_type,
+        )
+
+      row.enabled =
+        workload.is_active &&
+        !workload.is_archived
+
+      row.calculation_mode =
+        workload.calculation_mode as WorkloadCalculationMode
+
+      row.base_hours =
+        Number(
+          workload.base_hours,
+        )
+
+      row.students_per_unit =
+        workload.students_per_unit
+
+      row.notes =
+        workload.notes
+    }
+  }
+}
+
 function validate(): boolean {
-  clearLocalErrors()
+  clearErrors()
 
   if (!form.discipline) {
     localErrors.discipline =
@@ -581,98 +822,70 @@ function validate(): boolean {
   }
 
   if (
-    !form.semester_number
+    !selectedDiscipline
+      .value
+      ?.default_department
   ) {
-    localErrors.semester_number =
+    localErrors.discipline =
       t(
-        'curriculumDisciplines.validation.semesterRequired',
+        'curriculumDisciplines.validation.disciplineDepartmentRequired',
       )
   }
 
   if (
-    form.semester_number &&
-    props.curriculum
-      .semesters_count &&
-    form.semester_number >
-      props.curriculum
-        .semesters_count
+    form.semesters.length ===
+    0
   ) {
-    localErrors.semester_number =
+    localErrors.semesters =
       t(
-        'curriculumDisciplines.validation.semesterRange',
+        'curriculumDisciplines.validation.semestersRequired',
       )
   }
 
-  if (
-    !form.teaching_department
+  for (
+    const semesterNumber
+    of form.semesters
   ) {
-    localErrors.teaching_department =
-      t(
-        'curriculumDisciplines.validation.departmentRequired',
+    const semester =
+      getSemesterForm(
+        semesterNumber,
       )
-  }
 
-  if (
-    form.credits === null ||
-    form.credits < 0
-  ) {
-    localErrors.credits =
-      t(
-        'curriculumDisciplines.validation.nonNegative',
-      )
-  }
+    if (
+      semester.credits < 0
+    ) {
+      localErrors[
+        `semester_${semesterNumber}`
+      ] =
+        t(
+          'curriculumDisciplines.validation.nonNegative',
+        )
+    }
 
-  if (
-    form.total_academic_hours ===
-      null ||
-    form.total_academic_hours <
-      0
-  ) {
-    localErrors.total_academic_hours =
-      t(
-        'curriculumDisciplines.validation.nonNegative',
+    for (
+      const row
+      of Object.values(
+        semester.workloads,
       )
-  }
-
-  if (
-    form.independent_hours ===
-      null ||
-    form.independent_hours <
-      0
-  ) {
-    localErrors.independent_hours =
-      t(
-        'curriculumDisciplines.validation.nonNegative',
-      )
-  }
-
-  if (
-    form.total_academic_hours !==
-      null &&
-    form.independent_hours !==
-      null &&
-    form.independent_hours >
-      form.total_academic_hours
-  ) {
-    localErrors.independent_hours =
-      t(
-        'curriculumDisciplines.validation.independentExceedsTotal',
-      )
-  }
-
-  if (
-    form.weeks_count === null ||
-    form.weeks_count < 1
-  ) {
-    localErrors.weeks_count =
-      t(
-        'curriculumDisciplines.validation.weeks',
-      )
+    ) {
+      if (
+        row.enabled &&
+        row.base_hours < 0
+      ) {
+        localErrors[
+          `semester_${semesterNumber}`
+        ] =
+          t(
+            'curriculumDisciplines.validation.nonNegative',
+          )
+      }
+    }
   }
 
   return (
-    Object.keys(localErrors)
-      .length === 0
+    Object.keys(
+      localErrors,
+    ).length === 0
   )
 }
 
@@ -681,136 +894,185 @@ function submit(): void {
     return
   }
 
-  if (
-    !form.discipline ||
-    !form.semester_number ||
-    !form.teaching_department ||
-    form.credits === null ||
-    form.total_academic_hours ===
-      null ||
-    form.independent_hours ===
-      null ||
-    form.weeks_count === null
-  ) {
+  if (!form.discipline) {
     return
   }
 
-  emit('submit', {
-    curriculum:
-      props.curriculum.id,
+  const payload:
+    CurriculumDisciplineBundlePayload =
+    {
+      curriculum:
+        props.curriculum.id,
 
-    discipline:
-      form.discipline,
+      discipline:
+        form.discipline,
 
-    semester_number:
-      form.semester_number,
+      component_type:
+        form.component_type,
 
-    teaching_department:
-      form.teaching_department,
+      replace_semesters:
+        true,
 
-    component_type:
-      form.component_type,
+      semesters:
+        form.semesters
+          .slice()
+          .sort(
+            (a, b) =>
+              a - b,
+          )
+          .map(
+            (
+              semesterNumber,
+            ) => {
+              const semester =
+                getSemesterForm(
+                  semesterNumber,
+                )
 
-    control_form:
-      form.control_form,
+              return {
+                semester_number:
+                  semesterNumber,
 
-    credits:
-      form.credits,
+                credits:
+                  semester.credits,
 
-    total_academic_hours:
-      form.total_academic_hours,
+                weeks_count:
+                  semester.weeks_count,
 
-    independent_hours:
-      form.independent_hours,
+                is_active:
+                  semester.is_active,
 
-    weeks_count:
-      form.weeks_count,
+                notes:
+                  semester.notes
+                    .trim(),
 
-    is_active:
-      form.is_active,
+                workloads:
+                  Object.values(
+                    semester.workloads,
+                  )
+                    .filter(
+                      (row) =>
+                        row.enabled,
+                    )
+                    .map(
+                      (row) => ({
+                        workload_type:
+                          row.workload_type,
 
-    notes:
-      form.notes.trim(),
-  })
+                        calculation_mode:
+                          row.calculation_mode,
+
+                        base_hours:
+                          row.base_hours,
+
+                        students_per_unit:
+                          row.students_per_unit,
+
+                        is_active:
+                          true,
+
+                        notes:
+                          row.notes
+                            .trim(),
+                      }),
+                    ),
+              }
+            },
+          ),
+    }
+
+  emit(
+    'submit',
+    payload,
+  )
 }
 
 watch(
-  () => form.discipline,
-  (disciplineId) => {
-    if (!disciplineId) {
-      return
-    }
-
-    /*
-     * При редактировании уже
-     * сохранённую кафедру не
-     * перезаписываем автоматически.
-     */
-    if (
-      props.record &&
-      disciplineId ===
-        props.record.discipline
+  () =>
+    form.semesters.slice(),
+  (values) => {
+    for (
+      const semesterNumber
+      of values
     ) {
-      return
-    }
-
-    const discipline =
-      props.disciplines.find(
-        (item) =>
-          item.id ===
-          disciplineId,
+      ensureSemester(
+        semesterNumber,
       )
+    }
+  },
+)
 
-    if (
-      discipline
-        ?.default_department
+watch(
+  () =>
+    props.workloadRules,
+  () => {
+    for (
+      const semester
+      of Object.values(
+        semesterForms,
+      )
     ) {
-      const departmentAllowed =
-        departmentOptions.value
-          .some(
-            (option) =>
-              option.value ===
-              discipline
-                .default_department,
+      for (
+        const type
+        of props.workloadTypes
+      ) {
+        if (
+          !type.uses_curriculum_rule
+        ) {
+          continue
+        }
+
+        const rule =
+          ruleFor(
+            type.id,
           )
 
-      if (departmentAllowed) {
-        form.teaching_department =
-          discipline
-            .default_department
+        const row =
+          semester.workloads[
+            type.id
+          ]
+
+        if (
+          rule &&
+          row
+        ) {
+          row.calculation_mode =
+            rule.calculation_mode
+
+          row.base_hours =
+            Number(
+              rule.base_hours,
+            )
+
+          row.students_per_unit =
+            rule.students_per_unit
+        }
       }
     }
+  },
+  {
+    deep: true,
   },
 )
 
 watch(
   () => visible.value,
-  (isVisible) => {
-    if (!isVisible) {
+  (value) => {
+    if (!value) {
       return
     }
 
-    if (props.record) {
-      fillForm(
-        props.record,
-      )
-
-      return
-    }
-
-    resetForm()
-  },
-)
-
-watch(
-  () => props.record,
-  (record) => {
     if (
-      visible.value &&
-      record
+      props.record ||
+      props.existingEntries
+        .length
     ) {
-      fillForm(record)
+      loadExisting()
+
+      return
     }
+
+    reset()
   },
 )
 </script>
@@ -819,52 +1081,39 @@ watch(
   <BaseDialog
     v-model="visible"
     :title="title"
-    width="62rem"
+    width="90rem"
     :loading="loading"
   >
     <FormValidationSummary
-      :field-errors="
-        fieldErrors
-      "
-      :non-field-errors="
-        nonFieldErrors
-      "
-      :general-error="
-        generalError
-      "
+      :field-errors="fieldErrors"
+      :non-field-errors="nonFieldErrors"
+      :general-error="generalError"
     />
 
     <form
-      class="
-        curriculum-discipline-form
-      "
-      novalidate
+      class="curriculum-bundle-form"
       @submit.prevent="submit"
     >
-      <section>
+      <section
+        class="curriculum-section"
+      >
         <h3>
           {{
             t(
-              'curriculumDisciplines.sections.discipline',
+              'curriculumDisciplines.sections.main',
             )
           }}
         </h3>
 
         <div
-          class="
-            curriculum-discipline-form__grid
-          "
+          class="curriculum-grid"
         >
           <BaseFormField
-            class="
-              curriculum-discipline-form__wide
-            "
             :label="
               t(
                 'curriculumDisciplines.fields.discipline',
               )
             "
-            name="discipline"
             required
             :error="
               fieldError(
@@ -883,96 +1132,16 @@ watch(
               option-value="value"
               filter
               class="w-full"
-              :disabled="loading"
+              :disabled="
+                loading ||
+                Boolean(record)
+              "
             >
               <template
                 #option="{ option }"
               >
                 <div
-                  class="select-option"
-                >
-                  <strong>
-                    {{
-                      option.label
-                    }}
-                  </strong>
-
-                  <small
-                    v-if="
-                      option.description
-                    "
-                  >
-                    {{
-                      option.description
-                    }}
-                  </small>
-                </div>
-              </template>
-            </Select>
-          </BaseFormField>
-
-          <BaseFormField
-            :label="
-              t(
-                'curriculumDisciplines.fields.semester',
-              )
-            "
-            name="semester_number"
-            required
-            :error="
-              fieldError(
-                'semester_number',
-              )
-            "
-          >
-            <Select
-              v-model="
-                form.semester_number
-              "
-              :options="
-                semesterOptions
-              "
-              option-label="label"
-              option-value="value"
-              class="w-full"
-              :disabled="loading"
-            />
-          </BaseFormField>
-
-          <BaseFormField
-            :label="
-              t(
-                'curriculumDisciplines.fields.department',
-              )
-            "
-            name="
-              teaching_department
-            "
-            required
-            :error="
-              fieldError(
-                'teaching_department',
-              )
-            "
-          >
-            <Select
-              v-model="
-                form.teaching_department
-              "
-              :options="
-                departmentOptions
-              "
-              option-label="label"
-              option-value="value"
-              filter
-              class="w-full"
-              :disabled="loading"
-            >
-              <template
-                #option="{ option }"
-              >
-                <div
-                  class="select-option"
+                  class="option-item"
                 >
                   <strong>
                     {{
@@ -1000,59 +1169,73 @@ watch(
                 'curriculumDisciplines.fields.componentType',
               )
             "
-            name="component_type"
-            required
-            :error="
-              fieldError(
-                'component_type',
-              )
-            "
           >
             <Select
               v-model="
                 form.component_type
               "
               :options="
-                componentTypeOptions
+                componentOptions
               "
               option-label="label"
               option-value="value"
               class="w-full"
-              :disabled="loading"
             />
           </BaseFormField>
 
           <BaseFormField
+            class="curriculum-grid__wide"
             :label="
               t(
-                'curriculumDisciplines.fields.controlForm',
+                'curriculumDisciplines.fields.semesters',
               )
             "
-            name="control_form"
             required
             :error="
               fieldError(
-                'control_form',
+                'semesters',
               )
             "
           >
-            <Select
+            <MultiSelect
               v-model="
-                form.control_form
+                form.semesters
               "
               :options="
-                controlFormOptions
+                semesterOptions
               "
               option-label="label"
               option-value="value"
+              display="chip"
               class="w-full"
-              :disabled="loading"
             />
           </BaseFormField>
         </div>
+
+        <Message
+          v-if="
+            selectedDiscipline
+          "
+          severity="secondary"
+          :closable="false"
+        >
+          {{
+            t(
+              'curriculumDisciplines.departmentFromDiscipline',
+              {
+                department:
+                  selectedDiscipline
+                    .default_department_name ??
+                  '—',
+              },
+            )
+          }}
+        </Message>
       </section>
 
-      <section>
+      <section
+        class="curriculum-section"
+      >
         <h3>
           {{
             t(
@@ -1062,223 +1245,466 @@ watch(
         </h3>
 
         <div
-          class="
-            curriculum-discipline-form__grid
+          v-for="
+            semesterNumber
+            in form.semesters
+              .slice()
+              .sort(
+                (a, b) =>
+                  a - b,
+              )
           "
+          :key="
+            semesterNumber
+          "
+          class="semester-card"
         >
-          <BaseFormField
-            :label="
-              t(
-                'curriculumDisciplines.fields.credits',
-              )
-            "
-            name="credits"
-            :error="
-              fieldError(
-                'credits',
-              )
-            "
+          <header
+            class="semester-card__header"
           >
-            <InputNumber
-              v-model="
-                form.credits
-              "
-              :min="0"
-              :max-fraction-digits="2"
-              :min-fraction-digits="2"
-              :use-grouping="false"
-              class="w-full"
-              input-class="w-full"
-              :disabled="loading"
-            />
-          </BaseFormField>
+            <strong>
+              {{
+                t(
+                  'curriculumDisciplines.semesterOption',
+                  {
+                    semester:
+                      semesterNumber,
 
-          <BaseFormField
-            :label="
-              t(
-                'curriculumDisciplines.fields.weeks',
-              )
-            "
-            name="weeks_count"
-            required
-            :error="
-              fieldError(
-                'weeks_count',
-              )
-            "
-          >
-            <InputNumber
-              v-model="
-                form.weeks_count
-              "
-              :min="1"
-              :max="52"
-              :use-grouping="false"
-              class="w-full"
-              input-class="w-full"
-              :disabled="loading"
-            />
-          </BaseFormField>
+                    season:
+                      semesterNumber %
+                        2 ===
+                      1
+                        ? t(
+                            'curriculumDisciplines.seasons.autumn',
+                          )
+                        : t(
+                            'curriculumDisciplines.seasons.spring',
+                          ),
+                  },
+                )
+              }}
+            </strong>
+          </header>
 
-          <BaseFormField
-            :label="
-              t(
-                'curriculumDisciplines.fields.totalHours',
-              )
-            "
-            name="
-              total_academic_hours
-            "
-            :error="
-              fieldError(
-                'total_academic_hours',
-              )
-            "
+          <div
+            class="semester-meta"
           >
-            <InputNumber
-              v-model="
-                form.total_academic_hours
+            <BaseFormField
+              :label="
+                t(
+                  'curriculumDisciplines.fields.credits',
+                )
               "
-              :min="0"
-              :max-fraction-digits="2"
-              :min-fraction-digits="2"
-              :use-grouping="false"
-              class="w-full"
-              input-class="w-full"
-              :disabled="loading"
-            />
-          </BaseFormField>
+            >
+              <InputNumber
+                :model-value="
+                  getSemesterForm(
+                    semesterNumber,
+                  ).credits
+                "
+                @update:model-value="
+                  (value) =>
+                    getSemesterForm(
+                      semesterNumber,
+                    ).credits =
+                      Number(
+                        value ?? 0,
+                      )
+                "
+                :min="0"
+                :max-fraction-digits="2"
+                :use-grouping="false"
+                class="w-full"
+              />
+            </BaseFormField>
 
-          <BaseFormField
-            :label="
-              t(
-                'curriculumDisciplines.fields.independentHours',
-              )
-            "
-            name="
-              independent_hours
-            "
-            :error="
-              fieldError(
-                'independent_hours',
-              )
-            "
-          >
-            <InputNumber
-              v-model="
-                form.independent_hours
+            <BaseFormField
+              :label="
+                t(
+                  'curriculumDisciplines.fields.weeks',
+                )
               "
-              :min="0"
-              :max-fraction-digits="2"
-              :min-fraction-digits="2"
-              :use-grouping="false"
-              class="w-full"
-              input-class="w-full"
-              :disabled="loading"
-            />
-          </BaseFormField>
+            >
+              <InputNumber
+                :model-value="
+                  getSemesterForm(
+                    semesterNumber,
+                  ).weeks_count
+                "
+                @update:model-value="
+                  (value) =>
+                    getSemesterForm(
+                      semesterNumber,
+                    ).weeks_count =
+                      Number(
+                        value ?? 0,
+                      )
+                "
+                :min="1"
+                :use-grouping="false"
+                class="w-full"
+              />
+            </BaseFormField>
+          </div>
+
+          <div
+            class="workload-table"
+          >
+            <div
+              class="workload-table__header"
+            >
+              <span></span>
+
+              <span>
+                {{
+                  t(
+                    'curriculumWorkloads.fields.workloadType',
+                  )
+                }}
+              </span>
+
+              <span>
+                {{
+                  t(
+                    'curriculumWorkloads.fields.calculationMode',
+                  )
+                }}
+              </span>
+
+              <span>
+                {{
+                  t(
+                    'curriculumWorkloads.fields.baseHours',
+                  )
+                }}
+              </span>
+            </div>
+
+            <div
+              v-for="
+                type
+                in activeWorkloadTypes
+              "
+              :key="type.id"
+              class="workload-table__row"
+            >
+              <Checkbox
+                :model-value="
+                  getWorkloadRow(
+                    semesterNumber,
+                    type.id,
+                  ).enabled
+                "
+                @update:model-value="
+                  (value: boolean | undefined) => {
+                    getWorkloadRow(
+                      semesterNumber,
+                      type.id,
+                    ).enabled =
+                      Boolean( value, )
+                  }
+                "
+                binary
+                :disabled="
+                Boolean (
+                  type.uses_curriculum_rule &&
+                  !ruleFor( type.id,)
+                )
+                "
+              />
+
+              <div
+                class="workload-name"
+              >
+                <strong>
+                  {{
+                    type.display_name
+                  }}
+                </strong>
+
+                <small
+                  v-if="
+                    type.uses_curriculum_rule
+                  "
+                >
+                  {{
+                    ruleFor(
+                      type.id,
+                    )
+                      ? t(
+                          'curriculumDisciplines.curriculumRuleApplied',
+                        )
+                      : t(
+                          'curriculumDisciplines.curriculumRuleMissing',
+                        )
+                  }}
+                </small>
+              </div>
+
+              <Select
+                :model-value="
+                  getWorkloadRow(
+                    semesterNumber,
+                    type.id,
+                  ).calculation_mode
+                "
+                @update:model-value="
+                  (value: unknown) =>
+                    getWorkloadRow(
+                      semesterNumber,
+                      type.id,
+                    ).calculation_mode =
+                      value as WorkloadCalculationMode
+                "
+                :options="
+                  calculationModeOptions
+                "
+                option-label="label"
+                option-value="value"
+                :disabled="
+                  Boolean(
+                    type.uses_curriculum_rule ||
+                      !getWorkloadRow(
+                        semesterNumber,
+                        type.id,
+                      ).enabled,
+                  )
+                "
+                class="w-full"
+              />
+
+              <InputNumber
+                :model-value="
+                  getWorkloadRow(
+                    semesterNumber,
+                    type.id,
+                  ).base_hours
+                "
+                @update:model-value="
+                  (value: number | null | undefined) =>
+                    getWorkloadRow(
+                      semesterNumber,
+                      type.id,
+                    ).base_hours =
+                      Number(
+                        value ?? 0,
+                      )
+                "
+                :min="0"
+                :max-fraction-digits="2"
+                :use-grouping="false"
+                :disabled="
+                  Boolean(
+                    type.uses_curriculum_rule ||
+                      !getWorkloadRow(
+                        semesterNumber,
+                        type.id,
+                      ).enabled,
+                  )
+                "
+                class="w-full"
+              />
+            </div>
+          </div>
+
+          <footer
+            class="semester-totals"
+          >
+            <div>
+              <span>
+                {{
+                  t(
+                    'curriculumDisciplines.auditoriumTotal',
+                  )
+                }}
+              </span>
+
+              <strong>
+                {{
+                  classroomHours(
+                    getSemesterForm(
+                      semesterNumber,
+                    ),
+                  ).toFixed(2)
+                }}
+              </strong>
+            </div>
+
+            <div>
+              <span>
+                {{
+                  t(
+                    'curriculumDisciplines.fields.independentHours',
+                  )
+                }}
+              </span>
+
+              <strong>
+                {{
+                  independentHours(
+                    getSemesterForm(
+                      semesterNumber,
+                    ),
+                  ).toFixed(2)
+                }}
+              </strong>
+            </div>
+
+            <div>
+              <span>
+                {{
+                  t(
+                    'curriculumDisciplines.totalAcademic',
+                  )
+                }}
+              </span>
+
+              <strong>
+                {{
+                  totalAcademicHours(
+                    getSemesterForm(
+                      semesterNumber,
+                    ),
+                  ).toFixed(2)
+                }}
+              </strong>
+            </div>
+          </footer>
         </div>
 
-        <Message
-          severity="info"
-          :closable="false"
-        >
-          {{
-            t(
-              'curriculumDisciplines.contactHoursHint',
-              {
-                hours:
-                  contactHours.toFixed(
-                    2,
-                  ),
-              },
-            )
-          }}
-        </Message>
-      </section>
-
-      <section>
-        <BaseFormField
-          :label="
-            t(
-              'curriculumDisciplines.fields.notes',
-            )
+        <div
+          v-if="
+            form.semesters.length
           "
-          name="notes"
-          :error="
-            fieldError(
-              'notes',
-            )
-          "
+          class="grand-total"
         >
-          <Textarea
-            v-model="
-              form.notes
-            "
-            rows="4"
-            auto-resize
-            class="w-full"
-            :disabled="loading"
-          />
-        </BaseFormField>
-
-        <label
-          class="
-            curriculum-discipline-form__checkbox
-          "
-        >
-          <Checkbox
-            v-model="
-              form.is_active
-            "
-            binary
-            :disabled="loading"
-          />
-
-          <span>
+          <h4>
             {{
               t(
-                'curriculumDisciplines.fields.active',
+                'curriculumDisciplines.grandTotal',
               )
             }}
-          </span>
-        </label>
+          </h4>
+
+          <div
+            class="grand-total__types"
+          >
+            <div
+              v-for="
+                item
+                in footerTotals
+              "
+              :key="
+                item.workloadType.id
+              "
+            >
+              <span>
+                {{
+                  item.workloadType
+                    .display_name
+                }}
+              </span>
+
+              <strong>
+                {{
+                  item.hours.toFixed(
+                    2,
+                  )
+                }}
+              </strong>
+            </div>
+          </div>
+
+          <div
+            class="grand-total__main"
+          >
+            <div>
+              <span>
+                {{
+                  t(
+                    'curriculumDisciplines.auditoriumTotal',
+                  )
+                }}
+              </span>
+
+              <strong>
+                {{
+                  footerClassroom
+                    .toFixed(2)
+                }}
+              </strong>
+            </div>
+
+            <div>
+              <span>
+                {{
+                  t(
+                    'curriculumDisciplines.fields.independentHours',
+                  )
+                }}
+              </span>
+
+              <strong>
+                {{
+                  footerIndependent
+                    .toFixed(2)
+                }}
+              </strong>
+            </div>
+
+            <div>
+              <span>
+                {{
+                  t(
+                    'curriculumDisciplines.totalAcademic',
+                  )
+                }}
+              </span>
+
+              <strong>
+                {{
+                  footerTotal
+                    .toFixed(2)
+                }}
+              </strong>
+            </div>
+          </div>
+        </div>
       </section>
     </form>
 
     <template #footer>
       <BaseFormActions
         :loading="loading"
+        :save-label="
+          t('common.save')
+        "
+        :cancel-label="
+          t('common.cancel')
+        "
+        @submit="submit"
         @cancel="
           visible = false
         "
-        @submit="submit"
       />
     </template>
   </BaseDialog>
 </template>
 
 <style scoped>
-.curriculum-discipline-form {
-  display: grid;
-  gap: 1.5rem;
-}
-
-.curriculum-discipline-form section {
+.curriculum-bundle-form,
+.curriculum-section {
   display: grid;
   gap: 1rem;
 }
 
-.curriculum-discipline-form h3 {
+.curriculum-section h3,
+.grand-total h4 {
   margin: 0;
-  padding-bottom: 0.5rem;
-  border-bottom:
-    1px solid
-    var(--app-border-color);
-  font-size: 0.9rem;
 }
 
-.curriculum-discipline-form__grid {
+.curriculum-grid,
+.semester-meta {
   display: grid;
   grid-template-columns:
     repeat(
@@ -1288,38 +1714,185 @@ watch(
   gap: 1rem;
 }
 
-.curriculum-discipline-form__wide {
+.curriculum-grid__wide {
   grid-column: 1 / -1;
 }
 
-.curriculum-discipline-form__checkbox {
-  display: flex;
-  width: fit-content;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.82rem;
-  font-weight: 600;
-}
-
-.select-option {
+.option-item,
+.workload-name {
   display: grid;
   gap: 0.15rem;
 }
 
-.select-option small {
+.option-item small,
+.workload-name small {
   color:
-    var(--app-text-muted);
+    var(--app-text-muted, #6b7280);
+
   font-size: 0.7rem;
 }
 
-@media (max-width: 767px) {
-  .curriculum-discipline-form__grid {
+.semester-card {
+  display: grid;
+  gap: 1rem;
+
+  padding: 1rem;
+
+  border:
+    1px solid
+    var(--app-border-color, #d1d5db);
+
+  border-radius:
+    var(--app-radius-md, 0.5rem);
+}
+
+.semester-card__header {
+  display: flex;
+  align-items: center;
+  justify-content:
+    space-between;
+}
+
+.workload-table {
+  display: grid;
+
+  border:
+    1px solid
+    var(--app-border-color, #d1d5db);
+
+  border-radius:
+    var(--app-radius-md, 0.5rem);
+
+  overflow: hidden;
+}
+
+.workload-table__header,
+.workload-table__row {
+  display: grid;
+
+  grid-template-columns:
+    3rem
+    minmax(
+      15rem,
+      1fr
+    )
+    minmax(
+      12rem,
+      16rem
+    )
+    10rem;
+
+  align-items: center;
+
+  gap: 0.75rem;
+
+  padding:
+    0.65rem
+    0.75rem;
+}
+
+.workload-table__header {
+  font-size: 0.72rem;
+
+  font-weight: 700;
+
+  background:
+    var(
+      --app-surface-muted,
+      #f3f4f6
+    );
+}
+
+.workload-table__row
+  + .workload-table__row {
+  border-top:
+    1px solid
+    var(--app-border-color, #d1d5db);
+}
+
+.semester-totals,
+.grand-total__main {
+  display: grid;
+
+  grid-template-columns:
+    repeat(
+      3,
+      minmax(0, 1fr)
+    );
+
+  gap: 0.75rem;
+}
+
+.semester-totals > div,
+.grand-total__main > div,
+.grand-total__types > div {
+  display: flex;
+
+  justify-content:
+    space-between;
+
+  gap: 1rem;
+
+  padding: 0.75rem;
+
+  border:
+    1px solid
+    var(--app-border-color, #d1d5db);
+
+  border-radius:
+    var(--app-radius-md, 0.5rem);
+}
+
+.grand-total {
+  display: grid;
+
+  gap: 1rem;
+
+  padding: 1rem;
+
+  border:
+    2px solid
+    var(--app-border-color, #d1d5db);
+
+  border-radius:
+    var(--app-radius-md, 0.5rem);
+}
+
+.grand-total__types {
+  display: grid;
+
+  grid-template-columns:
+    repeat(
+      2,
+      minmax(0, 1fr)
+    );
+
+  gap: 0.5rem;
+}
+
+@media (
+  max-width: 850px
+) {
+  .curriculum-grid,
+  .semester-meta,
+  .semester-totals,
+  .grand-total__main,
+  .grand-total__types {
     grid-template-columns:
       1fr;
   }
 
-  .curriculum-discipline-form__wide {
+  .curriculum-grid__wide {
     grid-column: auto;
+  }
+
+  .workload-table {
+    overflow-x: auto;
+  }
+
+  .workload-table__header,
+  .workload-table__row {
+    min-width: 52rem;
   }
 }
 </style>

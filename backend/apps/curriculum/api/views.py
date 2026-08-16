@@ -1,5 +1,8 @@
 from django.db.models import Count
 from rest_framework.permissions import IsAuthenticated
+from rest_framework import status
+from rest_framework.decorators import action
+from rest_framework.response import Response
 
 from apps.common.api.mixins import (
     DjangoValidationErrorMixin,
@@ -16,6 +19,8 @@ from apps.curriculum.api.serializers import (
     CurriculumDisciplineSerializer,
     CurriculumSerializer,
     CurriculumWorkloadSerializer,
+    CurriculumDisciplineBundleSerializer,
+    CurriculumWorkloadRuleSerializer,
     DisciplineSerializer,
     WorkloadTypeSerializer,
 )
@@ -23,6 +28,7 @@ from apps.curriculum.models import (
     Curriculum,
     CurriculumDiscipline,
     CurriculumWorkload,
+    CurriculumWorkloadRule,
     Discipline,
     WorkloadType,
 )
@@ -119,6 +125,52 @@ class CurriculumDisciplineViewSet(DjangoValidationErrorMixin, BaseArchiveModelVi
         "discipline__name_ru",
     )
 
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="configure",
+    )
+    def configure(
+        self,
+        request,
+    ):
+        serializer = (
+            CurriculumDisciplineBundleSerializer(
+                data=request.data,
+                context=(
+                    self.get_serializer_context()
+                ),
+            )
+        )
+
+        serializer.is_valid(
+            raise_exception=True
+        )
+
+        records = serializer.save()
+
+        response_serializer = (
+            CurriculumDisciplineSerializer(
+                records,
+                many=True,
+                context=(
+                    self.get_serializer_context()
+                ),
+            )
+        )
+
+        return Response(
+            {
+                "detail": (
+                    "Дисциплина и виды "
+                    "нагрузки сохранены."
+                ),
+                "data":
+                    response_serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
     def get_queryset(self):
         return (
             CurriculumDiscipline.objects
@@ -176,4 +228,40 @@ class CurriculumWorkloadViewSet(DjangoValidationErrorMixin, BaseArchiveModelView
                 "effective_academic_year"
             ),
             "workload_type",
+        )
+
+class CurriculumWorkloadRuleViewSet(
+    DjangoValidationErrorMixin,
+    BaseArchiveModelViewSet,
+):
+    model = CurriculumWorkloadRule
+
+    serializer_class = (
+        CurriculumWorkloadRuleSerializer
+    )
+
+    permission_classes = [
+        IsAuthenticated,
+    ]
+
+    filterset_fields = (
+        "curriculum",
+        "workload_type",
+        "calculation_mode",
+        "is_active",
+    )
+
+    ordering = (
+        "workload_type__sort_order",
+        "workload_type__name_ru",
+    )
+
+    def get_queryset(self):
+        return (
+            CurriculumWorkloadRule
+            .objects
+            .select_related(
+                "curriculum",
+                "workload_type",
+            )
         )
