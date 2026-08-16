@@ -72,12 +72,20 @@ class WorkloadDistributionFilter(
 
     discipline = filters.NumberFilter(
         field_name=(
-            "planned_workload__teaching_stream__"
+            "planned_workload__curriculum_workload__"
             "curriculum_discipline__discipline_id"
         ),
         min_value=1,
         label="Дисциплина",
         help_text="Фильтр по ID дисциплины.",
+    )
+
+    curriculum = filters.NumberFilter(
+        field_name=(
+            "planned_workload__teaching_stream__curriculum_id"
+        ),
+        min_value=1,
+        label="Учебный план",
     )
 
     workload_type = filters.NumberFilter(
@@ -132,6 +140,7 @@ class WorkloadDistributionFilter(
         fields = (
             "academic_year",
             "academic_semester",
+            "curriculum",
             "teaching_department",
             "faculty",
             "planned_workload",

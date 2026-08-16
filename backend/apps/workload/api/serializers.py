@@ -1,6 +1,7 @@
 from decimal import Decimal
 from rest_framework import serializers
 from django.db.models import Sum
+from django.utils.translation import get_language
 
 from apps.common.api.serializers import AuditFieldsSerializer
 from apps.workload.models import WorkloadDistribution
@@ -12,6 +13,33 @@ from drf_spectacular.utils import (
     extend_schema_field,
 )
 
+class LocalizedNameMixin:
+    def get_localized_name(self, obj) -> str:
+        request = self.context.get("request")
+
+        if (
+            request
+            and request.user
+            and request.user.is_authenticated
+        ):
+            language = getattr(
+                request.user,
+                "interface_language",
+                "ru",
+            )
+        else:
+            language = (get_language() or "ru")[:2]
+
+        if language == "uz":
+            return (
+                getattr(obj, "name_uz", "")
+                or getattr(obj, "name_ru", "")
+            )
+
+        return (
+            getattr(obj, "name_ru", "")
+            or getattr(obj, "name_uz", "")
+        )
 
 class WorkloadDistributionValidationMixin:
     """
@@ -221,6 +249,7 @@ class WorkloadDistributionValidationMixin:
         return attrs
 
 class WorkloadDistributionSerializer(
+    LocalizedNameMixin,
     AuditFieldsSerializer,
     WorkloadDistributionValidationMixin,
 ):
@@ -238,10 +267,7 @@ class WorkloadDistributionSerializer(
         ),
         read_only=True,
     )
-    position_name = serializers.CharField(
-        source="staff_employment.position.name_ru",
-        read_only=True,
-    )
+
     employment_rate = serializers.DecimalField(
         source="staff_employment.rate",
         max_digits=4,
@@ -252,10 +278,9 @@ class WorkloadDistributionSerializer(
         source="staff_employment.employment_type",
         read_only=True,
     )
-    department_name = serializers.CharField(
-        source="planned_workload.teaching_department.name_ru",
-        read_only=True,
-    )
+
+    position_name = serializers.SerializerMethodField()
+    department_name = serializers.SerializerMethodField()
     academic_year_name = serializers.CharField(
         source="planned_workload.academic_year.name",
         read_only=True,
@@ -271,20 +296,8 @@ class WorkloadDistributionSerializer(
         source="planned_workload.teaching_stream.code",
         read_only=True,
     )
-    discipline_name = serializers.CharField(
-        source=(
-            "planned_workload.teaching_stream."
-            "curriculum_discipline.discipline.name_ru"
-        ),
-        read_only=True,
-    )
-    workload_type_name = serializers.CharField(
-        source=(
-            "planned_workload.curriculum_workload."
-            "workload_type.name_ru"
-        ),
-        read_only=True,
-    )
+    discipline_name = serializers.SerializerMethodField()
+    workload_type_name = serializers.SerializerMethodField()
     planned_total_hours = serializers.DecimalField(
         source="planned_workload.total_hours",
         max_digits=12,
@@ -297,11 +310,69 @@ class WorkloadDistributionSerializer(
     )
     approved_by_name = serializers.SerializerMethodField()
 
+    curriculum = serializers.IntegerField(
+        source="planned_workload.teaching_stream.curriculum_id",
+        read_only=True,
+    )
+
+    curriculum_code = serializers.CharField(
+        source="planned_workload.teaching_stream.curriculum.code",
+        read_only=True,
+    )
+
+    discipline_code = serializers.CharField(
+        source=(
+            "planned_workload.curriculum_workload."
+            "curriculum_discipline.discipline.code"
+        ),
+        read_only=True,
+    )
+
+    planned_remaining_hours = serializers.DecimalField(
+        source="planned_workload.remaining_hours",
+        max_digits=12,
+        decimal_places=2,
+        read_only=True,
+    )
+
+    @extend_schema_field(serializers.CharField())
+    def get_position_name(self, obj) -> str:
+        return self.get_localized_name(
+            obj.staff_employment.position
+        )
+
+    @extend_schema_field(serializers.CharField())
+    def get_department_name(self, obj) -> str:
+        return self.get_localized_name(
+            obj.planned_workload.teaching_department
+        )
+
+    @extend_schema_field(serializers.CharField())
+    def get_discipline_name(self, obj) -> str:
+        return self.get_localized_name(
+            obj.planned_workload
+            .curriculum_workload
+            .curriculum_discipline
+            .discipline
+        )
+
+    @extend_schema_field(serializers.CharField())
+    def get_workload_type_name(self, obj) -> str:
+        return self.get_localized_name(
+            obj.planned_workload
+            .curriculum_workload
+            .workload_type
+        )
+
     class Meta:
         model = WorkloadDistribution
         fields = (
             "id",
             "planned_workload",
+            "planned_remaining_hours",
+            "curriculum",
+            "curriculum_code",
+            "discipline_code",
             "planned_total_hours",
             "stream_code",
             "discipline_name",

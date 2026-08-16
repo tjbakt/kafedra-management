@@ -298,10 +298,20 @@ class WorkloadDistributionViewSet(
         "staff_employment__staff_member__last_name",
         "staff_employment__staff_member__first_name",
         "staff_employment__staff_member__middle_name",
+
         "planned_workload__teaching_stream__code",
         "planned_workload__teaching_stream__name",
-        "planned_workload__teaching_stream__"
+
+        "planned_workload__teaching_stream__curriculum__code",
+
+        "planned_workload__curriculum_workload__"
+        "curriculum_discipline__discipline__code",
+
+        "planned_workload__curriculum_workload__"
         "curriculum_discipline__discipline__name_ru",
+
+        "planned_workload__curriculum_workload__"
+        "curriculum_discipline__discipline__name_uz",
     )
     ordering_fields = (
         "allocated_hours",
@@ -335,10 +345,12 @@ class WorkloadDistributionViewSet(
             "planned_workload__academic_semester",
             "planned_workload__teaching_department",
             "planned_workload__teaching_stream",
-            "planned_workload__teaching_stream__curriculum_discipline",
-            "planned_workload__teaching_stream__curriculum_discipline__discipline",
             "planned_workload__curriculum_workload",
             "planned_workload__curriculum_workload__workload_type",
+            "planned_workload__teaching_stream__curriculum",
+            "planned_workload__curriculum_workload__curriculum_discipline",
+            "planned_workload__curriculum_workload__"
+            "curriculum_discipline__discipline",
             "staff_employment",
             "staff_employment__staff_member",
             "staff_employment__position",
@@ -810,12 +822,13 @@ class WorkloadDistributionViewSet(
                 "planned_workload__academic_semester",
                 "planned_workload__teaching_department",
                 "planned_workload__teaching_stream",
+                "planned_workload__teaching_stream__curriculum",
                 (
-                    "planned_workload__teaching_stream__"
+                    "planned_workload__curriculum_workload__"
                     "curriculum_discipline"
                 ),
                 (
-                    "planned_workload__teaching_stream__"
+                    "planned_workload__curriculum_workload__"
                     "curriculum_discipline__discipline"
                 ),
                 "planned_workload__curriculum_workload",

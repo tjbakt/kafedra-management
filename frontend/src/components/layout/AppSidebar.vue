@@ -156,6 +156,15 @@ const menuDefinitions: TranslatedSidebarItem[] = [
       },
       {
         label: '',
+        labelKey: 'navigation.workloadDistribution',
+        icon: 'pi pi-user-edit',
+        route: '/workload-distribution',
+        permissions: [
+          'workload.view_workloaddistribution',
+        ],
+      },
+      {
+        label: '',
         labelKey: 'navigation.schedules',
         icon: 'pi pi-calendar',
         route: '/schedules',

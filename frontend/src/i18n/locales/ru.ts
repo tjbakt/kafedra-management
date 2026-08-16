@@ -84,6 +84,7 @@ const ru = {
     curriculumDisciplines: 'Состав учебного плана',
     teachingSetup: 'Подготовка учебных групп',
     teachingWorkload: 'Учебные потоки и нагрузка',
+    workloadDistribution: 'Распределение нагрузки',
   },
 
   profile: {
@@ -2640,6 +2641,130 @@ const ru = {
         records:
           'Позиций нагрузки',
       },
+    },
+  },
+
+  workloadDistribution: {
+    title:
+      'Распределение учебной нагрузки',
+
+    description:
+      'Распределение рассчитанных часов дисциплин между преподавателями кафедр.',
+
+    create:
+      'Распределить нагрузку',
+
+    createTitle:
+      'Распределение нагрузки преподавателю',
+
+    editTitle:
+      'Редактирование распределения',
+
+    searchPlaceholder:
+      'Поиск по преподавателю, дисциплине или потоку...',
+
+    approve:
+      'Утвердить',
+
+    cancel:
+      'Отменить',
+
+    cancelTitle:
+      'Отмена распределения',
+
+    returnToDraft:
+      'Вернуть в черновик',
+
+    returnTitle:
+      'Возврат распределения в черновик',
+
+    archive:
+      'Архивировать',
+
+    archiveTitle:
+      'Архивирование распределения',
+
+    archiveConfirm:
+      'Архивировать распределение нагрузки преподавателя «{teacher}»?',
+
+    archived:
+      'Распределение перемещено в архив.',
+
+    remainingHint:
+      'Доступный остаток позиции: {remaining} ч. Общий объём: {total} ч.',
+
+    teacherNormHint:
+      'Рекомендуемая годовая нагрузка преподавателя: {recommended} ч. Уже распределено: {distributed} ч. Остаток нормы: {remaining} ч.',
+
+    statuses: {
+      draft:
+        'Черновик',
+
+      approved:
+        'Утверждено',
+
+      cancelled:
+        'Отменено',
+    },
+
+    filters: {
+      allYears:
+        'Все учебные годы',
+
+      allDepartments:
+        'Все кафедры',
+
+      allStatuses:
+        'Все статусы',
+    },
+
+    fields: {
+      plannedWorkload:
+        'Позиция плановой нагрузки',
+
+      curriculum:
+        'Учебный план',
+
+      discipline:
+        'Дисциплина',
+
+      workloadType:
+        'Вид нагрузки',
+
+      department:
+        'Кафедра',
+
+      teacher:
+        'Преподаватель',
+
+      allocatedHours:
+        'Распределяемые часы',
+
+      status:
+        'Статус',
+
+      notes:
+        'Примечание',
+
+      reason:
+        'Причина',
+    },
+
+    validation: {
+      workloadRequired:
+        'Выберите позицию плановой нагрузки.',
+
+      teacherRequired:
+        'Выберите преподавателя.',
+
+      hoursPositive:
+        'Количество часов должно быть больше нуля.',
+
+      hoursExceeded:
+        'Количество часов превышает доступный остаток {hours} ч.',
+
+      reasonRequired:
+        'Укажите причину.',
     },
   },
 

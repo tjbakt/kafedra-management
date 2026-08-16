@@ -81,6 +81,7 @@ const uz = {
     curriculumDisciplines: 'O‘quv rejasi tarkibi',
     teachingSetup: 'O‘quv guruhlarini tayyorlash',
     teachingWorkload: 'O‘quv oqimlari va yuklama',
+    workloadDistribution: 'Yuklamani taqsimlash',
   },
   profile: {
     profile: 'Profil',
@@ -2585,6 +2586,130 @@ const uz = {
         records:
           'Yuklama pozitsiyalari',
       },
+    },
+  },
+
+  workloadDistribution: {
+    title:
+      'O‘quv yuklamasini taqsimlash',
+
+    description:
+      'Hisoblangan fan yuklamasi soatlarini kafedra o‘qituvchilari o‘rtasida taqsimlash.',
+
+    create:
+      'Yuklamani taqsimlash',
+
+    createTitle:
+      'O‘qituvchiga yuklama taqsimlash',
+
+    editTitle:
+      'Yuklama taqsimotini tahrirlash',
+
+    searchPlaceholder:
+      'O‘qituvchi, fan yoki oqim bo‘yicha qidirish...',
+
+    approve:
+      'Tasdiqlash',
+
+    cancel:
+      'Bekor qilish',
+
+    cancelTitle:
+      'Taqsimotni bekor qilish',
+
+    returnToDraft:
+      'Qoralamaga qaytarish',
+
+    returnTitle:
+      'Taqsimotni qoralamaga qaytarish',
+
+    archive:
+      'Arxivlash',
+
+    archiveTitle:
+      'Taqsimotni arxivlash',
+
+    archiveConfirm:
+      '«{teacher}» o‘qituvchisining yuklama taqsimotini arxivlaysizmi?',
+
+    archived:
+      'Taqsimot arxivga ko‘chirildi.',
+
+    remainingHint:
+      'Pozitsiyaning mavjud qoldig‘i: {remaining} soat. Umumiy hajm: {total} soat.',
+
+    teacherNormHint:
+      'O‘qituvchining tavsiya etilgan yillik yuklamasi: {recommended} soat. Taqsimlangan: {distributed} soat. Norma qoldig‘i: {remaining} soat.',
+
+    statuses: {
+      draft:
+        'Qoralama',
+
+      approved:
+        'Tasdiqlangan',
+
+      cancelled:
+        'Bekor qilingan',
+    },
+
+    filters: {
+      allYears:
+        'Barcha o‘quv yillari',
+
+      allDepartments:
+        'Barcha kafedralar',
+
+      allStatuses:
+        'Barcha holatlar',
+    },
+
+    fields: {
+      plannedWorkload:
+        'Rejalashtirilgan yuklama pozitsiyasi',
+
+      curriculum:
+        'O‘quv rejasi',
+
+      discipline:
+        'Fan',
+
+      workloadType:
+        'Yuklama turi',
+
+      department:
+        'Kafedra',
+
+      teacher:
+        'O‘qituvchi',
+
+      allocatedHours:
+        'Taqsimlanadigan soatlar',
+
+      status:
+        'Holat',
+
+      notes:
+        'Izoh',
+
+      reason:
+        'Sabab',
+    },
+
+    validation: {
+      workloadRequired:
+        'Rejalashtirilgan yuklama pozitsiyasini tanlang.',
+
+      teacherRequired:
+        'O‘qituvchini tanlang.',
+
+      hoursPositive:
+        'Soatlar soni noldan katta bo‘lishi kerak.',
+
+      hoursExceeded:
+        'Soatlar mavjud {hours} soat qoldiqdan oshib ketdi.',
+
+      reasonRequired:
+        'Sababni kiriting.',
     },
   },
 

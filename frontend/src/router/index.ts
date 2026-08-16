@@ -191,6 +191,26 @@ const moduleRoutes: RouteRecordRaw[] = [
     },
   },
   {
+    path: 'workload-distribution',
+    name: 'workload-distribution',
+    component: () =>
+      import(
+        '@/modules/workload-distribution/WorkloadDistributionView.vue'
+        ),
+    meta: {
+      requiresAuth: true,
+      requiredPermissions: [
+        'workload.view_workloaddistribution',
+      ],
+      titleKey: 'navigation.workloadDistribution',
+      icon: 'pi pi-user-edit',
+      breadcrumbKeys: [
+        'navigation.teachingWorkload',
+        'navigation.workloadDistribution',
+      ],
+    },
+  },
+  {
     path: 'schedules',
     name: 'schedules',
     component: () =>

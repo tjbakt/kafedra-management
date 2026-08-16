@@ -1,0 +1,1196 @@
+<script setup lang="ts">
+import Button from 'primevue/button'
+import Select from 'primevue/select'
+import Tag from 'primevue/tag'
+
+import {
+  computed,
+  onMounted,
+  ref,
+} from 'vue'
+
+import {
+  useI18n,
+} from 'vue-i18n'
+
+import BaseCard from '@/components/base/BaseCard.vue'
+import BaseDataTable from '@/components/base/BaseDataTable.vue'
+import BasePageHeader from '@/components/base/BasePageHeader.vue'
+import BaseToolbar from '@/components/base/BaseToolbar.vue'
+
+import WorkloadDistributionFormDialog
+  from '@/modules/workload-distribution/components/WorkloadDistributionFormDialog.vue'
+
+import WorkloadDistributionReasonDialog
+  from '@/modules/workload-distribution/components/WorkloadDistributionReasonDialog.vue'
+
+import {
+  approveDistribution,
+  cancelDistribution,
+  getPlannedWorkloads,
+  getStaffAcademicYearRecords,
+  getStaffEmployments,
+  returnDistributionToDraft,
+  workloadDistributionsApi,
+} from '@/modules/workload-distribution/api'
+
+import type {
+  StaffEmployment,
+} from '@/modules/staff-employments/types'
+
+import type {
+  StaffAcademicYearRecord,
+} from '@/modules/staff-academic-years/types'
+
+import type {
+  PlannedWorkload,
+} from '@/modules/teaching-workload/types'
+
+import type {
+  WorkloadDistribution,
+  WorkloadDistributionCreatePayload,
+  WorkloadDistributionStatus,
+  WorkloadDistributionUpdatePayload,
+} from '@/modules/workload-distribution/types'
+
+import {
+  useCrudList,
+} from '@/composables/useCrudList'
+
+import {
+  useAppConfirm,
+} from '@/composables/useAppConfirm'
+
+import {
+  useAppToast,
+} from '@/composables/useAppToast'
+
+import {
+  usePermissions,
+} from '@/composables/usePermissions'
+
+import type {
+  CrudColumn,
+} from '@/types/crud'
+
+import type {
+  FieldErrors,
+} from '@/types/validation'
+
+import {
+  normalizeApiError,
+} from '@/utils/api-errors'
+
+const { t } =
+  useI18n()
+
+const toast =
+  useAppToast()
+
+const {
+  confirmDelete,
+} = useAppConfirm()
+
+const {
+  can,
+} = usePermissions()
+
+const plannedWorkloads =
+  ref<PlannedWorkload[]>([])
+
+const employments =
+  ref<StaffEmployment[]>([])
+
+const annualRecords =
+  ref<StaffAcademicYearRecord[]>([])
+
+const lookupLoading =
+  ref(false)
+
+const selectedRecord =
+  ref<WorkloadDistribution | null>(
+    null,
+  )
+
+const formVisible =
+  ref(false)
+
+const reasonVisible =
+  ref(false)
+
+const reasonAction =
+  ref<
+    'cancel' |
+    'return-to-draft' |
+    null
+  >(null)
+
+const saving =
+  ref(false)
+
+const actionLoading =
+  ref(false)
+
+const fieldErrors =
+  ref<FieldErrors>({})
+
+const nonFieldErrors =
+  ref<string[]>([])
+
+const generalError =
+  ref('')
+
+const selectedYear =
+  ref<number | null>(null)
+
+const selectedDepartment =
+  ref<number | null>(null)
+
+const selectedStatus =
+  ref<
+    WorkloadDistributionStatus | null
+  >(null)
+
+const canCreate =
+  computed(
+    () =>
+      can(
+        'workload.add_workloaddistribution',
+      ),
+  )
+
+const canEdit =
+  computed(
+    () =>
+      can(
+        'workload.change_workloaddistribution',
+      ),
+  )
+
+const canDelete =
+  computed(
+    () =>
+      can(
+        'workload.delete_workloaddistribution',
+      ),
+  )
+
+const years =
+  computed(() => {
+    const map =
+      new Map<
+        number,
+        string
+      >()
+
+    for (
+      const workload of
+      plannedWorkloads.value
+    ) {
+      map.set(
+        workload.academic_year,
+        workload.academic_year_name,
+      )
+    }
+
+    return [
+      {
+        value: null,
+        label:
+          t(
+            'workloadDistribution.filters.allYears',
+          ),
+      },
+
+      ...Array.from(
+        map.entries(),
+      ).map(
+        ([value, label]) => ({
+          value,
+          label,
+        }),
+      ),
+    ]
+  })
+
+const departments =
+  computed(() => {
+    const map =
+      new Map<
+        number,
+        string
+      >()
+
+    for (
+      const workload of
+      plannedWorkloads.value
+    ) {
+      map.set(
+        workload.teaching_department,
+        workload.department_name,
+      )
+    }
+
+    return [
+      {
+        value: null,
+        label:
+          t(
+            'workloadDistribution.filters.allDepartments',
+          ),
+      },
+
+      ...Array.from(
+        map.entries(),
+      ).map(
+        ([value, label]) => ({
+          value,
+          label,
+        }),
+      ),
+    ]
+  })
+
+const statuses =
+  computed(() => [
+    {
+      value: null,
+
+      label:
+        t(
+          'workloadDistribution.filters.allStatuses',
+        ),
+    },
+
+    {
+      value: 'draft',
+
+      label:
+        t(
+          'workloadDistribution.statuses.draft',
+        ),
+    },
+
+    {
+      value: 'approved',
+
+      label:
+        t(
+          'workloadDistribution.statuses.approved',
+        ),
+    },
+
+    {
+      value: 'cancelled',
+
+      label:
+        t(
+          'workloadDistribution.statuses.cancelled',
+        ),
+    },
+  ])
+
+function statusSeverity(
+  status:
+    WorkloadDistributionStatus,
+):
+  | 'success'
+  | 'secondary'
+  | 'danger' {
+  if (
+    status === 'approved'
+  ) {
+    return 'success'
+  }
+
+  if (
+    status === 'cancelled'
+  ) {
+    return 'danger'
+  }
+
+  return 'secondary'
+}
+
+const columns =
+  computed<
+    CrudColumn<
+      WorkloadDistribution
+    >[]
+  >(() => [
+    {
+      field:
+        'curriculum_code',
+
+      header:
+        t(
+          'workloadDistribution.fields.curriculum',
+        ),
+
+      minWidth: '10rem',
+    },
+
+    {
+      field:
+        'discipline_name',
+
+      header:
+        t(
+          'workloadDistribution.fields.discipline',
+        ),
+
+      minWidth: '16rem',
+    },
+
+    {
+      field:
+        'workload_type_name',
+
+      header:
+        t(
+          'workloadDistribution.fields.workloadType',
+        ),
+
+      minWidth: '11rem',
+    },
+
+    {
+      field:
+        'department_name',
+
+      header:
+        t(
+          'workloadDistribution.fields.department',
+        ),
+
+      minWidth: '13rem',
+    },
+
+    {
+      field:
+        'teacher_name',
+
+      header:
+        t(
+          'workloadDistribution.fields.teacher',
+        ),
+
+      sortable: true,
+
+      sortField:
+        'staff_employment__staff_member__last_name',
+
+      minWidth: '15rem',
+
+      bodySlot:
+        'teacher',
+    },
+
+    {
+      field:
+        'allocated_hours',
+
+      header:
+        t(
+          'workloadDistribution.fields.allocatedHours',
+        ),
+
+      sortable: true,
+
+      width: '9rem',
+
+      align: 'center',
+    },
+
+    {
+      field:
+        'status',
+
+      header:
+        t(
+          'workloadDistribution.fields.status',
+        ),
+
+      bodySlot:
+        'status',
+
+      width: '10rem',
+    },
+  ])
+
+const {
+  items,
+  totalRecords,
+  loading,
+  error,
+
+  query,
+  searchInput,
+  first,
+
+  load,
+  refresh,
+  reset,
+
+  handlePage,
+  handleSort,
+
+  setFilter,
+  clearFilters,
+} =
+  useCrudList<
+    WorkloadDistribution
+  >(
+    (params) =>
+      workloadDistributionsApi
+        .list(params),
+
+    {
+      initialPageSize: 20,
+
+      initialOrdering:
+        '-planned_workload__academic_year__start_year,staff_employment__staff_member__last_name',
+    },
+  )
+
+function clearErrors(): void {
+  fieldErrors.value = {}
+
+  nonFieldErrors.value = []
+
+  generalError.value = ''
+}
+
+async function loadLookups(): Promise<void> {
+  lookupLoading.value = true
+
+  try {
+    const [
+      workloadsResponse,
+      employmentsResponse,
+      annualResponse,
+    ] = await Promise.all([
+      getPlannedWorkloads(),
+      getStaffEmployments(),
+      getStaffAcademicYearRecords(),
+    ])
+
+    plannedWorkloads.value =
+      workloadsResponse.results
+
+    employments.value =
+      employmentsResponse.results
+
+    annualRecords.value =
+      annualResponse.results
+  } catch (loadError) {
+    toast.error(
+      t('common.error'),
+
+      normalizeApiError(
+        loadError,
+        t('crud.loadError'),
+      ).message,
+    )
+  } finally {
+    lookupLoading.value =
+      false
+  }
+}
+
+function openCreate(): void {
+  selectedRecord.value =
+    null
+
+  clearErrors()
+
+  formVisible.value =
+    true
+}
+
+function openEdit(
+  record:
+    WorkloadDistribution,
+): void {
+  if (
+    record.status !== 'draft'
+  ) {
+    return
+  }
+
+  selectedRecord.value =
+    record
+
+  clearErrors()
+
+  formVisible.value =
+    true
+}
+
+async function createDistribution(
+  payload:
+    WorkloadDistributionCreatePayload,
+): Promise<void> {
+  saving.value = true
+
+  clearErrors()
+
+  try {
+    await workloadDistributionsApi
+      .create(payload)
+
+    formVisible.value =
+      false
+
+    toast.success(
+      t('common.success'),
+      t('crud.created'),
+    )
+
+    await Promise.all([
+      refresh(),
+      loadLookups(),
+    ])
+  } catch (saveError) {
+    const normalized =
+      normalizeApiError(
+        saveError,
+        t('crud.saveError'),
+      )
+
+    fieldErrors.value =
+      normalized.fieldErrors
+
+    nonFieldErrors.value =
+      normalized.nonFieldErrors
+
+    generalError.value =
+      normalized.message
+  } finally {
+    saving.value = false
+  }
+}
+
+async function updateDistribution(
+  payload:
+    WorkloadDistributionUpdatePayload,
+): Promise<void> {
+  if (!selectedRecord.value) {
+    return
+  }
+
+  saving.value = true
+
+  clearErrors()
+
+  try {
+    await workloadDistributionsApi
+      .update(
+        selectedRecord.value.id,
+        payload,
+      )
+
+    formVisible.value =
+      false
+
+    selectedRecord.value =
+      null
+
+    toast.success(
+      t('common.success'),
+      t('crud.updated'),
+    )
+
+    await Promise.all([
+      refresh(),
+      loadLookups(),
+    ])
+  } catch (saveError) {
+    const normalized =
+      normalizeApiError(
+        saveError,
+        t('crud.saveError'),
+      )
+
+    fieldErrors.value =
+      normalized.fieldErrors
+
+    nonFieldErrors.value =
+      normalized.nonFieldErrors
+
+    generalError.value =
+      normalized.message
+  } finally {
+    saving.value = false
+  }
+}
+
+async function approve(
+  record:
+    WorkloadDistribution,
+): Promise<void> {
+  actionLoading.value =
+    true
+
+  try {
+    const response =
+      await approveDistribution(
+        record.id,
+      )
+
+    toast.success(
+      t('common.success'),
+      response.detail,
+    )
+
+    await Promise.all([
+      refresh(),
+      loadLookups(),
+    ])
+  } catch (actionError) {
+    toast.error(
+      t('common.error'),
+
+      normalizeApiError(
+        actionError,
+      ).message,
+    )
+  } finally {
+    actionLoading.value =
+      false
+  }
+}
+
+function openCancel(
+  record:
+    WorkloadDistribution,
+): void {
+  selectedRecord.value =
+    record
+
+  reasonAction.value =
+    'cancel'
+
+  reasonVisible.value =
+    true
+}
+
+function openReturnToDraft(
+  record:
+    WorkloadDistribution,
+): void {
+  selectedRecord.value =
+    record
+
+  reasonAction.value =
+    'return-to-draft'
+
+  reasonVisible.value =
+    true
+}
+
+async function submitReason(
+  reason: string,
+): Promise<void> {
+  if (
+    !selectedRecord.value ||
+    !reasonAction.value
+  ) {
+    return
+  }
+
+  actionLoading.value =
+    true
+
+  try {
+    const response =
+      reasonAction.value ===
+      'cancel'
+        ? await cancelDistribution(
+            selectedRecord.value.id,
+            reason,
+          )
+        : await returnDistributionToDraft(
+            selectedRecord.value.id,
+            reason,
+          )
+
+    reasonVisible.value =
+      false
+
+    toast.success(
+      t('common.success'),
+      response.detail,
+    )
+
+    await Promise.all([
+      refresh(),
+      loadLookups(),
+    ])
+  } catch (actionError) {
+    toast.error(
+      t('common.error'),
+
+      normalizeApiError(
+        actionError,
+      ).message,
+    )
+  } finally {
+    actionLoading.value =
+      false
+  }
+}
+
+function archive(
+  record:
+    WorkloadDistribution,
+): void {
+  confirmDelete({
+    header:
+      t(
+        'workloadDistribution.archiveTitle',
+      ),
+
+    message:
+      t(
+        'workloadDistribution.archiveConfirm',
+        {
+          teacher:
+            record.teacher_name,
+        },
+      ),
+
+    accept:
+      async () => {
+        try {
+          await workloadDistributionsApi
+            .remove(record.id)
+
+          toast.success(
+            t('common.success'),
+            t(
+              'workloadDistribution.archived',
+            ),
+          )
+
+          await Promise.all([
+            refresh(),
+            loadLookups(),
+          ])
+        } catch (archiveError) {
+          toast.error(
+            t('common.error'),
+
+            normalizeApiError(
+              archiveError,
+            ).message,
+          )
+        }
+      },
+  })
+}
+
+async function applyFilters(): Promise<void> {
+  setFilter(
+    'academic_year',
+    selectedYear.value,
+  )
+
+  setFilter(
+    'teaching_department',
+    selectedDepartment.value,
+  )
+
+  setFilter(
+    'status',
+    selectedStatus.value,
+  )
+
+  await load()
+}
+
+async function resetFilters(): Promise<void> {
+  selectedYear.value =
+    null
+
+  selectedDepartment.value =
+    null
+
+  selectedStatus.value =
+    null
+
+  clearFilters()
+
+  await reset()
+}
+
+onMounted(
+  async () => {
+    await Promise.all([
+      load(),
+      loadLookups(),
+    ])
+  },
+)
+</script>
+
+<template>
+  <div
+    class="
+      workload-distribution-page
+    "
+  >
+    <BasePageHeader
+      :title="
+        t(
+          'workloadDistribution.title',
+        )
+      "
+      :description="
+        t(
+          'workloadDistribution.description',
+        )
+      "
+      icon="pi pi-user-edit"
+    >
+      <template #actions>
+        <Button
+          v-if="canCreate"
+          :label="
+            t(
+              'workloadDistribution.create',
+            )
+          "
+          icon="pi pi-plus"
+          @click="openCreate"
+        />
+      </template>
+    </BasePageHeader>
+
+    <BaseToolbar
+      v-model:search="
+        searchInput
+      "
+      :show-create="false"
+      :show-reset="true"
+      :loading="
+        loading ||
+        lookupLoading
+      "
+      :search-placeholder="
+        t(
+          'workloadDistribution.searchPlaceholder',
+        )
+      "
+      @refresh="refresh"
+      @reset="resetFilters"
+    >
+      <template #center>
+        <Select
+          v-model="
+            selectedYear
+          "
+          :options="years"
+          option-label="label"
+          option-value="value"
+          class="
+            distribution-filter
+          "
+          @change="
+            applyFilters
+          "
+        />
+
+        <Select
+          v-model="
+            selectedDepartment
+          "
+          :options="
+            departments
+          "
+          option-label="label"
+          option-value="value"
+          filter
+          class="
+            distribution-filter
+          "
+          @change="
+            applyFilters
+          "
+        />
+
+        <Select
+          v-model="
+            selectedStatus
+          "
+          :options="statuses"
+          option-label="label"
+          option-value="value"
+          class="
+            distribution-filter
+          "
+          @change="
+            applyFilters
+          "
+        />
+      </template>
+    </BaseToolbar>
+
+    <BaseCard
+      :padding="false"
+    >
+      <BaseDataTable
+        :value="items"
+        :columns="columns"
+        :loading="loading"
+        :error="error"
+        :first="first"
+        :rows="
+          query.pageSize
+        "
+        :total-records="
+          totalRecords
+        "
+        show-row-actions
+        @page="
+          handlePage
+        "
+        @sort="
+          handleSort
+        "
+        @retry="refresh"
+      >
+        <template
+          #teacher="{ row }"
+        >
+          <div
+            class="
+              teacher-cell
+            "
+          >
+            <strong>
+              {{
+                row.teacher_name
+              }}
+            </strong>
+
+            <small>
+              {{
+                row.position_name
+              }}
+              ·
+              {{
+                row.employment_rate
+              }}
+            </small>
+          </div>
+        </template>
+
+        <template
+          #status="{ row }"
+        >
+          <Tag
+            :value="
+              t(
+                `workloadDistribution.statuses.${row.status}`,
+              )
+            "
+            :severity="
+              statusSeverity(
+                row.status,
+              )
+            "
+          />
+        </template>
+
+        <template
+          #actions="{ row }"
+        >
+          <Button
+            v-if="
+              canEdit &&
+              row.status ===
+                'draft'
+            "
+            v-tooltip.bottom="
+              t('common.edit')
+            "
+            icon="pi pi-pencil"
+            text
+            rounded
+            @click.stop="
+              openEdit(row)
+            "
+          />
+
+          <Button
+            v-if="
+              canEdit &&
+              row.status ===
+                'draft'
+            "
+            v-tooltip.bottom="
+              t(
+                'workloadDistribution.approve',
+              )
+            "
+            icon="pi pi-check"
+            severity="success"
+            text
+            rounded
+            @click.stop="
+              approve(row)
+            "
+          />
+
+          <Button
+            v-if="
+              canEdit &&
+              row.status !==
+                'cancelled'
+            "
+            v-tooltip.bottom="
+              t(
+                'workloadDistribution.cancel',
+              )
+            "
+            icon="pi pi-times"
+            severity="warn"
+            text
+            rounded
+            @click.stop="
+              openCancel(row)
+            "
+          />
+
+          <Button
+            v-if="
+              canEdit &&
+              row.status !==
+                'draft'
+            "
+            v-tooltip.bottom="
+              t(
+                'workloadDistribution.returnToDraft',
+              )
+            "
+            icon="
+              pi pi-undo
+            "
+            severity="secondary"
+            text
+            rounded
+            @click.stop="
+              openReturnToDraft(
+                row,
+              )
+            "
+          />
+
+          <Button
+            v-if="canDelete"
+            v-tooltip.bottom="
+              t(
+                'workloadDistribution.archive',
+              )
+            "
+            icon="pi pi-box"
+            severity="danger"
+            text
+            rounded
+            @click.stop="
+              archive(row)
+            "
+          />
+        </template>
+      </BaseDataTable>
+    </BaseCard>
+
+    <WorkloadDistributionFormDialog
+      v-model="formVisible"
+      :record="
+        selectedRecord
+      "
+      :planned-workloads="
+        plannedWorkloads
+      "
+      :employments="
+        employments
+      "
+      :annual-records="
+        annualRecords
+      "
+      :loading="saving"
+      :field-errors="
+        fieldErrors
+      "
+      :non-field-errors="
+        nonFieldErrors
+      "
+      :general-error="
+        generalError
+      "
+      @create="
+        createDistribution
+      "
+      @update="
+        updateDistribution
+      "
+    />
+
+    <WorkloadDistributionReasonDialog
+      v-model="
+        reasonVisible
+      "
+      :title="
+        reasonAction ===
+        'cancel'
+          ? t(
+              'workloadDistribution.cancelTitle',
+            )
+          : t(
+              'workloadDistribution.returnTitle',
+            )
+      "
+      :loading="
+        actionLoading
+      "
+      @submit="
+        submitReason
+      "
+    />
+  </div>
+</template>
+
+<style scoped>
+.workload-distribution-page {
+  display: grid;
+  gap: 1rem;
+}
+
+.distribution-filter {
+  width: 14rem;
+}
+
+.teacher-cell {
+  display: grid;
+  gap: 0.1rem;
+}
+
+.teacher-cell strong {
+  font-size: 0.82rem;
+}
+
+.teacher-cell small {
+  color:
+    var(--app-text-muted);
+
+  font-size: 0.7rem;
+}
+
+@media (max-width: 991px) {
+  .distribution-filter {
+    width: 100%;
+  }
+}
+</style>
