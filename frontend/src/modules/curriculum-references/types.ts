@@ -8,6 +8,13 @@ export type WorkloadTypeCode =
   | 'credit'
   | 'course_work'
   | 'course_project'
+  | 'course_work_project_defense'
+  | 'scientific_practice'
+  | 'qualification_practice'
+  | 'master_dissertation_supervision'
+  | 'master_dissertation_defense'
+  | 'graduation_work_supervision'
+  | 'graduation_work_defense'
   | 'independent_work'
   | 'other'
 

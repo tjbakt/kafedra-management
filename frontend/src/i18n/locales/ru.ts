@@ -1658,84 +1658,42 @@ const ru = {
 
     workloadTypes: {
       create: 'Добавить вид работы',
-
-      createTitle:
-        'Создание вида учебной работы',
-
-      editTitle:
-        'Редактирование вида учебной работы',
-
-      archiveTitle:
-        'Архивирование вида работы',
-
-      archiveConfirm:
-        'Архивировать вид работы «{name}»?',
-
-      archived:
-        'Вид учебной работы перемещён в архив',
-
-      searchPlaceholder:
-        'Поиск по коду или названию вида работы...',
-
+      createTitle: 'Создание вида учебной работы',
+      editTitle: 'Редактирование вида учебной работы',
+      archiveTitle: 'Архивирование вида работы',
+      archiveConfirm: 'Архивировать вид работы «{name}»?',
+      archived: 'Вид учебной работы перемещён в архив',
+      searchPlaceholder: 'Поиск по коду или названию вида работы...',
       fields: {
-        code:
-          'Вид работы',
-
-        name:
-          'Название',
-
-        nameRu:
-          'Название на русском',
-
-        nameUz:
-          'Название на узбекском',
-
-        calculationMode:
-          'Способ расчёта',
-
-        reportCategory:
-          'Категория для отчётов',
-
-        classroom:
-          'Аудиторная работа',
-
-        teachingLoad:
-          'Включать в нагрузку преподавателя',
+        code: 'Вид работы',
+        name: 'Название',
+        nameRu: 'Название на русском',
+        nameUz: 'Название на узбекском',
+        calculationMode: 'Способ расчёта',
+        reportCategory: 'Категория для отчётов',
+        classroom: 'Аудиторная работа',
+        teachingLoad: 'Включать в нагрузку преподавателя',
       },
 
       codes: {
-        lecture:
-          'Лекции',
-
-        practice:
-          'Практические занятия',
-
-        laboratory:
-          'Лабораторные занятия',
-
-        seminar:
-          'Семинарские занятия',
-
-        consultation:
-          'Консультации',
-
-        exam:
-          'Экзамен',
-
-        credit:
-          'Зачёт',
-
-        courseWork:
-          'Курсовая работа',
-
-        courseProject:
-          'Курсовой проект',
-
-        independentWork:
-          'Самостоятельная работа',
-
-        other:
-          'Другой вид работы',
+        lecture: 'Лекции',
+        practice: 'Практические занятия',
+        laboratory: 'Лабораторные занятия',
+        seminar: 'Семинарские занятия',
+        independentWork: 'Самостоятельная работа',
+        courseWork: 'Курсовая работа',
+        courseProject: 'Курсовой проект',
+        courseWorkProjectDefense: "Защита курсовой работы/проекта",
+        scientificPractice: "Научная практика",
+        qualificationPractice: "Квалификационная практика",
+        masterDissertationSupervision: "Руководство магистерской диссертацией",
+        masterDissertationDefense: "Защита магистерской диссертации",
+        graduationWorkSupervision: "Руководство выпускной квалификационной работой",
+        graduationWorkDefense: "Защита выпускной квалификационной работы",
+        consultation: 'Консультации',
+        exam: 'Экзамен',
+        credit: 'Зачёт',
+        other: 'Другой вид работы',
       },
 
       calculationModes: {

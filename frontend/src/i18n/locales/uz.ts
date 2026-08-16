@@ -1494,8 +1494,7 @@ const uz = {
   },
 
   curriculumReferences: {
-    title:
-      'O‘quv rejasi ma’lumotnomalari',
+    title: 'O‘quv rejasi ma’lumotnomalari',
 
     description:
       'O‘quv rejalarini shakllantirish va yuklamani hisoblashda ishlatiladigan fanlar hamda o‘quv ishlari turlari.',
@@ -1597,86 +1596,44 @@ const uz = {
     },
 
     workloadTypes: {
-      create:
-        'Ish turini qo‘shish',
-
-      createTitle:
-        'O‘quv ishi turini yaratish',
-
-      editTitle:
-        'O‘quv ishi turini tahrirlash',
-
-      archiveTitle:
-        'Ish turini arxivlash',
-
-      archiveConfirm:
-        '«{name}» ish turini arxivlaysizmi?',
-
-      archived:
-        'O‘quv ishi turi arxivga ko‘chirildi',
-
-      searchPlaceholder:
-        'Ish turi kodi yoki nomi bo‘yicha qidirish...',
+      create: 'Ish turini qo‘shish',
+      createTitle: 'O‘quv ishi turini yaratish',
+      editTitle: 'O‘quv ishi turini tahrirlash',
+      archiveTitle: 'Ish turini arxivlash',
+      archiveConfirm: '«{name}» ish turini arxivlaysizmi?',
+      archived: 'O‘quv ishi turi arxivga ko‘chirildi',
+      searchPlaceholder: 'Ish turi kodi yoki nomi bo‘yicha qidirish...',
 
       fields: {
-        code:
-          'Ish turi',
-
-        name:
-          'Nomi',
-
-        nameRu:
-          'Rus tilidagi nomi',
-
-        nameUz:
-          'O‘zbek tilidagi nomi',
-
-        calculationMode:
-          'Hisoblash usuli',
-
-        reportCategory:
-          'Hisobot kategoriyasi',
-
-        classroom:
-          'Auditoriya ishi',
-
-        teachingLoad:
-          'O‘qituvchi yuklamasiga kiritish',
+        code: 'Ish turi',
+        name: 'Nomi',
+        nameRu: 'Rus tilidagi nomi',
+        nameUz: 'O‘zbek tilidagi nomi',
+        calculationMode: 'Hisoblash usuli',
+        reportCategory: 'Hisobot kategoriyasi',
+        classroom: 'Auditoriya ishi',
+        teachingLoad: 'O‘qituvchi yuklamasiga kiritish',
       },
 
       codes: {
-        lecture:
-          'Ma’ruzalar',
-
-        practice:
-          'Amaliy mashg‘ulotlar',
-
-        laboratory:
-          'Laboratoriya mashg‘ulotlari',
-
-        seminar:
-          'Seminar mashg‘ulotlari',
-
-        consultation:
-          'Maslahatlar',
-
-        exam:
-          'Imtihon',
-
-        credit:
-          'Sinov',
-
-        courseWork:
-          'Kurs ishi',
-
-        courseProject:
-          'Kurs loyihasi',
-
-        independentWork:
-          'Mustaqil ish',
-
-        other:
-          'Boshqa ish turi',
+        lecture: 'Ma’ruzalar',
+        practice: 'Amaliy mashg‘ulotlar',
+        laboratory: 'Laboratoriya mashg‘ulotlari',
+        seminar: 'Seminar mashg‘ulotlari',
+        independentWork: 'Mustaqil ish',
+        courseWork: 'Kurs ishi',
+        courseProject: 'Kurs loyihasi',
+        courseWorkProjectDefense: "Kurs ishi/loyihasini himoya qilish",
+        scientificPractice: "Ilmiy amaliyot",
+        qualificationPractice: "Malakaviy amaliyot",
+        masterDissertationSupervision: "Magistrlik dissertatsiyasiga rahbarlik",
+        masterDissertationDefense: "Magistrlik dissertatsiyasini himoya qilish",
+        graduationWorkSupervision: "Bitiruv malakaviy ishiga rahbarlik",
+        graduationWorkDefense: "Bitiruv malakaviy ishini himoya qilish",
+        consultation: 'Maslahatlar',
+        exam: 'Imtihon',
+        credit: 'Sinov',
+        other: 'Boshqa ish turi',
       },
 
       calculationModes: {

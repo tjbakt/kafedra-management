@@ -175,6 +175,62 @@ const codeOptions =
         ),
     },
     {
+      value:
+        'course_work_project_defense',
+      label:
+        t(
+          'curriculumReferences.workloadTypes.codes.courseWorkProjectDefense',
+        ),
+    },
+    {
+      value:
+        'scientific_practice',
+      label:
+        t(
+          'curriculumReferences.workloadTypes.codes.scientificPractice',
+        ),
+    },
+    {
+      value:
+        'qualification_practice',
+      label:
+        t(
+          'curriculumReferences.workloadTypes.codes.qualificationPractice',
+        ),
+    },
+    {
+      value:
+        'master_dissertation_supervision',
+      label:
+        t(
+          'curriculumReferences.workloadTypes.codes.masterDissertationSupervision',
+        ),
+    },
+    {
+      value:
+        'master_dissertation_defense',
+      label:
+        t(
+          'curriculumReferences.workloadTypes.codes.masterDissertationDefense',
+        ),
+    },
+    {
+      value:
+        'graduation_work_supervision',
+      label:
+        t(
+          'curriculumReferences.workloadTypes.codes.graduationWorkSupervision',
+        ),
+    },
+    {
+      value:
+        'graduation_work_defense',
+      label:
+        t(
+          'curriculumReferences.workloadTypes.codes.graduationWorkDefense',
+        ),
+    },
+    {
       value: 'independent_work',
       label:
         t(

@@ -79,8 +79,16 @@ class WorkloadType(BaseModel):
         CREDIT = "credit", _("Зачёт")
         COURSE_WORK = "course_work", _("Курсовая работа")
         COURSE_PROJECT = "course_project", _("Курсовой проект")
-        INDEPENDENT_WORK = "independent_work", _("Самостоятельная работа")
-        OTHER = "other", _("Другой вид работы")
+
+        COURSE_WORK_PROJECT_DEFENSE = ( "course_work_project_defense", _("Защита курсовой работы/проекта"), )
+        SCIENTIFIC_PRACTICE = ( "scientific_practice", _("Научная практика"), )
+        QUALIFICATION_PRACTICE = ( "qualification_practice", _("Квалификационная практика"), )
+        MASTER_DISSERTATION_SUPERVISION = ( "master_dissertation_supervision", _("Руководство магистерской диссертацией"), )
+        MASTER_DISSERTATION_DEFENSE = ( "master_dissertation_defense", _("Защита магистерской диссертации"), )
+        GRADUATION_WORK_SUPERVISION = ( "graduation_work_supervision", _("Руководство выпускной квалификационной работой"), )
+        GRADUATION_WORK_DEFENSE = ( "graduation_work_defense", _("Защита выпускной квалификационной работы"), )
+        INDEPENDENT_WORK = ( "independent_work", _("Самостоятельная работа"), )
+        OTHER = ( "other", _("Другой вид работы"), )
 
     class CalculationMode(models.TextChoices):
         FIXED = "fixed", _("Фиксированные часы")
