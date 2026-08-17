@@ -25,6 +25,7 @@ import BaseToolbar from '@/components/base/BaseToolbar.vue'
 import AcademicSemesterDialog from '@/modules/academic-settings/components/AcademicSemesterDialog.vue'
 import AcademicYearDialog from '@/modules/academic-settings/components/AcademicYearDialog.vue'
 import AcademicYearStatusDialog from '@/modules/academic-settings/components/AcademicYearStatusDialog.vue'
+import AcademicWorkloadNormsForm from '@/modules/academic-settings/components/AcademicWorkloadNormsForm.vue'
 import EducationDurationDialog from '@/modules/academic-settings/components/EducationDurationDialog.vue'
 import LocalizedReferenceDialog from '@/modules/academic-settings/components/LocalizedReferenceDialog.vue'
 
@@ -908,9 +909,12 @@ onMounted(async () => {
 
         <Tab value="semesters">
           {{
-            t(
-              'academicSettings.tabs.semesters',
-            )
+            t('academicSettings.tabs.semesters',)
+          }}
+        </Tab>
+        <Tab value="workload-norms">
+          {{
+            t('academicSettings.tabs.workloadNorms',)
           }}
         </Tab>
       </TabList>
@@ -1621,6 +1625,11 @@ onMounted(async () => {
             </BaseDataTable>
           </BaseCard>
         </TabPanel>
+
+        <TabPanel value="workload-norms">
+          <AcademicWorkloadNormsForm/>
+        </TabPanel>
+
       </TabPanels>
     </Tabs>
 

@@ -6,8 +6,6 @@ export type WorkloadTypeCode =
   | 'consultation'
   | 'exam'
   | 'credit'
-  | 'course_work'
-  | 'course_project'
   | 'course_work_supervision'
   | 'course_project_supervision'
   | 'course_work_defense'

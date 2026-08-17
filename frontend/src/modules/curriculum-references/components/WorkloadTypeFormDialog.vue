@@ -161,21 +161,6 @@ const codeOptions =
         ),
     },
     {
-      value: 'course_work',
-      label:
-        t(
-          'curriculumReferences.workloadTypes.codes.courseWork',
-        ),
-    },
-    {
-      value: 'course_project',
-      label:
-        t(
-          'curriculumReferences.workloadTypes.codes.courseProject',
-        ),
-    },
-
-    {
       value:
         'course_work_supervision',
 

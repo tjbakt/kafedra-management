@@ -952,50 +952,26 @@ const uz = {
   },
 
   academicSettings: {
-    title:
-      'Akademik ma’lumotnomalar',
-
-    description:
-      'O‘quv yillari, ta’lim darajalari, ta’lim shakllari, davomiyligi va akademik semestrlar.',
-
-    archiveConfirm:
-      'Yozuvni arxivga ko‘chirasizmi?',
+    title: 'Akademik ma’lumotnomalar',
+    description: 'O‘quv yillari, ta’lim darajalari, ta’lim shakllari, davomiyligi va akademik semestrlar.',
+    archiveConfirm: 'Yozuvni arxivga ko‘chirasizmi?',
 
     tabs: {
-      years:
-        'O‘quv yillari',
-
-      levels:
-        'Ta’lim darajalari',
-
-      forms:
-        'Ta’lim shakllari',
-
-      durations:
-        'Davomiylik',
-
-      semesters:
-        'Semestrlar',
+      years: 'O‘quv yillari',
+      levels: 'Ta’lim darajalari',
+      forms: 'Ta’lim shakllari',
+      durations: 'Davomiylik',
+      semesters: 'Semestrlar',
+      workloadNorms: 'O‘quv yuklamasi me’yorlari',
     },
 
     common: {
-      code:
-        'Kod',
-
-      name:
-        'Nomi',
-
-      nameRu:
-        'Rus tilidagi nomi',
-
-      nameUz:
-        'O‘zbek tilidagi nomi',
-
-      sortOrder:
-        'Tartib',
-
-      active:
-        'Faol',
+      code: 'Kod',
+      name: 'Nomi',
+      nameRu: 'Rus tilidagi nomi',
+      nameUz: 'O‘zbek tilidagi nomi',
+      sortOrder: 'Tartib',
+      active: 'Faol',
     },
 
     academicYears: {
@@ -1179,6 +1155,90 @@ const uz = {
 
         springYear:
           'Bahorgi semestr o‘quv yilining tugash yilida boshlanishi kerak',
+      },
+    },
+    workloadNorms: {
+      generalTitle:
+        'O‘quv yilining umumiy me’yorlari',
+
+      generalDescription:
+        'Asosiy me’yorlar tanlangan o‘quv yili uchun tasdiqlanadi va barcha o‘quv rejalari hamda fanlarda qo‘llaniladi.',
+
+      normsTitle:
+        'Auditoriyadan tashqari o‘quv ishlari koeffitsiyentlari',
+
+      normsDescription:
+        'Koeffitsiyentlar o‘qituvchilarning o‘quv yuklamasini avtomatik hisoblashda qo‘llaniladi.',
+
+      currentYear:
+        'joriy',
+
+      closedYear:
+        'O‘quv yili yopilgan. Yopilgan o‘quv yili me’yorlarini o‘zgartirish mumkin emas.',
+
+      empty:
+        'Yillik me’yor qo‘llaniladigan o‘quv ish turlari mavjud emas.',
+
+      saveSuccess:
+        'O‘quv yuklamasi me’yorlari muvaffaqiyatli saqlandi.',
+
+      fields: {
+        academicYear:
+          'O‘quv yili',
+
+        hoursPerCredit:
+          '1 kreditdagi soatlar soni',
+      },
+
+      columns: {
+        enabled:
+          'Hisobga olish',
+
+        workloadType:
+          'O‘quv ish turi',
+
+        calculationMode:
+          'Hisoblash usuli',
+
+        coefficient:
+          'Koeffitsiyent / soatlar',
+      },
+
+      validation: {
+        creditPositive:
+          'Bir kreditdagi soatlar soni noldan katta bo‘lishi kerak.',
+
+        coefficientRequired:
+          '«{name}» ish turi uchun koeffitsiyentni kiriting.',
+      },
+
+      hints: {
+        credit:
+          'Masalan: 1 kredit = 30 akademik soat.',
+
+        rating:
+          'Talabalar soni × koeffitsiyent. Masalan: bir talabaga 0,25 soat.',
+
+        courseWorkSupervision:
+          'Talabalar soni × koeffitsiyent. Odatda bir talabaga taxminan 2 soat.',
+
+        courseWorkDefense:
+          'Talabalar soni × koeffitsiyent. Masalan: bir talabaga 0,2 soat.',
+
+        courseProjectSupervision:
+          'Talabalar soni × koeffitsiyent. Odatda bir talabaga taxminan 3 soat.',
+
+        courseProjectDefense:
+          'Talabalar soni × koeffitsiyent. Masalan: bir talabaga 0,3 soat.',
+
+        graduationSupervision:
+          'Talabalar soni × bitiruv malakaviy ishiga rahbarlik koeffitsiyenti.',
+
+        masterSupervision:
+          'Magistrantlar soni × magistrlik dissertatsiyasiga rahbarlik koeffitsiyenti.',
+
+        default:
+          'Koeffitsiyent tanlangan o‘quv ish turining hisoblash usuliga muvofiq qo‘llaniladi.',
       },
     },
   },
