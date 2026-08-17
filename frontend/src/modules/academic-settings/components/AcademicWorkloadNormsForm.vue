@@ -358,6 +358,15 @@ async function loadNorms(): Promise<void> {
   }
 }
 
+function isWeeklyNorm(
+  row: NormFormRow,
+): boolean {
+  return (
+    row.workloadType
+      .uses_weekly_norm
+  )
+}
+
 function validate(): boolean {
   clearErrors()
 
@@ -581,6 +590,16 @@ function coefficientHint(
     case 'master_dissertation_supervision':
       return t(
         'academicSettings.workloadNorms.hints.masterSupervision',
+      )
+
+    case 'scientific_practice_supervision':
+      return t(
+        'academicSettings.workloadNorms.hints.scientificPractice',
+      )
+
+    case 'qualification_practice_supervision':
+      return t(
+        'academicSettings.workloadNorms.hints.qualificationPractice',
       )
 
     default:
@@ -857,13 +876,12 @@ onMounted(
           </div>
 
           <InputNumber
-            v-model="
-              row.coefficient
-            "
+            v-model="row.coefficient"
             :min="0"
             :min-fraction-digits="2"
             :max-fraction-digits="4"
             :use-grouping="false"
+            :suffix=" isWeeklyNorm(row) ? ' ч./нед.' : '' "
             class="w-full"
             input-class="w-full"
             :disabled="

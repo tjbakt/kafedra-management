@@ -67,6 +67,14 @@ import type {
 } from '@/modules/curriculum-disciplines/types'
 
 import {
+  academicYearCreditNormsApi,
+} from '@/modules/academic-settings/api'
+
+import type {
+  AcademicYearCreditNorm,
+} from '@/modules/academic-settings/types'
+
+import {
   useCrudList,
 } from '@/composables/useCrudList'
 
@@ -131,6 +139,22 @@ const curriculum =
 
 const disciplines =
   ref<Discipline[]>([])
+
+const creditNorm =
+  ref<AcademicYearCreditNorm | null>(
+    null,
+  )
+
+const creditHoursPerCredit =
+  computed(
+    () =>
+      creditNorm.value
+        ? Number(
+            creditNorm.value
+              .hours_per_credit,
+          )
+        : 0,
+  )
 
 const selectedRecord =
   ref<
@@ -752,6 +776,31 @@ async function loadMetadata(): Promise<void> {
   }
 }
 
+
+async function loadCreditNorm(): Promise<void> {
+  creditNorm.value =
+    null
+
+  const academicYearId =
+    curriculum.value
+      ?.effective_academic_year
+
+  if (!academicYearId) {
+    return
+  }
+
+  const response =
+    await academicYearCreditNormsApi.list({
+      academic_year:
+        academicYearId,
+
+      page_size: 10,
+    })
+
+  creditNorm.value =
+    response.results[0] ??
+    null
+}
 function openCreate(): void {
   selectedRecord.value = null
   existingEntries.value = []
@@ -994,6 +1043,7 @@ onMounted(
     await Promise.all([
       load(),
       loadMetadata(),
+      loadCreditNorm(),
     ])
   },
 )
@@ -1388,6 +1438,7 @@ onMounted(
       v-if="curriculum"
       v-model="formVisible"
       :curriculum="curriculum"
+      :credit-hours-per-credit="creditHoursPerCredit"
       :record="
     selectedRecord
   "

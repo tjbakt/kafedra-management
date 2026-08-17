@@ -299,6 +299,10 @@ class WorkloadTypeSerializer(
         )
     )
 
+    uses_weekly_norm = serializers.BooleanField(
+        read_only=True,
+    )
+
     class Meta:
         model = WorkloadType
         fields = (
@@ -316,6 +320,7 @@ class WorkloadTypeSerializer(
             "uses_annual_norm",
             "uses_curriculum_rule",
             "paired_code",
+            "uses_weekly_norm",
             "is_active",
             "sort_order",
             "created_at",
@@ -1375,8 +1380,7 @@ class CurriculumDisciplineBundleSerializer(
         )
 
         if (
-            workload_type
-            .uses_annual_norm
+            workload_type.uses_annual_norm
         ):
             norm = (
                 AcademicYearWorkloadNorm
@@ -1394,6 +1398,16 @@ class CurriculumDisciplineBundleSerializer(
                 )
             )
 
+            calculation_mode = (
+                WorkloadType
+                .CalculationMode
+                .PER_GROUP
+                if workload_type
+                .uses_weekly_norm
+                else workload_type
+                .calculation_mode
+            )
+
             return {
                 "calculation_mode":
                     workload_type
@@ -1406,25 +1420,25 @@ class CurriculumDisciplineBundleSerializer(
                     None,
             }
 
-        return {
-            "calculation_mode":
-                workload_data.get(
-                    "calculation_mode"
-                )
-                or workload_type
-                .calculation_mode,
-
-            "base_hours":
-                workload_data.get(
-                    "base_hours",
-                    Decimal("0.00"),
-                ),
-
-            "students_per_unit":
-                workload_data.get(
-                    "students_per_unit"
-                ),
-        }
+        # return {
+        #     "calculation_mode":
+        #         workload_data.get(
+        #             "calculation_mode"
+        #         )
+        #         or workload_type
+        #         .calculation_mode,
+        #
+        #     "base_hours":
+        #         workload_data.get(
+        #             "base_hours",
+        #             Decimal("0.00"),
+        #         ),
+        #
+        #     "students_per_unit":
+        #         workload_data.get(
+        #             "students_per_unit"
+        #         ),
+        # }
 
     @transaction.atomic
     def create(self, validated_data):

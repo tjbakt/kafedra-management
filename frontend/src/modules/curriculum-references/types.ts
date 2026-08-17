@@ -121,6 +121,7 @@ export interface WorkloadType extends Record<string, unknown> {
 
   uses_annual_norm: boolean
   uses_curriculum_rule: boolean
+  uses_weekly_norm: boolean
 
   paired_code: WorkloadTypeCode | null
 

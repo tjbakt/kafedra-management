@@ -1237,6 +1237,12 @@ const uz = {
         masterSupervision:
           'Magistrantlar soni × magistrlik dissertatsiyasiga rahbarlik koeffitsiyenti.',
 
+        scientificPractice:
+          'Bitta o‘quv guruhining bir haftalik ilmiy amaliyotiga rahbarlik soatlari.',
+
+        qualificationPractice:
+          'Bitta o‘quv guruhining bir haftalik malakaviy amaliyotiga rahbarlik soatlari.',
+
         default:
           'Koeffitsiyent tanlangan o‘quv ish turining hisoblash usuliga muvofiq qo‘llaniladi.',
       },
@@ -1898,6 +1904,15 @@ const uz = {
 
     curriculumRuleMissing:
       'Сначала задайте единую норму учебного плана',
+
+    weeklyNorm: 'Soat me’yori × o‘quv haftalari × guruhlar',
+    creditNormMissing: 'O‘quv yili uchun bir kreditdagi soatlar soni belgilanmagan. «Akademik ma’lumotnomalar → O‘quv yuklamasi me’yorlari» bo‘limiga o‘ting.',
+    semestersCount: '{count} sem.',
+
+    units: {
+      hoursPerWeek:
+        'soat/hafta',
+    },
 
     seasons: {
       autumn: 'Kuzgi',

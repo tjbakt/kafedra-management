@@ -202,6 +202,13 @@ class WorkloadType(BaseModel):
         }
     )
 
+    WEEKLY_NORM_CODES = frozenset(
+        {
+            Code.SCIENTIFIC_PRACTICE_SUPERVISION,
+            Code.QUALIFICATION_PRACTICE_SUPERVISION,
+        }
+    )
+
     PAIRED_CODES = {
         Code.COURSE_WORK_SUPERVISION:
             Code.COURSE_WORK_DEFENSE,
@@ -236,6 +243,17 @@ class WorkloadType(BaseModel):
         )
 
     @property
+    def uses_weekly_norm(self) -> bool:
+        """
+        Коэффициент задаётся в часах
+        на одну неделю одной учебной группы.
+        """
+        return (
+                self.code
+                in self.WEEKLY_NORM_CODES
+        )
+
+    @property
     def paired_code(self):
         return self.PAIRED_CODES.get(
             self.code
@@ -262,16 +280,6 @@ class WorkloadType(BaseModel):
             ReportCategory.GRADUATION_WORK_DEFENSE,
         }
     )
-
-    @property
-    def uses_curriculum_rule(self) -> bool:
-        return (
-            self.report_category
-            in self.CURRICULUM_RULE_CATEGORIES
-        )
-
-    def __str__(self) -> str:
-        return self.name_ru
 
 class AcademicYearWorkloadNorm(BaseModel):
     """

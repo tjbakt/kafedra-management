@@ -37,17 +37,49 @@ class TeachingStreamWorkloadCalculator:
         self,
         workload: CurriculumWorkload,
     ) -> Decimal:
-        mode = workload.calculation_mode
+        workload_type = (
+            workload.workload_type
+        )
+
+        #
+        # Научная и квалификационная практика:
+        #
+        # коэффициент × недели × группы.
+        #
+        if workload_type.uses_weekly_norm:
+            weeks_count = (
+                workload
+                .curriculum_discipline
+                .weeks_count
+            )
+
+            return (
+                Decimal(
+                    self.stream.groups_count
+                )
+                *
+                Decimal(
+                    weeks_count
+                )
+            )
+
+        mode = (
+            workload.calculation_mode
+        )
 
         if (
             mode
-            == WorkloadType.CalculationMode.FIXED
+            == WorkloadType
+            .CalculationMode
+            .FIXED
         ):
             return Decimal("1.00")
 
         if (
             mode
-            == WorkloadType.CalculationMode.PER_GROUP
+            == WorkloadType
+            .CalculationMode
+            .PER_GROUP
         ):
             return Decimal(
                 self.stream.groups_count
@@ -55,7 +87,9 @@ class TeachingStreamWorkloadCalculator:
 
         if (
             mode
-            == WorkloadType.CalculationMode.PER_SUBGROUP
+            == WorkloadType
+            .CalculationMode
+            .PER_SUBGROUP
         ):
             return Decimal(
                 self.stream.subgroups_count
@@ -63,7 +97,9 @@ class TeachingStreamWorkloadCalculator:
 
         if (
             mode
-            == WorkloadType.CalculationMode.PER_STUDENT
+            == WorkloadType
+            .CalculationMode
+            .PER_STUDENT
         ):
             return Decimal(
                 self.stream.students_count

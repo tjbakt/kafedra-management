@@ -235,44 +235,6 @@ const componentOptions =
     ],
   )
 
-const calculationModeOptions =
-  computed(
-    () => [
-      {
-        value: 'fixed',
-
-        label:
-          t(
-            'curriculumWorkloads.calculationModes.fixed',
-          ),
-      },
-      {
-        value: 'per_group',
-
-        label:
-          t(
-            'curriculumWorkloads.calculationModes.perGroup',
-          ),
-      },
-      {
-        value: 'per_subgroup',
-
-        label:
-          t(
-            'curriculumWorkloads.calculationModes.perSubgroup',
-          ),
-      },
-      {
-        value: 'per_student',
-
-        label:
-          t(
-            'curriculumWorkloads.calculationModes.perStudent',
-          ),
-      },
-    ],
-  )
-
 function ruleFor(
   workloadTypeId: number,
 ): CurriculumWorkloadRule | null {
@@ -543,23 +505,24 @@ function totalAcademicHours(
 }
 
 function semesterCredits(
-  semester:
-    SemesterForm,
+  semester: SemesterForm,
 ): number {
-  const value = props.creditHoursPerCredit
+  const hoursPerCredit =
+    props.creditHoursPerCredit
 
   if (
-    !value ||
-    value <= 0
+    hoursPerCredit <= 0
   ) {
     return 0
   }
 
-  return (
-    totalAcademicHours(
-      semester,
-    ) /
-    value
+  return Number(
+    (
+      totalAcademicHours(
+        semester,
+      ) /
+      hoursPerCredit
+    ).toFixed(2),
   )
 }
 
@@ -615,66 +578,6 @@ const activeWorkloadTypes =
     },
   )
 
-const footerTotals =
-  computed(
-    () => {
-      const totals =
-        new Map<
-          number,
-          number
-        >()
-
-      for (
-        const semester
-        of selectedSemesterForms.value
-      ) {
-        for (
-          const row
-          of Object.values(
-            semester.workloads,
-          )
-        ) {
-          if (!row.enabled) {
-            continue
-          }
-
-          totals.set(
-            row.workload_type,
-
-            (
-              totals.get(
-                row.workload_type,
-              ) ?? 0
-            ) +
-              Number(
-                row.base_hours ||
-                0,
-              ),
-          )
-        }
-      }
-
-      return activeWorkloadTypes.value
-        .filter(
-          (type) =>
-            totals.has(
-              type.id,
-            ),
-        )
-        .map(
-          (type) => ({
-            workloadType:
-              type,
-
-            hours:
-              totals.get(
-                type.id,
-              ) ?? 0,
-          }),
-        )
-    },
-  )
-
 const footerClassroom =
   computed(
     () =>
@@ -722,6 +625,48 @@ function usesDirectHours(
     type.code ===
       'independent_work'
   )
+}
+
+function workloadColumnTotal(
+  type: WorkloadType,
+): number {
+  return selectedSemesterForms.value
+    .reduce(
+      (
+        total,
+        semester,
+      ) => {
+        const row =
+          getWorkloadRow(
+            semester.semester_number,
+            type.id,
+          )
+
+        if (!row.enabled) {
+          return total
+        }
+
+        if (
+          usesDirectHours(type)
+        ) {
+          return (
+            total +
+            Number(
+              row.base_hours ||
+              0,
+            )
+          )
+        }
+
+        //
+        // Для неаудиторных работ
+        // считаем число семестров,
+        // в которых работа включена.
+        //
+        return total + 1
+      },
+      0,
+    )
 }
 
 function fieldError(
@@ -961,7 +906,7 @@ function handleSemesterWorkloadToggle(
     return
   }
 
-  const pair =
+  const pairedType =
     activeWorkloadTypes.value
       .find(
         (item) =>
@@ -969,14 +914,14 @@ function handleSemesterWorkloadToggle(
           type.paired_code,
       )
 
-  if (!pair) {
+  if (!pairedType) {
     return
   }
 
   const pairRow =
     getWorkloadRow(
       semesterNumber,
-      pair.id,
+      pairedType.id,
     )
 
   pairRow.enabled =
@@ -1323,8 +1268,125 @@ watch(
           }}
         </h3>
 
+        <Message
+          v-if="
+      creditHoursPerCredit <= 0
+    "
+          severity="warn"
+          :closable="false"
+        >
+          {{
+            t(
+              'curriculumDisciplines.creditNormMissing',
+            )
+          }}
+        </Message>
+
         <div
-          v-for="
+          v-if="
+      form.semesters.length
+    "
+          class="semester-matrix-wrapper"
+        >
+          <table
+            class="semester-matrix"
+          >
+            <thead>
+            <tr>
+              <th
+                class="
+              semester-matrix__semester
+            "
+              >
+                {{
+                  t(
+                    'curriculumDisciplines.fields.semester',
+                  )
+                }}
+              </th>
+
+              <th
+                class="
+              semester-matrix__weeks
+            "
+              >
+                {{
+                  t(
+                    'curriculumDisciplines.fields.weeks',
+                  )
+                }}
+              </th>
+
+              <th
+                v-for="
+              type
+              in activeWorkloadTypes
+            "
+                :key="type.id"
+                class="
+              semester-matrix__workload
+            "
+              >
+                <div
+                  class="
+                workload-column-title
+              "
+                >
+                  <strong>
+                    {{
+                      type.display_name
+                    }}
+                  </strong>
+
+                  <small>
+                    {{
+                      type.calculation_mode_name
+                    }}
+                  </small>
+
+                  <small
+                    v-if="
+                  type.uses_weekly_norm
+                "
+                  >
+                    {{
+                      t(
+                        'curriculumDisciplines.weeklyNorm',
+                      )
+                    }}
+                  </small>
+                </div>
+              </th>
+
+              <th>
+                {{
+                  t(
+                    'curriculumDisciplines.auditoriumTotal',
+                  )
+                }}
+              </th>
+
+              <th>
+                {{
+                  t(
+                    'curriculumDisciplines.totalAcademic',
+                  )
+                }}
+              </th>
+
+              <th>
+                {{
+                  t(
+                    'curriculumDisciplines.fields.credits',
+                  )
+                }}
+              </th>
+            </tr>
+            </thead>
+
+            <tbody>
+            <tr
+              v-for="
             semesterNumber
             in form.semesters
               .slice()
@@ -1333,249 +1395,190 @@ watch(
                   a - b,
               )
           "
-          :key="
+              :key="
             semesterNumber
           "
-          class="semester-card"
-        >
-          <header
-            class="semester-card__header"
-          >
-            <strong>
-              {{
-                t(
-                  'curriculumDisciplines.semesterOption',
-                  {
-                    semester:
-                      semesterNumber,
+            >
+              <th
+                class="
+              semester-matrix__semester
+            "
+              >
+                <div
+                  class="
+                semester-label
+              "
+                >
+                  <strong>
+                    {{
+                      semesterNumber
+                    }}
+                  </strong>
 
-                    season:
+                  <small>
+                    {{
                       semesterNumber %
-                        2 ===
+                      2 ===
                       1
                         ? t(
-                            'curriculumDisciplines.seasons.autumn',
-                          )
+                          'curriculumDisciplines.seasons.autumn',
+                        )
                         : t(
-                            'curriculumDisciplines.seasons.spring',
-                          ),
-                  },
-                )
-              }}
-            </strong>
-          </header>
+                          'curriculumDisciplines.seasons.spring',
+                        )
+                    }}
+                  </small>
+                </div>
+              </th>
 
-          <div
-            class="semester-meta"
-          >
-            <BaseFormField
-              :label="
-                t(
-                  'curriculumDisciplines.fields.credits',
-                )
+              <td>
+                <InputNumber
+                  :model-value="
+                getSemesterForm(
+                  semesterNumber,
+                ).weeks_count
               "
-            >
-              <InputNumber
-                :model-value="semesterCredits(
+                  @update:model-value="
+                (value) =>
                   getSemesterForm(
                     semesterNumber,
-                    ),
-                  )
-                "
-                :min="0"
-                :max-fraction-digits="2"
-                :use-grouping="false"
-                disabled
-                class="w-full"
-              />
-            </BaseFormField>
+                  ).weeks_count =
+                    Number(
+                      value ?? 1,
+                    )
+              "
+                  :min="1"
+                  :use-grouping="false"
+                  class="
+                matrix-number
+              "
+                  input-class="
+                matrix-number__input
+              "
+                />
+              </td>
 
-            <BaseFormField
-              :label="
-                t(
-                  'curriculumDisciplines.fields.weeks',
+              <td
+                v-for="
+              type
+              in activeWorkloadTypes
+            "
+                :key="
+              `${semesterNumber}-${type.id}`
+            "
+                class="
+              semester-matrix__value
+            "
+              >
+                <InputNumber
+                  v-if="
+                usesDirectHours(
+                  type,
                 )
               "
-            >
-              <InputNumber
-                :model-value="
-                  getSemesterForm(
-                    semesterNumber,
-                  ).weeks_count
-                "
-                @update:model-value="
-                  (value) =>
-                    getSemesterForm(
+                  :model-value="
+                getWorkloadRow(
+                  semesterNumber,
+                  type.id,
+                ).base_hours
+              "
+                  @update:model-value="
+                (value) => {
+                  const row =
+                    getWorkloadRow(
                       semesterNumber,
-                    ).weeks_count =
-                      Number(
-                        value ?? 0,
-                      )
-                "
-                :min="1"
-                :use-grouping="false"
-                class="w-full"
-              />
-            </BaseFormField>
-          </div>
+                      type.id,
+                    )
 
-          <div
-            class="workload-table"
-          >
-            <div
-              class="workload-table__header"
-            >
-              <span></span>
+                  row.base_hours =
+                    Number(
+                      value ?? 0,
+                    )
 
-              <span>
-                {{
-                  t(
-                    'curriculumWorkloads.fields.workloadType',
-                  )
-                }}
-              </span>
-
-              <span>
-                {{
-                  t(
-                    'curriculumWorkloads.fields.calculationMode',
-                  )
-                }}
-              </span>
-
-              <span>
-                {{
-                  t(
-                    'curriculumWorkloads.fields.baseHours',
-                  )
-                }}
-              </span>
-            </div>
-
-            <div
-              v-for="
-                type
-                in activeWorkloadTypes
+                  row.enabled =
+                    row.base_hours > 0
+                }
               "
-              :key="type.id"
-              class="workload-table__row"
-            >
-              <Checkbox
-                :model-value="
+                  :min="0"
+                  :max-fraction-digits="
+                2
+              "
+                  :use-grouping="
+                false
+              "
+                  class="
+                matrix-number
+              "
+                  input-class="
+                matrix-number__input
+              "
+                />
+
+                <div
+                  v-else
+                  class="
+                matrix-checkbox
+              "
+                >
+                  <Checkbox
+                    :model-value="
                   getWorkloadRow(
                     semesterNumber,
                     type.id,
                   ).enabled
                 "
-                @update:model-value="
-                  (value: boolean | undefined) => {
+                    binary
+                    @update:model-value="
+                  (value) => {
                     getWorkloadRow(
                       semesterNumber,
                       type.id,
                     ).enabled =
-                      Boolean( value, )
+                      Boolean(
+                        value,
+                      )
+
+                    handleSemesterWorkloadToggle(
+                      semesterNumber,
+                      type,
+                    )
                   }
                 "
-                binary
-                :disabled="
-                Boolean (
-                  type.uses_curriculum_rule &&
-                  !ruleFor( type.id,)
-                )
-                "
-              />
+                  />
 
-              <div
-                class="workload-name"
-              >
-                <strong>
-                  {{
-                    type.display_name
-                  }}
-                </strong>
-
-                <small
-                  v-if="
-                    type.uses_curriculum_rule
-                  "
-                >
-                  {{
-                    ruleFor(
-                      type.id,
-                    )
-                      ? t(
-                          'curriculumDisciplines.curriculumRuleApplied',
-                        )
-                      : t(
-                          'curriculumDisciplines.curriculumRuleMissing',
-                        )
-                  }}
-                </small>
-              </div>
-
-              <Select
-                :model-value="
+                  <small
+                    v-if="
                   getWorkloadRow(
                     semesterNumber,
                     type.id,
-                  ).calculation_mode
+                  ).enabled &&
+                  type.uses_annual_norm
                 "
-                @update:model-value="
-                  (value: unknown) =>
-                    getWorkloadRow(
-                      semesterNumber,
-                      type.id,
-                    ).calculation_mode =
-                      value as WorkloadCalculationMode
-                "
-                :options="
-                  calculationModeOptions
-                "
-                option-label="label"
-                option-value="value"
-                :disabled="
-                  Boolean(
-                    type.uses_curriculum_rule ||
-                      !getWorkloadRow(
-                        semesterNumber,
-                        type.id,
-                      ).enabled,
-                  )
-                "
-                class="w-full"
-              />
+                  >
+                    {{
+                      Number(
+                        getWorkloadRow(
+                          semesterNumber,
+                          type.id,
+                        ).base_hours,
+                      ).toFixed(2)
+                    }}
+                    {{
+                      type.uses_weekly_norm
+                        ? t(
+                          'curriculumDisciplines.units.hoursPerWeek',
+                        )
+                        : ''
+                    }}
+                  </small>
+                </div>
+              </td>
 
-              <InputNumber
-                v-if="usesDirectHours(type)"
-                v-model="getWorkloadRow(semesterNumber, type.id,).base_hours"
-                :min="0"
-                :max-fraction-digits="2"
-                :use-grouping="false"
-                :disabled="!getWorkloadRow(semesterNumber, type.id,).enabled"
-                class="w-full"
-              />
-
-              <Checkbox
-                v-else
-                v-model="getWorkloadRow(semesterNumber, type.id,).enabled"
-                binary @change="handleSemesterWorkloadToggle(semesterNumber, type,)"
-              />
-            </div>
-          </div>
-
-          <footer
-            class="semester-totals"
-          >
-            <div>
-              <span>
-                {{
-                  t(
-                    'curriculumDisciplines.auditoriumTotal',
-                  )
-                }}
-              </span>
-
-              <strong>
+              <td
+                class="
+              semester-matrix__total
+            "
+              >
                 {{
                   classroomHours(
                     getSemesterForm(
@@ -1583,39 +1586,13 @@ watch(
                     ),
                   ).toFixed(2)
                 }}
-              </strong>
-            </div>
+              </td>
 
-            <div>
-              <span>
-                {{
-                  t(
-                    'curriculumDisciplines.fields.independentHours',
-                  )
-                }}
-              </span>
-
-              <strong>
-                {{
-                  independentHours(
-                    getSemesterForm(
-                      semesterNumber,
-                    ),
-                  ).toFixed(2)
-                }}
-              </strong>
-            </div>
-
-            <div>
-              <span>
-                {{
-                  t(
-                    'curriculumDisciplines.totalAcademic',
-                  )
-                }}
-              </span>
-
-              <strong>
+              <td
+                class="
+              semester-matrix__total
+            "
+              >
                 {{
                   totalAcademicHours(
                     getSemesterForm(
@@ -1623,18 +1600,13 @@ watch(
                     ),
                   ).toFixed(2)
                 }}
-              </strong>
-            </div>
-            <div>
-              <span>
-                {{
-                  t(
-                    'curriculumDisciplines.fields.credits',
-                  )
-                }}
-              </span>
+              </td>
 
-              <strong>
+              <td
+                class="
+              semester-matrix__total
+            "
+              >
                 {{
                   semesterCredits(
                     getSemesterForm(
@@ -1642,110 +1614,94 @@ watch(
                     ),
                   ).toFixed(2)
                 }}
-              </strong>
-            </div>
-          </footer>
-        </div>
+              </td>
+            </tr>
+            </tbody>
 
-        <div
-          v-if="
-            form.semesters.length
-          "
-          class="grand-total"
-        >
-          <h4>
-            {{
-              t(
-                'curriculumDisciplines.grandTotal',
-              )
-            }}
-          </h4>
-
-          <div
-            class="grand-total__types"
-          >
-            <div
-              v-for="
-                item
-                in footerTotals
-              "
-              :key="
-                item.workloadType.id
-              "
-            >
-              <span>
-                {{
-                  item.workloadType
-                    .display_name
-                }}
-              </span>
-
-              <strong>
-                {{
-                  item.hours.toFixed(
-                    2,
-                  )
-                }}
-              </strong>
-            </div>
-          </div>
-
-          <div
-            class="grand-total__main"
-          >
-            <div>
-              <span>
+            <tfoot>
+            <tr>
+              <th>
                 {{
                   t(
-                    'curriculumDisciplines.auditoriumTotal',
+                    'curriculumDisciplines.grandTotal',
                   )
                 }}
-              </span>
+              </th>
 
-              <strong>
+              <th>
+                —
+              </th>
+
+              <th
+                v-for="
+              type
+              in activeWorkloadTypes
+            "
+                :key="
+              `total-${type.id}`
+            "
+              >
+                <template
+                  v-if="
+                usesDirectHours(
+                  type,
+                )
+              "
+                >
+                  {{
+                    workloadColumnTotal(
+                      type,
+                    ).toFixed(2)
+                  }}
+                </template>
+
+                <template
+                  v-else
+                >
+                  {{
+                    t(
+                      'curriculumDisciplines.semestersCount',
+                      {
+                        count:
+                          workloadColumnTotal(
+                            type,
+                          ),
+                      },
+                    )
+                  }}
+                </template>
+              </th>
+
+              <th>
                 {{
                   footerClassroom
                     .toFixed(2)
                 }}
-              </strong>
-            </div>
+              </th>
 
-            <div>
-              <span>
-                {{
-                  t(
-                    'curriculumDisciplines.fields.independentHours',
-                  )
-                }}
-              </span>
-
-              <strong>
-                {{
-                  footerIndependent
-                    .toFixed(2)
-                }}
-              </strong>
-            </div>
-
-            <div>
-              <span>
-                {{
-                  t(
-                    'curriculumDisciplines.totalAcademic',
-                  )
-                }}
-              </span>
-
-              <strong>
+              <th>
                 {{
                   footerTotal
                     .toFixed(2)
                 }}
-              </strong>
-            </div>
-          </div>
+              </th>
+
+              <th>
+                {{
+                  creditHoursPerCredit > 0
+                    ? (
+                      footerTotal /
+                      creditHoursPerCredit
+                    ).toFixed(2)
+                    : '0.00'
+                }}
+              </th>
+            </tr>
+            </tfoot>
+          </table>
         </div>
       </section>
+
     </form>
 
     <template #footer>
@@ -1807,38 +1763,12 @@ watch(
   font-size: 0.7rem;
 }
 
-.semester-card {
-  display: grid;
-  gap: 1rem;
-
-  padding: 1rem;
-
-  border:
-    1px solid
-    var(--app-border-color, #d1d5db);
-
-  border-radius:
-    var(--app-radius-md, 0.5rem);
-}
 
 .semester-card__header {
   display: flex;
   align-items: center;
   justify-content:
     space-between;
-}
-
-.workload-table {
-  display: grid;
-
-  border:
-    1px solid
-    var(--app-border-color, #d1d5db);
-
-  border-radius:
-    var(--app-radius-md, 0.5rem);
-
-  overflow: hidden;
 }
 
 .workload-table__header,
@@ -1969,5 +1899,148 @@ watch(
   .workload-table__row {
     min-width: 52rem;
   }
+}
+
+.semester-matrix-wrapper {
+  width: 100%;
+  overflow-x: auto;
+
+  border:
+    1px solid
+    var(
+      --app-border-color,
+      #d1d5db
+    );
+
+  border-radius:
+    var(
+      --app-radius-md,
+      0.5rem
+    );
+}
+
+.semester-matrix {
+  width: 100%;
+  min-width: max-content;
+
+  border-collapse: collapse;
+
+  font-size: 0.78rem;
+}
+
+.semester-matrix th,
+.semester-matrix td {
+  min-width: 8rem;
+
+  padding: 0.65rem;
+
+  border-right:
+    1px solid
+    var(
+      --app-border-color,
+      #d1d5db
+    );
+
+  border-bottom:
+    1px solid
+    var(
+      --app-border-color,
+      #d1d5db
+    );
+
+  text-align: center;
+  vertical-align: middle;
+}
+
+.semester-matrix thead th {
+  position: sticky;
+  top: 0;
+
+  z-index: 2;
+
+  background:
+    var(
+      --app-surface-muted,
+      #f3f4f6
+    );
+}
+
+.semester-matrix tfoot th {
+  font-weight: 700;
+
+  background:
+    var(
+      --app-surface-muted,
+      #f3f4f6
+    );
+}
+
+.semester-matrix__semester {
+  min-width: 7rem !important;
+}
+
+.semester-matrix__weeks {
+  min-width: 8rem !important;
+}
+
+.semester-matrix__workload {
+  min-width: 11rem !important;
+}
+
+.semester-matrix__value {
+  min-width: 9rem !important;
+}
+
+.semester-matrix__total {
+  font-weight: 700;
+}
+
+.workload-column-title,
+.semester-label {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.workload-column-title small,
+.semester-label small {
+  color:
+    var(
+      --app-text-muted,
+      #6b7280
+    );
+
+  font-size: 0.66rem;
+
+  font-weight: 400;
+}
+
+.matrix-number {
+  width: 7rem;
+}
+
+.matrix-number__input {
+  width: 100%;
+
+  text-align: center;
+}
+
+.matrix-checkbox {
+  display: grid;
+
+  justify-items: center;
+
+  gap: 0.3rem;
+}
+
+.matrix-checkbox small {
+  color:
+    var(
+      --app-text-muted,
+      #6b7280
+    );
+
+  white-space: nowrap;
+
+  font-size: 0.65rem;
 }
 </style>
