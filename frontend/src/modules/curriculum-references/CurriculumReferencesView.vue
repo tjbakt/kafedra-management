@@ -28,6 +28,7 @@ import WorkloadTypeFormDialog from '@/modules/curriculum-references/components/W
 
 import {
   disciplinesApi,
+  getAllWorkloadTypes,
   getDepartments,
   workloadTypesApi,
 } from '@/modules/curriculum-references/api'
@@ -76,11 +77,9 @@ import {
 
 const { t } = useI18n()
 
-const localeStore =
-  useLocaleStore()
+const localeStore = useLocaleStore()
 
-const toast =
-  useAppToast()
+const toast = useAppToast()
 
 const {
   confirmDelete,
@@ -90,58 +89,44 @@ const {
   can,
 } = usePermissions()
 
-const activeTab =
-  ref('disciplines')
+const activeTab = ref('disciplines')
 
-const departments =
-  ref<DepartmentLookup[]>([])
+const departments = ref<DepartmentLookup[]>([])
 
-const selectedDiscipline =
-  ref<Discipline | null>(null)
+const selectedDiscipline = ref<Discipline | null>(null)
 
-const selectedWorkloadType =
-  ref<WorkloadType | null>(null)
+const selectedWorkloadType = ref<WorkloadType | null>(null)
 
-const disciplineDialogVisible =
-  ref(false)
+const disciplineDialogVisible = ref(false)
 
-const workloadTypeDialogVisible =
-  ref(false)
+const workloadTypeDialogVisible = ref(false)
 
-const saving =
-  ref(false)
+const saving = ref(false)
 
-const lookupsLoading =
-  ref(false)
+const lookupsLoading = ref(false)
 
-const selectedDepartment =
-  ref<number | null>(null)
+const selectedDepartment = ref<number | null>(null)
 
-const selectedDisciplineActive =
-  ref<boolean | null>(null)
+const workloadTypeLookup = ref<WorkloadType[]>([])
+
+const selectedDisciplineActive = ref<boolean | null>(null)
 
 const selectedCalculationMode =
   ref<CalculationMode | null>(
     null,
   )
 
-const selectedClassroom =
-  ref<boolean | null>(null)
+const selectedClassroom = ref<boolean | null>(null)
 
-const selectedTeachingLoad =
-  ref<boolean | null>(null)
+const selectedTeachingLoad = ref<boolean | null>(null)
 
-const selectedWorkloadActive =
-  ref<boolean | null>(null)
+const selectedWorkloadActive = ref<boolean | null>(null)
 
-const fieldErrors =
-  ref<FieldErrors>({})
+const fieldErrors = ref<FieldErrors>({})
 
-const nonFieldErrors =
-  ref<string[]>([])
+const nonFieldErrors = ref<string[]>([])
 
-const generalFormError =
-  ref('')
+const generalFormError = ref('')
 
 const canCreateDiscipline =
   computed(
@@ -567,15 +552,23 @@ async function loadDepartments(): Promise<void> {
   lookupsLoading.value = true
 
   try {
-    const response =
-      await getDepartments()
+    const [
+      departmentsResponse,
+      workloadTypesResponse,
+    ] = await Promise.all([
+      getDepartments(),
+      getAllWorkloadTypes(),
+    ])
 
     departments.value =
-      response.results
-  } catch (error) {
+      departmentsResponse.results
+
+    workloadTypeLookup.value =
+      workloadTypesResponse.results
+  } catch (loadError) {
     const normalized =
       normalizeApiError(
-        error,
+        loadError,
         t('crud.loadError'),
       )
 
@@ -1393,11 +1386,7 @@ onMounted(async () => {
                   #classroom="{ row }"
                 >
                   <Tag
-                    :value="
-                      row.is_classroom
-                        ? t('common.yes')
-                        : t('common.no')
-                    "
+                    :value="row.is_classroom ? t('common.yes') : t('common.no')"
                     :severity="
                       row.is_classroom
                         ? 'info'
@@ -1492,28 +1481,15 @@ onMounted(async () => {
     </Tabs>
 
     <DisciplineFormDialog
-      v-model="
-        disciplineDialogVisible
-      "
-      :discipline="
-        selectedDiscipline
-      "
-      :departments="
-        departments
-      "
+      v-model="disciplineDialogVisible"
+      :discipline="selectedDiscipline"
+      :departments="departments"
+      :workload-types="workloadTypeLookup"
       :loading="saving"
-      :field-errors="
-        fieldErrors
-      "
-      :non-field-errors="
-        nonFieldErrors
-      "
-      :general-error="
-        generalFormError
-      "
-      @submit="
-        saveDiscipline
-      "
+      :field-errors="fieldErrors"
+      :non-field-errors="nonFieldErrors"
+      :general-error="generalFormError"
+      @submit="saveDiscipline"
     />
 
     <WorkloadTypeFormDialog

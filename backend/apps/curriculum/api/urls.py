@@ -1,6 +1,8 @@
 from rest_framework.routers import DefaultRouter
 
 from apps.curriculum.api.views import (
+    AcademicYearCreditNormViewSet,
+    AcademicYearWorkloadNormViewSet,
     CurriculumDisciplineViewSet,
     CurriculumViewSet,
     CurriculumWorkloadViewSet,
@@ -37,6 +39,19 @@ router.register(
     CurriculumWorkloadViewSet,
     basename="curriculum-workload",
 )
+
+router.register(
+    "academic-year-workload-norms",
+    AcademicYearWorkloadNormViewSet,
+    basename="academic-year-workload-norm",
+)
+
+router.register(
+    "academic-year-credit-norms",
+    AcademicYearCreditNormViewSet,
+    basename="academic-year-credit-norm",
+)
+
 router.register(
     "curriculum-workload-rules",
     CurriculumWorkloadRuleViewSet,

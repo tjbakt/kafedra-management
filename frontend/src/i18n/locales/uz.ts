@@ -1624,6 +1624,13 @@ const uz = {
         courseWork: 'Kurs ishi',
         courseProject: 'Kurs loyihasi',
         courseWorkProjectDefense: "Kurs ishi/loyihasini himoya qilish",
+        courseWorkSupervision: 'Kurs ishiga rahbarlik',
+        courseWorkDefense: 'Kurs ishini himoya qilish',
+        courseProjectSupervision: 'Kurs loyihasiga rahbarlik',
+        courseProjectDefense: 'Kurs loyihasini himoya qilish',
+        scientificPracticeSupervision: 'Ilmiy amaliyotga rahbarlik',
+        qualificationPracticeSupervision: 'Malakaviy amaliyotga rahbarlik',
+        rating: 'Reyting',
         scientificPractice: "Ilmiy amaliyot",
         qualificationPractice: "Malakaviy amaliyot",
         masterDissertationSupervision: "Magistrlik dissertatsiyasiga rahbarlik",
@@ -1666,8 +1673,9 @@ const uz = {
         courseProjectSupervision:
           'Kurs loyihasiga rahbarlik',
 
-        courseDefense:
-          'Kurs ishi/loyihasini himoya qilish',
+        courseDefense: 'Kurs ishi/loyihasini himoya qilish',
+        courseWorkDefense: 'Kurs ishi himoyasi',
+        courseProjectDefense: 'Kurs loyihasi himoyasi',
 
         scientificPractice:
           'Ilmiy amaliyot',

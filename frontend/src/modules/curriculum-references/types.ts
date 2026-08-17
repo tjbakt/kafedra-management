@@ -8,13 +8,18 @@ export type WorkloadTypeCode =
   | 'credit'
   | 'course_work'
   | 'course_project'
+  | 'course_work_supervision'
+  | 'course_project_supervision'
+  | 'course_work_defense'
+  | 'course_project_defense'
   | 'course_work_project_defense'
-  | 'scientific_practice'
-  | 'qualification_practice'
+  | 'scientific_practice_supervision'
+  | 'qualification_practice_supervision'
   | 'master_dissertation_supervision'
   | 'master_dissertation_defense'
   | 'graduation_work_supervision'
   | 'graduation_work_defense'
+  | 'rating'
   | 'independent_work'
   | 'other'
 
@@ -30,7 +35,8 @@ export type ReportCategory =
   | 'laboratory'
   | 'course_work_supervision'
   | 'course_project_supervision'
-  | 'course_work_project_defense'
+  | 'course_work_defense'
+  | 'course_project_defense'
   | 'scientific_practice'
   | 'qualification_practice'
   | 'master_dissertation_supervision'
@@ -52,6 +58,19 @@ export interface Discipline extends Record<string, unknown> {
 
   default_department: number | null
   default_department_name: string | null
+
+  workload_types: number[]
+
+  workload_type_details: Array<{
+    id: number
+    code: WorkloadTypeCode
+    display_name: string
+    calculation_mode: CalculationMode
+    is_classroom: boolean
+    is_teaching_load: boolean
+    uses_annual_norm: boolean
+    paired_code: WorkloadTypeCode | null
+  }>
 
   is_active: boolean
   sort_order: number
@@ -80,6 +99,7 @@ export interface DisciplinePayload {
   name_uz: string
 
   default_department: number | null
+  workload_types: number[]
 
   is_active: boolean
   sort_order: number
@@ -101,7 +121,10 @@ export interface WorkloadType extends Record<string, unknown> {
   report_category: ReportCategory
   report_category_name: string
 
+  uses_annual_norm: boolean
   uses_curriculum_rule: boolean
+
+  paired_code: WorkloadTypeCode | null
 
   is_classroom: boolean
   is_teaching_load: boolean

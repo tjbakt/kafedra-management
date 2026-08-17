@@ -8,6 +8,31 @@ import type {
 } from '@/types/api'
 
 import type {
+  AcademicYearCreditNorm,
+  AcademicYearCreditNormPayload,
+  AcademicYearWorkloadNorm,
+  AcademicYearWorkloadNormPayload,
+} from './types'
+
+export const academicYearWorkloadNormsApi =
+  createCrudApi<
+    AcademicYearWorkloadNorm,
+    AcademicYearWorkloadNormPayload,
+    AcademicYearWorkloadNormPayload
+  >(
+    '/curriculum/academic-year-workload-norms/',
+  )
+
+export const academicYearCreditNormsApi =
+  createCrudApi<
+    AcademicYearCreditNorm,
+    AcademicYearCreditNormPayload,
+    AcademicYearCreditNormPayload
+  >(
+    '/curriculum/academic-year-credit-norms/',
+  )
+
+import type {
   AcademicSemester,
   AcademicSemesterPayload,
   AcademicYear,

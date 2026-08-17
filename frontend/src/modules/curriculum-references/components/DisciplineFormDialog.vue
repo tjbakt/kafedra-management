@@ -10,6 +10,8 @@ import {
   watch,
 } from 'vue'
 
+import MultiSelect from 'primevue/multiselect'
+
 import { useI18n } from 'vue-i18n'
 
 import BaseDialog from '@/components/base/BaseDialog.vue'
@@ -25,6 +27,8 @@ import type {
   Discipline,
   DisciplinePayload,
   SelectOption,
+  WorkloadType,
+  WorkloadTypeCode,
 } from '@/modules/curriculum-references/types'
 
 import type {
@@ -45,6 +49,7 @@ const props = withDefaults(
     discipline?: Discipline | null
 
     departments: DepartmentLookup[]
+    workloadTypes: WorkloadType[]
 
     loading?: boolean
 
@@ -80,8 +85,8 @@ const form = reactive({
   name_ru: '',
   name_uz: '',
 
-  default_department:
-    null as number | null,
+  default_department: null as number | null,
+  workload_types: [] as number[],
 
   is_active: true,
 
@@ -169,6 +174,166 @@ const departmentOptions =
     return options
   })
 
+const workloadTypeOptions =
+  computed(() =>
+    props.workloadTypes
+      .filter(
+        (item) =>
+          item.is_active &&
+          !item.is_archived &&
+          item.code !==
+          'course_work_project_defense',
+      )
+      .map(
+        (item) => ({
+          value: item.id,
+
+          code: item.code,
+
+          label:
+          item.display_name,
+
+          pairedCode:
+          item.paired_code,
+        }),
+      ),
+  )
+
+function workloadByCode(
+  code:
+  WorkloadTypeCode,
+): WorkloadType | null {
+  return (
+    props.workloadTypes.find(
+      (item) =>
+        item.code === code,
+    ) ?? null
+  )
+}
+
+function idsByCodes(
+  codes:
+  WorkloadTypeCode[],
+): number[] {
+  return props.workloadTypes
+    .filter(
+      (item) =>
+        codes.includes(
+          item.code,
+        ),
+    )
+    .map(
+      (item) =>
+        item.id,
+    )
+}
+
+function handleWorkloadTypesChange(): void {
+  const selected =
+    new Set(
+      form.workload_types,
+    )
+  for (
+    const id
+    of selected
+    ) {
+    const type =
+      props.workloadTypes.find(
+        (item) =>
+          item.id === id,
+      )
+
+    if (
+      !type?.paired_code
+    ) {
+      continue
+    }
+
+    const pair =
+      workloadByCode(
+        type.paired_code,
+      )
+
+    if (pair) {
+      selected.add(
+        pair.id,
+      )
+    }
+  }
+
+  const courseWorkIds =
+    idsByCodes([
+      'course_work_supervision',
+      'course_work_defense',
+    ])
+
+  const courseProjectIds =
+    idsByCodes([
+      'course_project_supervision',
+      'course_project_defense',
+    ])
+
+  const hasCourseWork =
+    courseWorkIds.some(
+      (id) =>
+        selected.has(id),
+    )
+
+  const hasCourseProject =
+    courseProjectIds.some(
+      (id) =>
+        selected.has(id),
+    )
+
+  if (
+    hasCourseWork &&
+    hasCourseProject
+  ) {
+    localErrors.workload_types =
+      t(
+        'curriculumReferences.disciplines.validation.courseWorkOrProject',
+      )
+
+    return
+  }
+
+  const graduationIds =
+    idsByCodes([
+      'graduation_work_supervision',
+      'graduation_work_defense',
+    ])
+
+  const masterIds =
+    idsByCodes([
+      'master_dissertation_supervision',
+      'master_dissertation_defense',
+    ])
+
+  if (
+    graduationIds.some(
+      (id) =>
+        selected.has(id),
+    ) &&
+    masterIds.some(
+      (id) =>
+        selected.has(id),
+    )
+  ) {
+    localErrors.workload_types =
+      t(
+        'curriculumReferences.disciplines.validation.graduationOrMaster',
+      )
+
+    return
+  }
+
+  delete localErrors
+    .workload_types
+
+  form.workload_types =
+    [...selected]
+}
+
 function clearLocalErrors(): void {
   for (
     const key of
@@ -184,8 +349,8 @@ function resetForm(): void {
   form.name_ru = ''
   form.name_uz = ''
 
-  form.default_department =
-    null
+  form.workload_types = []
+  form.default_department = null
 
   form.is_active = true
 
@@ -197,23 +362,17 @@ function resetForm(): void {
 function fillForm(
   discipline: Discipline,
 ): void {
-  form.code =
-    discipline.code
+  form.code = discipline.code
 
-  form.name_ru =
-    discipline.name_ru
+  form.name_ru = discipline.name_ru
 
-  form.name_uz =
-    discipline.name_uz
+  form.name_uz = discipline.name_uz
 
-  form.default_department =
-    discipline.default_department
+  form.workload_types = [...discipline.workload_types]
+  form.default_department = discipline.default_department
 
-  form.is_active =
-    discipline.is_active
-
-  form.sort_order =
-    discipline.sort_order
+  form.is_active = discipline.is_active
+  form.sort_order = discipline.sort_order
 
   clearLocalErrors()
 }
@@ -266,25 +425,13 @@ function submit(): void {
   }
 
   emit('submit', {
-    code:
-      form.code
-        .trim()
-        .toUpperCase(),
-
-    name_ru:
-      form.name_ru.trim(),
-
-    name_uz:
-      form.name_uz.trim(),
-
-    default_department:
-      form.default_department,
-
-    is_active:
-      form.is_active,
-
-    sort_order:
-      form.sort_order,
+    code: form.code.trim().toUpperCase(),
+    name_ru: form.name_ru.trim(),
+    name_uz: form.name_uz.trim(),
+    default_department: form.default_department,
+    workload_types: [...form.workload_types],
+    is_active: form.is_active,
+    sort_order: form.sort_order,
   })
 }
 
@@ -414,6 +561,24 @@ watch(
               </div>
             </template>
           </Select>
+        </BaseFormField>
+
+        <BaseFormField
+          :label=" t( 'curriculumReferences.disciplines.fields.workloadTypes', ) "
+          name="workload_types"
+          :error=" fieldError( 'workload_types', ) "
+        >
+          <MultiSelect
+            v-model=" form.workload_types "
+            :options=" workloadTypeOptions "
+            option-label="label"
+            option-value="value"
+            display="chip"
+            filter
+            class="w-full"
+            :disabled="loading"
+            @change="handleWorkloadTypesChange"
+          />
         </BaseFormField>
 
         <BaseFormField

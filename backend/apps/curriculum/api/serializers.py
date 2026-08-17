@@ -6,10 +6,12 @@ from rest_framework import serializers
 
 from apps.common.api.serializers import AuditFieldsSerializer
 from apps.curriculum.models import (
+    AcademicYearCreditNorm,
+    AcademicYearWorkloadNorm,
     Curriculum,
-    CurriculumWorkloadRule,
     CurriculumDiscipline,
     CurriculumWorkload,
+    CurriculumWorkloadRule,
     Discipline,
     WorkloadType,
 )
@@ -46,6 +48,20 @@ class DisciplineSerializer(
     display_name = serializers.SerializerMethodField()
     default_department_name = serializers.SerializerMethodField()
 
+    workload_types = (
+        serializers.PrimaryKeyRelatedField(
+            queryset=WorkloadType.objects.filter(
+                is_archived=False,
+            ),
+            many=True,
+            required=False,
+        )
+    )
+
+    workload_type_details = (
+        serializers.SerializerMethodField()
+    )
+
     class Meta:
         model = Discipline
         fields = (
@@ -56,6 +72,8 @@ class DisciplineSerializer(
             "display_name",
             "default_department",
             "default_department_name",
+            "workload_types",
+            "workload_type_details",
             "is_active",
             "sort_order",
             "created_at",
@@ -72,6 +90,7 @@ class DisciplineSerializer(
         read_only_fields = (
             "id",
             "display_name",
+            "workload_type_details",
             "created_at",
             "updated_at",
             "created_by",
@@ -80,6 +99,157 @@ class DisciplineSerializer(
             "archived_at",
             "archived_by",
         )
+
+    @extend_schema_field(
+        serializers.ListField(
+            child=serializers.DictField()
+        )
+    )
+    def get_workload_type_details(
+        self,
+        obj,
+    ):
+        return [
+            {
+                "id": item.id,
+                "code": item.code,
+                "display_name":
+                    self.get_display_name(
+                        item
+                    ),
+                "calculation_mode":
+                    item.calculation_mode,
+                "is_classroom":
+                    item.is_classroom,
+                "is_teaching_load":
+                    item.is_teaching_load,
+                "uses_annual_norm":
+                    item.uses_annual_norm,
+                "paired_code":
+                    item.paired_code,
+            }
+            for item
+            in obj.workload_types
+            .filter(
+                is_archived=False
+            )
+            .order_by(
+                "sort_order",
+                "name_ru",
+            )
+        ]
+
+    def validate_workload_types(
+        self,
+        workload_types,
+    ):
+        codes = {
+            item.code
+            for item in workload_types
+        }
+
+        #
+        # КР и КП одновременно запрещены.
+        #
+        course_work_selected = bool(
+            {
+                WorkloadType
+                .Code
+                .COURSE_WORK_SUPERVISION,
+
+                WorkloadType
+                .Code
+                .COURSE_WORK_DEFENSE,
+            }
+            & codes
+        )
+
+        course_project_selected = bool(
+            {
+                WorkloadType
+                .Code
+                .COURSE_PROJECT_SUPERVISION,
+
+                WorkloadType
+                .Code
+                .COURSE_PROJECT_DEFENSE,
+            }
+            & codes
+        )
+
+        if (
+            course_work_selected
+            and course_project_selected
+        ):
+            raise serializers.ValidationError(
+                "Для одной дисциплины нельзя "
+                "одновременно выбирать курсовую "
+                "работу и курсовой проект."
+            )
+
+        #
+        # ВКР и магистерская диссертация
+        # одновременно запрещены.
+        #
+        graduation_selected = bool(
+            {
+                WorkloadType
+                .Code
+                .GRADUATION_WORK_SUPERVISION,
+
+                WorkloadType
+                .Code
+                .GRADUATION_WORK_DEFENSE,
+            }
+            & codes
+        )
+
+        master_selected = bool(
+            {
+                WorkloadType
+                .Code
+                .MASTER_DISSERTATION_SUPERVISION,
+
+                WorkloadType
+                .Code
+                .MASTER_DISSERTATION_DEFENSE,
+            }
+            & codes
+        )
+
+        if (
+            graduation_selected
+            and master_selected
+        ):
+            raise serializers.ValidationError(
+                "Нельзя одновременно выбирать "
+                "выпускную квалификационную работу "
+                "и магистерскую диссертацию."
+            )
+
+        #
+        # Парные виды должны присутствовать вместе.
+        #
+        for item in workload_types:
+            paired_code = (
+                item.paired_code
+            )
+
+            if (
+                paired_code
+                and paired_code
+                not in codes
+            ):
+                raise serializers.ValidationError(
+                    (
+                        f"Для вида работы "
+                        f"«{item.name_ru}» необходимо "
+                        f"также выбрать связанный "
+                        f"вид работы."
+                    )
+                )
+
+        return workload_types
 
     @extend_schema_field(
         serializers.CharField(
@@ -110,6 +280,24 @@ class WorkloadTypeSerializer(
         source="get_report_category_display",
         read_only=True,
     )
+    uses_annual_norm = (
+        serializers.BooleanField(
+            read_only=True,
+        )
+    )
+
+    uses_curriculum_rule = (
+        serializers.BooleanField(
+            read_only=True,
+        )
+    )
+
+    paired_code = (
+        serializers.CharField(
+            read_only=True,
+            allow_null=True,
+        )
+    )
 
     class Meta:
         model = WorkloadType
@@ -125,6 +313,9 @@ class WorkloadTypeSerializer(
             "report_category_name",
             "is_classroom",
             "is_teaching_load",
+            "uses_annual_norm",
+            "uses_curriculum_rule",
+            "paired_code",
             "is_active",
             "sort_order",
             "created_at",
@@ -963,6 +1154,47 @@ class CurriculumDisciplineBundleSerializer(
         curriculum = attrs["curriculum"]
         discipline = attrs["discipline"]
 
+        allowed_workload_ids = set(
+            discipline
+            .workload_types
+            .filter(
+                is_active=True,
+                is_archived=False,
+            )
+            .values_list(
+                "id",
+                flat=True,
+            )
+        )
+
+        academic_year = (
+            curriculum
+            .effective_academic_year
+        )
+
+        credit_norm = (
+            AcademicYearCreditNorm
+            .objects
+            .filter(
+                academic_year=(
+                    academic_year
+                ),
+                is_archived=False,
+            )
+            .first()
+        )
+
+        if not credit_norm:
+            raise serializers.ValidationError(
+                {
+                    "curriculum": (
+                        "Для учебного года "
+                        "не задано количество часов "
+                        "на один академический кредит."
+                    )
+                }
+            )
+
         department = (
             discipline.default_department
         )
@@ -1073,9 +1305,7 @@ class CurriculumDisciplineBundleSerializer(
                     }
                 )
 
-            for workload in (
-                semester["workloads"]
-            ):
+            for workload in ( semester["workloads"] ):
                 workload_type = (
                     workload[
                         "workload_type"
@@ -1083,14 +1313,32 @@ class CurriculumDisciplineBundleSerializer(
                 )
 
                 if (
-                    workload_type
-                    .uses_curriculum_rule
+                        workload_type.id
+                        not in
+                        allowed_workload_ids
                 ):
-                    exists = (
-                        CurriculumWorkloadRule
+                    raise serializers.ValidationError(
+                        {
+                            "semesters": (
+                                f"Вид работы "
+                                f"«{workload_type.name_ru}» "
+                                "не разрешён для "
+                                "выбранной дисциплины."
+                            )
+                        }
+                    )
+
+                if (
+                        workload_type
+                                .uses_annual_norm
+                ):
+                    norm_exists = (
+                        AcademicYearWorkloadNorm
                         .objects
                         .filter(
-                            curriculum=curriculum,
+                            academic_year=(
+                                academic_year
+                            ),
                             workload_type=(
                                 workload_type
                             ),
@@ -1100,14 +1348,14 @@ class CurriculumDisciplineBundleSerializer(
                         .exists()
                     )
 
-                    if not exists:
+                    if not norm_exists:
                         raise serializers.ValidationError(
                             {
                                 "semesters": (
-                                    f"Для вида работы "
+                                    f"Для "
                                     f"«{workload_type.name_ru}» "
-                                    "не задана единая "
-                                    "норма учебного плана."
+                                    "не установлена норма "
+                                    "на учебный год."
                                 )
                             }
                         )
@@ -1128,12 +1376,16 @@ class CurriculumDisciplineBundleSerializer(
 
         if (
             workload_type
-            .uses_curriculum_rule
+            .uses_annual_norm
         ):
-            rule = (
-                CurriculumWorkloadRule
-                .objects.get(
-                    curriculum=curriculum,
+            norm = (
+                AcademicYearWorkloadNorm
+                .objects
+                .get(
+                    academic_year=(
+                        curriculum
+                        .effective_academic_year
+                    ),
                     workload_type=(
                         workload_type
                     ),
@@ -1144,13 +1396,14 @@ class CurriculumDisciplineBundleSerializer(
 
             return {
                 "calculation_mode":
-                    rule.calculation_mode,
+                    workload_type
+                    .calculation_mode,
 
                 "base_hours":
-                    rule.base_hours,
+                    norm.coefficient,
 
                 "students_per_unit":
-                    rule.students_per_unit,
+                    None,
             }
 
         return {
@@ -1302,6 +1555,29 @@ class CurriculumDisciplineBundleSerializer(
                 + independent_hours
             )
 
+            credit_norm = (
+                AcademicYearCreditNorm
+                .objects
+                .get(
+                    academic_year=(
+                        curriculum
+                        .effective_academic_year
+                    ),
+                    is_archived=False,
+                )
+            )
+
+            credits = (
+                total_hours
+                /
+                credit_norm
+                .hours_per_credit
+                if total_hours > 0
+                else Decimal("0.00")
+            ).quantize(
+                Decimal("0.01")
+            )
+
             discipline_entry = (
                 CurriculumDiscipline
                 .all_objects
@@ -1323,11 +1599,6 @@ class CurriculumDisciplineBundleSerializer(
                 "component_type":
                     component_type,
 
-                #
-                # Поле сохраняем в БД,
-                # но новая форма им
-                # не управляет.
-                #
                 "control_form":
                     (
                         discipline_entry
@@ -1339,8 +1610,7 @@ class CurriculumDisciplineBundleSerializer(
                         .NONE
                     ),
 
-                "credits":
-                    semester["credits"],
+                "credits": credits,
 
                 "total_academic_hours":
                     total_hours,
@@ -1529,3 +1799,94 @@ class CurriculumDisciplineBundleSerializer(
             )
 
         return result
+
+class AcademicYearWorkloadNormSerializer(
+    LocalizedNameMixin,
+    AuditFieldsSerializer,
+):
+    workload_type_name = (
+        serializers.SerializerMethodField()
+    )
+
+    academic_year_name = (
+        serializers.CharField(
+            source="academic_year.name",
+            read_only=True,
+        )
+    )
+
+    @extend_schema_field(
+        serializers.CharField()
+    )
+    def get_workload_type_name(
+        self,
+        obj,
+    ):
+        return self.get_display_name(
+            obj.workload_type
+        )
+
+    class Meta:
+        model = AcademicYearWorkloadNorm
+
+        fields = (
+            "id",
+
+            "academic_year",
+            "academic_year_name",
+
+            "workload_type",
+            "workload_type_name",
+
+            "coefficient",
+
+            "is_active",
+            "notes",
+
+            "created_at",
+            "updated_at",
+
+            "created_by",
+            "created_by_name",
+
+            "updated_by",
+            "updated_by_name",
+
+            "is_archived",
+        )
+
+
+class AcademicYearCreditNormSerializer(
+    AuditFieldsSerializer,
+):
+    academic_year_name = (
+        serializers.CharField(
+            source="academic_year.name",
+            read_only=True,
+        )
+    )
+
+    class Meta:
+        model = AcademicYearCreditNorm
+
+        fields = (
+            "id",
+
+            "academic_year",
+            "academic_year_name",
+
+            "hours_per_credit",
+
+            "notes",
+
+            "created_at",
+            "updated_at",
+
+            "created_by",
+            "created_by_name",
+
+            "updated_by",
+            "updated_by_name",
+
+            "is_archived",
+        )

@@ -1690,6 +1690,13 @@ const ru = {
         masterDissertationDefense: "Защита магистерской диссертации",
         graduationWorkSupervision: "Руководство выпускной квалификационной работой",
         graduationWorkDefense: "Защита выпускной квалификационной работы",
+        courseWorkSupervision: 'Руководство курсовой работой',
+        courseWorkDefense: 'Защита курсовой работы',
+        courseProjectSupervision: 'Руководство курсовым проектом',
+        courseProjectDefense: 'Защита курсового проекта',
+        scientificPracticeSupervision: 'Руководство научной практикой',
+        qualificationPracticeSupervision: 'Руководство квалификационной практикой',
+        rating: 'Рейтинг',
         consultation: 'Консультации',
         exam: 'Экзамен',
         credit: 'Зачёт',
@@ -1726,11 +1733,10 @@ const ru = {
         courseProjectSupervision:
           'Руководство курсовым проектом',
 
-        courseDefense:
-          'Защита курсовой работы/проекта',
-
-        scientificPractice:
-          'Научная практика',
+        courseDefense: 'Защита курсовой работы/проекта',
+        courseWorkDefense: 'Защита курсовой работы',
+        courseProjectDefense: 'Защита курсового проекта',
+        scientificPractice: 'Научная практика',
 
         qualificationPractice:
           'Квалификационная практика',

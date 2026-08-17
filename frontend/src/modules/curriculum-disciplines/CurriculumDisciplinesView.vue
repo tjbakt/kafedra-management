@@ -20,13 +20,13 @@ import {
 } from 'vue-i18n'
 
 import BaseCard from '@/components/base/BaseCard.vue'
-import BaseDialog from '@/components/base/BaseDialog.vue'
+// import BaseDialog from '@/components/base/BaseDialog.vue'
 import BaseDataTable from '@/components/base/BaseDataTable.vue'
 import BasePageHeader from '@/components/base/BasePageHeader.vue'
 import BaseToolbar from '@/components/base/BaseToolbar.vue'
 
 import CurriculumDisciplineFormDialog from '@/modules/curriculum-disciplines/components/CurriculumDisciplineFormDialog.vue'
-import CurriculumWorkloadPanel from '@/modules/curriculum-disciplines/components/CurriculumWorkloadPanel.vue'
+// import CurriculumWorkloadPanel from '@/modules/curriculum-disciplines/components/CurriculumWorkloadPanel.vue'
 
 import {
   curriculumDisciplinesApi,
@@ -140,13 +140,13 @@ const selectedRecord =
 const formVisible =
   ref(false)
 
-const workloadDialogVisible =
-  ref(false)
-
-const workloadDiscipline =
-  ref<
-    CurriculumDiscipline | null
-  >(null)
+// const workloadDialogVisible =
+//   ref(false)
+//
+// const workloadDiscipline =
+//   ref<
+//     CurriculumDiscipline | null
+//   >(null)
 
 const saving =
   ref(false)
@@ -206,13 +206,6 @@ const canDelete =
       ),
   )
 
-const canViewWorkloads =
-  computed(
-    () =>
-      can(
-        'curriculum.view_curriculumworkload',
-      ),
-  )
 
 const semesterOptions =
   computed<
@@ -793,39 +786,28 @@ async function openEdit(
     true
 }
 
-function openWorkloads(
-  record:
-    CurriculumDiscipline,
-): void {
-  workloadDiscipline.value =
-    record
-
-  workloadDialogVisible.value =
-    true
-}
-
-async function handleWorkloadChanged(): Promise<void> {
-  await refresh()
-
-  if (
-    !workloadDiscipline.value
-  ) {
-    return
-  }
-
-  const refreshed =
-    items.value.find(
-      (item) =>
-        item.id ===
-        workloadDiscipline.value
-          ?.id,
-    )
-
-  if (refreshed) {
-    workloadDiscipline.value =
-      refreshed
-  }
-}
+// async function handleWorkloadChanged(): Promise<void> {
+//   await refresh()
+//
+//   if (
+//     !workloadDiscipline.value
+//   ) {
+//     return
+//   }
+//
+//   const refreshed =
+//     items.value.find(
+//       (item) =>
+//         item.id ===
+//         workloadDiscipline.value
+//           ?.id,
+//     )
+//
+//   if (refreshed) {
+//     workloadDiscipline.value =
+//       refreshed
+//   }
+// }
 
 async function saveRecord(
   payload:
@@ -1436,36 +1418,34 @@ onMounted(
   "
     />
 
-    <BaseDialog
-      v-model="
-    workloadDialogVisible
-  "
-      :title="
-    workloadDiscipline
-      ? `${t(
-          'curriculumWorkloads.title',
-        )}: ${workloadDiscipline.discipline_code}`
-      : t(
-          'curriculumWorkloads.title',
-        )
-  "
-      width="70rem"
-    >
-      <CurriculumWorkloadPanel
-        v-if="
-      workloadDiscipline
-    "
-        :key="
-      workloadDiscipline.id
-    "
-        :discipline="
-      workloadDiscipline
-    "
-        @changed="
-      handleWorkloadChanged
-    "
-      />
-    </BaseDialog>
+<!--    <BaseDialog-->
+<!--      v-model=" workloadDialogVisible"-->
+<!--      :title="-->
+<!--    workloadDiscipline-->
+<!--      ? `${t(-->
+<!--          'curriculumWorkloads.title',-->
+<!--        )}: ${workloadDiscipline.discipline_code}`-->
+<!--      : t(-->
+<!--          'curriculumWorkloads.title',-->
+<!--        )-->
+<!--  "-->
+<!--      width="70rem"-->
+<!--    >-->
+<!--      <CurriculumWorkloadPanel-->
+<!--        v-if="-->
+<!--      workloadDiscipline-->
+<!--    "-->
+<!--        :key="-->
+<!--      workloadDiscipline.id-->
+<!--    "-->
+<!--        :discipline="-->
+<!--      workloadDiscipline-->
+<!--    "-->
+<!--        @changed="-->
+<!--      handleWorkloadChanged-->
+<!--    "-->
+<!--      />-->
+<!--    </BaseDialog>-->
 
   </div>
 </template>

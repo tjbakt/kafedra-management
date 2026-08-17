@@ -256,6 +256,8 @@ const moduleRoutes: RouteRecordRaw[] = [
       ],
     },
   },
+
+
 ]
 
 const routes: RouteRecordRaw[] = [

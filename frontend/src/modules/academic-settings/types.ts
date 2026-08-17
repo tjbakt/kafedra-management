@@ -178,3 +178,55 @@ export interface AcademicYearOperationResult {
   reopened_by_name: string | null
   reopening_reason: string
 }
+
+export interface AcademicYearWorkloadNorm
+  extends Record<string, unknown> {
+  id: number
+
+  academic_year: number
+  academic_year_name: string
+
+  workload_type: number
+  workload_type_name: string
+
+  coefficient: string
+
+  is_active: boolean
+  notes: string
+
+  is_archived: boolean
+}
+
+export interface AcademicYearWorkloadNormPayload {
+  academic_year: number
+
+  workload_type: number
+
+  coefficient: number
+
+  is_active: boolean
+
+  notes: string
+}
+
+export interface AcademicYearCreditNorm
+  extends Record<string, unknown> {
+  id: number
+
+  academic_year: number
+  academic_year_name: string
+
+  hours_per_credit: string
+
+  notes: string
+
+  is_archived: boolean
+}
+
+export interface AcademicYearCreditNormPayload {
+  academic_year: number
+
+  hours_per_credit: number
+
+  notes: string
+}

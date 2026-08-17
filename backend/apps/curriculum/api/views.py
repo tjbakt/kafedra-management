@@ -16,6 +16,8 @@ from apps.curriculum.api.filters import (
     WorkloadTypeFilter,
 )
 from apps.curriculum.api.serializers import (
+    AcademicYearCreditNormSerializer,
+    AcademicYearWorkloadNormSerializer,
     CurriculumDisciplineSerializer,
     CurriculumSerializer,
     CurriculumWorkloadSerializer,
@@ -25,6 +27,8 @@ from apps.curriculum.api.serializers import (
     WorkloadTypeSerializer,
 )
 from apps.curriculum.models import (
+    AcademicYearCreditNorm,
+    AcademicYearWorkloadNorm,
     Curriculum,
     CurriculumDiscipline,
     CurriculumWorkload,
@@ -44,11 +48,14 @@ class DisciplineViewSet(BaseArchiveModelViewSet):
     ordering = ("sort_order", "name_ru")
 
     def get_queryset(self):
-        return Discipline.objects.select_related(
-            "default_department",
-            "default_department__faculty",
+        return (
+            Discipline.objects.select_related(
+                "default_department",
+                "default_department__faculty",
+            ).prefetch_related(
+                "workload_types",
+            )
         )
-
 
 class WorkloadTypeViewSet(BaseArchiveModelViewSet):
     model = WorkloadType
@@ -263,5 +270,72 @@ class CurriculumWorkloadRuleViewSet(
             .select_related(
                 "curriculum",
                 "workload_type",
+            )
+        )
+
+class AcademicYearWorkloadNormViewSet(
+    DjangoValidationErrorMixin,
+    BaseArchiveModelViewSet,
+):
+    model = AcademicYearWorkloadNorm
+
+    serializer_class = (
+        AcademicYearWorkloadNormSerializer
+    )
+
+    permission_classes = [
+        IsAuthenticated,
+    ]
+
+    filterset_fields = (
+        "academic_year",
+        "workload_type",
+        "is_active",
+    )
+
+    ordering = (
+        "-academic_year__start_year",
+        "workload_type__sort_order",
+    )
+
+    def get_queryset(self):
+        return (
+            AcademicYearWorkloadNorm
+            .objects
+            .select_related(
+                "academic_year",
+                "workload_type",
+            )
+        )
+
+
+class AcademicYearCreditNormViewSet(
+    DjangoValidationErrorMixin,
+    BaseArchiveModelViewSet,
+):
+    model = AcademicYearCreditNorm
+
+    serializer_class = (
+        AcademicYearCreditNormSerializer
+    )
+
+    permission_classes = [
+        IsAuthenticated,
+    ]
+
+    filterset_fields = (
+        "academic_year",
+    )
+
+    ordering = (
+        "-academic_year__start_year",
+    )
+
+    def get_queryset(self):
+        return (
+            AcademicYearCreditNorm
+            .objects
+            .select_related(
+                "academic_year",
             )
         )

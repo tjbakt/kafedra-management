@@ -46,6 +46,17 @@ class Discipline(BaseModel):
             "В конкретном учебном плане её можно изменить."
         ),
     )
+    workload_types = models.ManyToManyField(
+        "WorkloadType",
+        verbose_name=_("Допустимые виды учебной работы"),
+        related_name="disciplines",
+        blank=True,
+        help_text=_(
+            "Виды работы, которые могут использоваться "
+            "для данной дисциплины в учебном плане."
+        ),
+    )
+
     is_active = models.BooleanField(
         _("Активна"),
         default=True,
@@ -81,9 +92,13 @@ class WorkloadType(BaseModel):
         COURSE_PROJECT = "course_project", _("Курсовой проект")
         COURSE_WORK_SUPERVISION = ( "course_work_supervision", _("Руководство курсовой работой"), )
         COURSE_PROJECT_SUPERVISION = ( "course_project_supervision", _("Руководство курсовым проектом"), )
+        COURSE_WORK_DEFENSE = ( "course_work_defense", _("Защита курсовой работы"), )
+        COURSE_PROJECT_DEFENSE = ( "course_project_defense", _("Защита курсового проекта"), )
+
         COURSE_WORK_PROJECT_DEFENSE = ( "course_work_project_defense", _("Защита курсовой работы/проекта"), )
-        SCIENTIFIC_PRACTICE = ( "scientific_practice", _("Научная практика"), )
-        QUALIFICATION_PRACTICE = ( "qualification_practice", _("Квалификационная практика"), )
+
+        SCIENTIFIC_PRACTICE_SUPERVISION = ( "scientific_practice_supervision", _("Руководство научной практикой"), )
+        QUALIFICATION_PRACTICE_SUPERVISION = ( "qualification_practice_supervision", _("Руководство квалификационной практикой"), )
         MASTER_DISSERTATION_SUPERVISION = ( "master_dissertation_supervision", _("Руководство магистерской диссертацией"), )
         MASTER_DISSERTATION_DEFENSE = ( "master_dissertation_defense", _("Защита магистерской диссертации"), )
         GRADUATION_WORK_SUPERVISION = ( "graduation_work_supervision", _("Руководство выпускной квалификационной работой"), )
@@ -166,6 +181,74 @@ class WorkloadType(BaseModel):
         db_index=True,
     )
 
+    ANNUAL_NORM_CODES = frozenset(
+        {
+            Code.RATING,
+
+            Code.COURSE_WORK_SUPERVISION,
+            Code.COURSE_WORK_DEFENSE,
+
+            Code.COURSE_PROJECT_SUPERVISION,
+            Code.COURSE_PROJECT_DEFENSE,
+
+            Code.SCIENTIFIC_PRACTICE_SUPERVISION,
+            Code.QUALIFICATION_PRACTICE_SUPERVISION,
+
+            Code.GRADUATION_WORK_SUPERVISION,
+            Code.GRADUATION_WORK_DEFENSE,
+
+            Code.MASTER_DISSERTATION_SUPERVISION,
+            Code.MASTER_DISSERTATION_DEFENSE,
+        }
+    )
+
+    PAIRED_CODES = {
+        Code.COURSE_WORK_SUPERVISION:
+            Code.COURSE_WORK_DEFENSE,
+
+        Code.COURSE_WORK_DEFENSE:
+            Code.COURSE_WORK_SUPERVISION,
+
+        Code.COURSE_PROJECT_SUPERVISION:
+            Code.COURSE_PROJECT_DEFENSE,
+
+        Code.COURSE_PROJECT_DEFENSE:
+            Code.COURSE_PROJECT_SUPERVISION,
+
+        Code.GRADUATION_WORK_SUPERVISION:
+            Code.GRADUATION_WORK_DEFENSE,
+
+        Code.GRADUATION_WORK_DEFENSE:
+            Code.GRADUATION_WORK_SUPERVISION,
+
+        Code.MASTER_DISSERTATION_SUPERVISION:
+            Code.MASTER_DISSERTATION_DEFENSE,
+
+        Code.MASTER_DISSERTATION_DEFENSE:
+            Code.MASTER_DISSERTATION_SUPERVISION,
+    }
+
+    @property
+    def uses_annual_norm(self) -> bool:
+        return (
+            self.code
+            in self.ANNUAL_NORM_CODES
+        )
+
+    @property
+    def paired_code(self):
+        return self.PAIRED_CODES.get(
+            self.code
+        )
+
+    #
+    # Оставляем для совместимости
+    # существующего frontend.
+    #
+    @property
+    def uses_curriculum_rule(self) -> bool:
+        return self.uses_annual_norm
+
     CURRICULUM_RULE_CATEGORIES = frozenset(
         {
             ReportCategory.RATING,
@@ -189,6 +272,155 @@ class WorkloadType(BaseModel):
 
     def __str__(self) -> str:
         return self.name_ru
+
+class AcademicYearWorkloadNorm(BaseModel):
+    """
+    Коэффициент/базовые часы вида работы
+    на конкретный учебный год.
+
+    Примеры:
+
+    рейтинг:
+        0.25 часа * число студентов
+
+    руководство КР:
+        2 часа * число студентов
+
+    защита КР:
+        0.2 часа * число студентов
+
+    руководство КП:
+        3 часа * число студентов
+    """
+
+    academic_year = models.ForeignKey(
+        AcademicYear,
+        verbose_name=_("Учебный год"),
+        related_name="curriculum_workload_norms",
+        on_delete=models.CASCADE,
+    )
+
+    workload_type = models.ForeignKey(
+        WorkloadType,
+        verbose_name=_("Вид учебной работы"),
+        related_name="academic_year_norms",
+        on_delete=models.PROTECT,
+    )
+
+    coefficient = models.DecimalField(
+        _("Коэффициент / базовые часы"),
+        max_digits=10,
+        decimal_places=4,
+        validators=[
+            MinValueValidator(
+                Decimal("0.0000")
+            )
+        ],
+    )
+
+    is_active = models.BooleanField(
+        _("Активна"),
+        default=True,
+        db_index=True,
+    )
+
+    notes = models.TextField(
+        _("Примечание"),
+        blank=True,
+    )
+
+    class Meta:
+        verbose_name = _(
+            "Норма учебной нагрузки"
+        )
+
+        verbose_name_plural = _(
+            "Нормы учебной нагрузки"
+        )
+
+        ordering = (
+            "-academic_year__start_year",
+            "workload_type__sort_order",
+        )
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=(
+                    "academic_year",
+                    "workload_type",
+                ),
+                name=(
+                    "unique_workload_norm_"
+                    "per_academic_year"
+                ),
+            ),
+        ]
+
+    def clean(self):
+        super().clean()
+
+        if (
+            self.workload_type_id
+            and not
+            self.workload_type
+            .uses_annual_norm
+        ):
+            raise ValidationError(
+                {
+                    "workload_type": _(
+                        "Для данного вида работы "
+                        "годовая норма не используется."
+                    )
+                }
+            )
+
+    def __str__(self):
+        return (
+            f"{self.academic_year}: "
+            f"{self.workload_type.name_ru} "
+            f"= {self.coefficient}"
+        )
+
+class AcademicYearCreditNorm(BaseModel):
+    academic_year = models.OneToOneField(
+        AcademicYear,
+        verbose_name=_("Учебный год"),
+        related_name="credit_norm",
+        on_delete=models.CASCADE,
+    )
+
+    hours_per_credit = models.DecimalField(
+        _("Количество часов в одном кредите"),
+        max_digits=6,
+        decimal_places=2,
+        default=Decimal("30.00"),
+        validators=[
+            MinValueValidator(
+                Decimal("0.01")
+            )
+        ],
+    )
+
+    notes = models.TextField(
+        _("Примечание"),
+        blank=True,
+    )
+
+    class Meta:
+        verbose_name = _(
+            "Норма академического кредита"
+        )
+
+        verbose_name_plural = _(
+            "Нормы академического кредита"
+        )
+
+    def __str__(self):
+        return (
+            f"{self.academic_year}: "
+            f"1 кредит = "
+            f"{self.hours_per_credit} ч."
+        )
 
 class Curriculum(BaseModel):
     """

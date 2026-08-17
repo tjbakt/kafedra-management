@@ -87,6 +87,7 @@ const props = withDefaults(
     disciplines: Discipline[]
     workloadTypes: WorkloadType[]
     workloadRules: CurriculumWorkloadRule[]
+    creditHoursPerCredit?: number
     loading?: boolean
     fieldErrors?: FieldErrors
     nonFieldErrors?: string[]
@@ -95,6 +96,7 @@ const props = withDefaults(
   {
     record: null,
     existingEntries: () => [],
+    creditHoursPerCredit: 0,
     loading: false,
     fieldErrors: () => ({}),
     nonFieldErrors: () => [],
@@ -540,6 +542,27 @@ function totalAcademicHours(
   )
 }
 
+function semesterCredits(
+  semester:
+    SemesterForm,
+): number {
+  const value = props.creditHoursPerCredit
+
+  if (
+    !value ||
+    value <= 0
+  ) {
+    return 0
+  }
+
+  return (
+    totalAcademicHours(
+      semester,
+    ) /
+    value
+  )
+}
+
 const selectedSemesterForms =
   computed(
     () =>
@@ -560,13 +583,36 @@ const selectedSemesterForms =
   )
 
 const activeWorkloadTypes =
-  computed(
-    () =>
-      props.workloadTypes.filter(
-        (item) =>
-          item.is_active &&
-          !item.is_archived,
-      ),
+  computed<WorkloadType[]>(
+    () => {
+      const discipline =
+        selectedDiscipline.value
+
+      if (!discipline) {
+        return []
+      }
+
+      const allowedIds =
+        new Set(
+          discipline
+            .workload_types,
+        )
+
+      return props.workloadTypes
+        .filter(
+          (item) =>
+            allowedIds.has(
+              item.id,
+            ) &&
+            item.is_active &&
+            !item.is_archived,
+        )
+        .sort(
+          (a, b) =>
+            a.sort_order -
+            b.sort_order,
+        )
+    },
   )
 
 const footerTotals =
@@ -667,6 +713,16 @@ const footerTotal =
       footerClassroom.value +
       footerIndependent.value,
   )
+
+function usesDirectHours(
+  type: WorkloadType,
+): boolean {
+  return (
+    type.is_classroom ||
+    type.code ===
+      'independent_work'
+  )
+}
 
 function fieldError(
   field: string,
@@ -889,6 +945,44 @@ function validate(): boolean {
   )
 }
 
+function handleSemesterWorkloadToggle(
+  semesterNumber: number,
+  type: WorkloadType,
+): void {
+  const row =
+    getWorkloadRow(
+      semesterNumber,
+      type.id,
+    )
+
+  if (
+    !type.paired_code
+  ) {
+    return
+  }
+
+  const pair =
+    activeWorkloadTypes.value
+      .find(
+        (item) =>
+          item.code ===
+          type.paired_code,
+      )
+
+  if (!pair) {
+    return
+  }
+
+  const pairRow =
+    getWorkloadRow(
+      semesterNumber,
+      pair.id,
+    )
+
+  pairRow.enabled =
+    row.enabled
+}
+
 function submit(): void {
   if (!validate()) {
     return
@@ -901,18 +995,10 @@ function submit(): void {
   const payload:
     CurriculumDisciplineBundlePayload =
     {
-      curriculum:
-        props.curriculum.id,
-
-      discipline:
-        form.discipline,
-
-      component_type:
-        form.component_type,
-
-      replace_semesters:
-        true,
-
+      curriculum: props.curriculum.id,
+      discipline: form.discipline,
+      component_type: form.component_type,
+      replace_semesters: true,
       semesters:
         form.semesters
           .slice()
@@ -930,17 +1016,10 @@ function submit(): void {
                 )
 
               return {
-                semester_number:
-                  semesterNumber,
-
-                credits:
-                  semester.credits,
-
-                weeks_count:
-                  semester.weeks_count,
-
-                is_active:
-                  semester.is_active,
+                semester_number: semesterNumber,
+                credits:semesterCredits(semester,),
+                weeks_count: semester.weeks_count,
+                is_active:semester.is_active,
 
                 notes:
                   semester.notes
@@ -1297,23 +1376,16 @@ watch(
               "
             >
               <InputNumber
-                :model-value="
+                :model-value="semesterCredits(
                   getSemesterForm(
                     semesterNumber,
-                  ).credits
-                "
-                @update:model-value="
-                  (value) =>
-                    getSemesterForm(
-                      semesterNumber,
-                    ).credits =
-                      Number(
-                        value ?? 0,
-                      )
+                    ),
+                  )
                 "
                 :min="0"
                 :max-fraction-digits="2"
                 :use-grouping="false"
+                disabled
                 class="w-full"
               />
             </BaseFormField>
@@ -1474,35 +1546,19 @@ watch(
               />
 
               <InputNumber
-                :model-value="
-                  getWorkloadRow(
-                    semesterNumber,
-                    type.id,
-                  ).base_hours
-                "
-                @update:model-value="
-                  (value: number | null | undefined) =>
-                    getWorkloadRow(
-                      semesterNumber,
-                      type.id,
-                    ).base_hours =
-                      Number(
-                        value ?? 0,
-                      )
-                "
+                v-if="usesDirectHours(type)"
+                v-model="getWorkloadRow(semesterNumber, type.id,).base_hours"
                 :min="0"
                 :max-fraction-digits="2"
                 :use-grouping="false"
-                :disabled="
-                  Boolean(
-                    type.uses_curriculum_rule ||
-                      !getWorkloadRow(
-                        semesterNumber,
-                        type.id,
-                      ).enabled,
-                  )
-                "
+                :disabled="!getWorkloadRow(semesterNumber, type.id,).enabled"
                 class="w-full"
+              />
+
+              <Checkbox
+                v-else
+                v-model="getWorkloadRow(semesterNumber, type.id,).enabled"
+                binary @change="handleSemesterWorkloadToggle(semesterNumber, type,)"
               />
             </div>
           </div>
@@ -1562,6 +1618,25 @@ watch(
               <strong>
                 {{
                   totalAcademicHours(
+                    getSemesterForm(
+                      semesterNumber,
+                    ),
+                  ).toFixed(2)
+                }}
+              </strong>
+            </div>
+            <div>
+              <span>
+                {{
+                  t(
+                    'curriculumDisciplines.fields.credits',
+                  )
+                }}
+              </span>
+
+              <strong>
+                {{
+                  semesterCredits(
                     getSemesterForm(
                       semesterNumber,
                     ),

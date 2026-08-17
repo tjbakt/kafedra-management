@@ -31,6 +31,17 @@ export const workloadTypesApi =
     '/curriculum/workload-types/',
   )
 
+export async function getAllWorkloadTypes(): Promise<
+  PaginatedResponse<WorkloadType>
+> {
+  return workloadTypesApi.list({
+    page_size: 500,
+    is_active: true,
+    ordering:
+      'sort_order,name_ru',
+  })
+}
+
 export async function getDepartments(): Promise<
   PaginatedResponse<DepartmentLookup>
 > {

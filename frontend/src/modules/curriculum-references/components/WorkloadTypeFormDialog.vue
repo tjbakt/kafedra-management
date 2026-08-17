@@ -174,71 +174,129 @@ const codeOptions =
           'curriculumReferences.workloadTypes.codes.courseProject',
         ),
     },
+
     {
       value:
-        'course_work_project_defense',
+        'course_work_supervision',
+
       label:
         t(
-          'curriculumReferences.workloadTypes.codes.courseWorkProjectDefense',
+          'curriculumReferences.workloadTypes.codes.courseWorkSupervision',
         ),
     },
+
     {
       value:
-        'scientific_practice',
+        'course_work_defense',
+
       label:
         t(
-          'curriculumReferences.workloadTypes.codes.scientificPractice',
+          'curriculumReferences.workloadTypes.codes.courseWorkDefense',
         ),
     },
+
     {
       value:
-        'qualification_practice',
+        'course_project_supervision',
+
       label:
         t(
-          'curriculumReferences.workloadTypes.codes.qualificationPractice',
+          'curriculumReferences.workloadTypes.codes.courseProjectSupervision',
         ),
     },
+
+    {
+      value:
+        'course_project_defense',
+
+      label:
+        t(
+          'curriculumReferences.workloadTypes.codes.courseProjectDefense',
+        ),
+    },
+
+    {
+      value:
+        'scientific_practice_supervision',
+
+      label:
+        t(
+          'curriculumReferences.workloadTypes.codes.scientificPracticeSupervision',
+        ),
+    },
+
+    {
+      value:
+        'qualification_practice_supervision',
+
+      label:
+        t(
+          'curriculumReferences.workloadTypes.codes.qualificationPracticeSupervision',
+        ),
+    },
+
     {
       value:
         'master_dissertation_supervision',
+
       label:
         t(
           'curriculumReferences.workloadTypes.codes.masterDissertationSupervision',
         ),
     },
+
     {
       value:
         'master_dissertation_defense',
+
       label:
         t(
           'curriculumReferences.workloadTypes.codes.masterDissertationDefense',
         ),
     },
+
     {
       value:
         'graduation_work_supervision',
+
       label:
         t(
           'curriculumReferences.workloadTypes.codes.graduationWorkSupervision',
         ),
     },
+
     {
       value:
         'graduation_work_defense',
+
       label:
         t(
           'curriculumReferences.workloadTypes.codes.graduationWorkDefense',
         ),
     },
+
     {
-      value: 'independent_work',
+      value: 'rating',
+
+      label:
+        t(
+          'curriculumReferences.workloadTypes.codes.rating',
+        ),
+    },
+
+    {
+      value:
+        'independent_work',
+
       label:
         t(
           'curriculumReferences.workloadTypes.codes.independentWork',
         ),
     },
+
     {
       value: 'other',
+
       label:
         t(
           'curriculumReferences.workloadTypes.codes.other',
@@ -323,10 +381,21 @@ const reportCategoryOptions =
     },
     {
       value:
-        'course_work_project_defense',
+        'course_work_defense',
+
       label:
         t(
-          'curriculumReferences.workloadTypes.reportCategories.courseDefense',
+          'curriculumReferences.workloadTypes.reportCategories.courseWorkDefense',
+        ),
+    },
+
+    {
+      value:
+        'course_project_defense',
+
+      label:
+        t(
+          'curriculumReferences.workloadTypes.reportCategories.courseProjectDefense',
         ),
     },
     {
