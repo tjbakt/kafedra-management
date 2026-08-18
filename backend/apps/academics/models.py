@@ -669,5 +669,260 @@ class StudentGroup(BaseModel):
     def profiling_department_faculty(self):
         return self.study_program.profiling_department.faculty
 
+    def get_education_duration(self):
+        if (
+            not self.study_program_id
+            or not self.study_form_id
+        ):
+            return None
+
+        return (
+            EducationDuration.objects
+            .filter(
+                education_level=(
+                    self.study_program
+                    .education_level
+                ),
+                study_form=self.study_form,
+                is_active=True,
+                is_archived=False,
+            )
+            .first()
+        )
+
+    @property
+    def study_years_count(self):
+        duration = (
+            self.get_education_duration()
+        )
+
+        if not duration:
+            return None
+
+        return (
+            duration.semesters_count + 1
+        ) // 2
+
+    def course_number_for(
+        self,
+        academic_year,
+    ):
+        """
+        Курс группы в конкретном
+        учебном году.
+
+        Поступление 2024/2025:
+        2024/2025 -> 1 курс
+        2025/2026 -> 2 курс
+        2026/2027 -> 3 курс
+        """
+
+        if (
+            not self
+            .academic_year_admission_id
+        ):
+            return None
+
+        difference = (
+            academic_year.start_year
+            - self
+            .academic_year_admission
+            .start_year
+        )
+
+        course = difference + 1
+
+        years_count = (
+            self.study_years_count
+        )
+
+        if (
+            years_count is None
+            or course < 1
+            or course > years_count
+        ):
+            return None
+
+        return course
+
+    def semester_number_for(
+        self,
+        academic_semester,
+    ):
+        """
+        Определяет номер семестра
+        группы по году поступления.
+
+        1 курс:
+            осень -> 1
+            весна -> 2
+
+        2 курс:
+            осень -> 3
+            весна -> 4
+        """
+
+        course = (
+            self.course_number_for(
+                academic_semester
+                .academic_year
+            )
+        )
+
+        if course is None:
+            return None
+
+        semester_number = (
+            (course - 1) * 2
+        )
+
+        if (
+            academic_semester.season
+            == AcademicSemester
+            .Season
+            .AUTUMN
+        ):
+            semester_number += 1
+        else:
+            semester_number += 2
+
+        duration = (
+            self.get_education_duration()
+        )
+
+        if (
+            duration
+            and semester_number
+            > duration.semesters_count
+        ):
+            return None
+
+        return semester_number
+
+    @property
+    def current_course_number(self):
+        academic_year = (
+            AcademicYear.objects
+            .filter(
+                is_current=True,
+                is_archived=False,
+            )
+            .first()
+        )
+
+        if not academic_year:
+            return None
+
+        return self.course_number_for(
+            academic_year
+        )
+
+    @property
+    def current_semester_number(self):
+        academic_semester = (
+            AcademicSemester.objects
+            .filter(
+                is_current=True,
+                is_archived=False,
+            )
+            .select_related(
+                "academic_year"
+            )
+            .first()
+        )
+
+        if not academic_semester:
+            return None
+
+        return self.semester_number_for(
+            academic_semester
+        )
+
+    @property
+    def calculated_graduation_start_year(
+        self,
+    ):
+        """
+        Первый год планового
+        учебного года выпуска.
+
+        8 семестров = 4 учебных года.
+        10 семестров = 5 учебных лет.
+        9 семестров = 5 учебных лет.
+        """
+
+        if (
+            not self
+            .academic_year_admission_id
+        ):
+            return None
+
+        years_count = (
+            self.study_years_count
+        )
+
+        if years_count is None:
+            return None
+
+        return (
+            self
+            .academic_year_admission
+            .start_year
+            + years_count
+            - 1
+        )
+
+    @property
+    def calculated_graduation_academic_year(
+        self,
+    ):
+        start_year = (
+            self
+            .calculated_graduation_start_year
+        )
+
+        if start_year is None:
+            return None
+
+        return (
+            AcademicYear.objects
+            .filter(
+                start_year=start_year,
+                end_year=start_year + 1,
+                is_archived=False,
+            )
+            .first()
+        )
+
+    def sync_graduation_academic_year(
+        self,
+    ):
+        calculated = (
+            self
+            .calculated_graduation_academic_year
+        )
+
+        if calculated:
+            self.graduation_academic_year = (
+                calculated
+            )
+
+    def save(
+        self,
+        *args,
+        **kwargs,
+    ):
+        if (
+            self.academic_year_admission_id
+            and self.study_program_id
+            and self.study_form_id
+        ):
+            self.sync_graduation_academic_year()
+
+        return super().save(
+            *args,
+            **kwargs,
+        )
+
     def __str__(self) -> str:
         return self.code

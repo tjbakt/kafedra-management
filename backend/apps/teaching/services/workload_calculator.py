@@ -5,6 +5,7 @@ from django.db import transaction
 from apps.audit.models import AuditEvent
 from apps.audit.services.audit_service import AuditService
 from apps.curriculum.models import (
+    AcademicYearWorkloadNorm,
     CurriculumWorkload,
     WorkloadType,
 )
@@ -32,6 +33,64 @@ class TeachingStreamWorkloadCalculator:
         teaching_stream: TeachingStream,
     ):
         self.stream = teaching_stream
+
+    def get_base_hours(
+        self,
+        workload:
+            CurriculumWorkload,
+    ) -> Decimal:
+        workload_type = (
+            workload.workload_type
+        )
+
+        #
+        # Обычная аудиторная работа:
+        # часы идут непосредственно
+        # из учебного плана.
+        #
+        if (
+            not workload_type
+            .uses_annual_norm
+        ):
+            return (
+                workload.base_hours
+            )
+
+        #
+        # Годовая норма:
+        # берём учебный год
+        # РЕАЛЬНОГО ПОТОКА,
+        # а не effective_academic_year
+        # учебного плана.
+        #
+        norm = (
+            AcademicYearWorkloadNorm
+            .objects
+            .filter(
+                academic_year=(
+                    self.stream
+                    .academic_year
+                ),
+                workload_type=(
+                    workload_type
+                ),
+                is_active=True,
+                is_archived=False,
+            )
+            .first()
+        )
+
+        if not norm:
+            raise ValueError(
+                (
+                    "Для учебного года "
+                    f"{self.stream.academic_year} "
+                    "не задана норма для вида "
+                    f"«{workload_type.name_ru}»."
+                )
+            )
+
+        return norm.coefficient
 
     def get_quantity(
         self,
@@ -190,7 +249,9 @@ class TeachingStreamWorkloadCalculator:
             )
 
             base_hours = (
-                workload.base_hours
+                self.get_base_hours(
+                    workload
+                )
             )
 
             total_hours = (

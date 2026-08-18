@@ -768,6 +768,27 @@ class StudentGroupSerializer(LocalizedNameMixin, AuditFieldsSerializer):
             obj.study_program.profiling_department.faculty
         )
 
+    current_course_number = (
+        serializers.IntegerField(
+            read_only=True,
+            allow_null=True,
+        )
+    )
+
+    current_semester_number = (
+        serializers.IntegerField(
+            read_only=True,
+            allow_null=True,
+        )
+    )
+
+    calculated_graduation_start_year = (
+        serializers.IntegerField(
+            read_only=True,
+            allow_null=True,
+        )
+    )
+
     class Meta:
         model = StudentGroup
         fields = (
@@ -777,6 +798,9 @@ class StudentGroupSerializer(LocalizedNameMixin, AuditFieldsSerializer):
             "admission_academic_year_name",
             "graduation_academic_year",
             "graduation_academic_year_name",
+            "current_course_number",
+            "current_semester_number",
+            "calculated_graduation_start_year",
             "faculty",
             "faculty_name",
             "faculty_type",
@@ -810,6 +834,9 @@ class StudentGroupSerializer(LocalizedNameMixin, AuditFieldsSerializer):
             "education_level",
             "profiling_department",
             "profiling_department_faculty",
+            "current_course_number",
+            "current_semester_number",
+            "calculated_graduation_start_year",
             "created_at",
             "updated_at",
             "created_by",

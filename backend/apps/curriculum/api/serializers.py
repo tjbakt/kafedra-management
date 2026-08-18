@@ -18,6 +18,9 @@ from apps.curriculum.models import (
 from drf_spectacular.utils import (
     extend_schema_field,
 )
+from apps.curriculum.services.norm_resolver import (
+    resolve_credit_norm,
+)
 
 
 class LocalizedNameMixin:
@@ -1172,30 +1175,27 @@ class CurriculumDisciplineBundleSerializer(
             )
         )
 
-        academic_year = (
-            curriculum
-            .effective_academic_year
-        )
+        # academic_year = (
+        #     curriculum
+        #     .effective_academic_year
+        # )
 
         credit_norm = (
-            AcademicYearCreditNorm
-            .objects
-            .filter(
-                academic_year=(
-                    academic_year
-                ),
-                is_archived=False,
+            resolve_credit_norm(
+                curriculum
+                .effective_academic_year
             )
-            .first()
         )
 
         if not credit_norm:
             raise serializers.ValidationError(
                 {
                     "curriculum": (
-                        "Для учебного года "
-                        "не задано количество часов "
-                        "на один академический кредит."
+                        "Не задана ни одна "
+                        "действующая норма "
+                        "академического кредита "
+                        "для года начала действия "
+                        "учебного плана."
                     )
                 }
             )
@@ -1382,22 +1382,6 @@ class CurriculumDisciplineBundleSerializer(
         if (
             workload_type.uses_annual_norm
         ):
-            norm = (
-                AcademicYearWorkloadNorm
-                .objects
-                .get(
-                    academic_year=(
-                        curriculum
-                        .effective_academic_year
-                    ),
-                    workload_type=(
-                        workload_type
-                    ),
-                    is_active=True,
-                    is_archived=False,
-                )
-            )
-
             calculation_mode = (
                 WorkloadType
                 .CalculationMode
@@ -1409,36 +1393,32 @@ class CurriculumDisciplineBundleSerializer(
             )
 
             return {
-                "calculation_mode":
-                    workload_type
-                    .calculation_mode,
+                "calculation_mode": calculation_mode,
 
-                "base_hours":
-                    norm.coefficient,
+                "base_hours": Decimal("0.00"),
 
-                "students_per_unit":
-                    None,
+                "students_per_unit": None,
             }
 
-        # return {
-        #     "calculation_mode":
-        #         workload_data.get(
-        #             "calculation_mode"
-        #         )
-        #         or workload_type
-        #         .calculation_mode,
-        #
-        #     "base_hours":
-        #         workload_data.get(
-        #             "base_hours",
-        #             Decimal("0.00"),
-        #         ),
-        #
-        #     "students_per_unit":
-        #         workload_data.get(
-        #             "students_per_unit"
-        #         ),
-        # }
+        return {
+            "calculation_mode":
+                workload_data.get(
+                    "calculation_mode"
+                )
+                or workload_type
+                .calculation_mode,
+
+            "base_hours":
+                workload_data.get(
+                    "base_hours",
+                    Decimal("0.00"),
+                ),
+
+            "students_per_unit":
+                workload_data.get(
+                    "students_per_unit"
+                ),
+        }
 
     @transaction.atomic
     def create(self, validated_data):

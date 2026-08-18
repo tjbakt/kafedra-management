@@ -142,6 +142,32 @@ class GroupCurriculumAssignment(BaseModel):
                 }
             )
 
+        if (
+            self.student_group_id
+            and self.start_academic_year_id
+        ):
+            admission_year = (
+                self.student_group
+                .academic_year_admission
+            )
+
+            if (
+                self.start_academic_year
+                .start_year
+                <
+                admission_year.start_year
+            ):
+                raise ValidationError(
+                    {
+                        "start_academic_year": _(
+                            "Учебный план группы "
+                            "не может применяться "
+                            "раньше года поступления "
+                            "группы."
+                        )
+                    }
+                )
+
     def __str__(self):
         return f"{self.student_group} — {self.curriculum.code}"
 
@@ -290,6 +316,52 @@ class GroupSemester(BaseModel):
                         )
                     }
                 )
+            if (
+                    self.group_curriculum_id
+                    and self.academic_semester_id
+            ):
+                student_group = (
+                    self.group_curriculum
+                    .student_group
+                )
+
+                expected_semester_number = (
+                    student_group
+                    .semester_number_for(
+                        self.academic_semester
+                    )
+                )
+
+                if (
+                        expected_semester_number
+                        is None
+                ):
+                    raise ValidationError(
+                        {
+                            "academic_year": _(
+                                "Группа не должна "
+                                "обучаться в выбранном "
+                                "учебном году согласно "
+                                "году поступления и "
+                                "продолжительности обучения."
+                            )
+                        }
+                    )
+
+                if (
+                        self.semester_number
+                        != expected_semester_number
+                ):
+                    raise ValidationError(
+                        {
+                            "semester_number": _(
+                                "Для выбранной группы "
+                                "и учебного года должен "
+                                "использоваться семестр "
+                                f"{expected_semester_number}."
+                            )
+                        }
+                    )
 
     def __str__(self):
         return (
