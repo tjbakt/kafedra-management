@@ -19,7 +19,8 @@ from drf_spectacular.utils import (
     extend_schema_field,
 )
 from apps.curriculum.services.norm_resolver import (
-    resolve_credit_norm,
+    resolve_curriculum_academic_year,
+    resolve_curriculum_credit_norm,
 )
 
 
@@ -1180,12 +1181,30 @@ class CurriculumDisciplineBundleSerializer(
         #     .effective_academic_year
         # )
 
-        credit_norm = (
-            resolve_credit_norm(
+        curriculum_academic_year = (
+            resolve_curriculum_academic_year(
                 curriculum
-                .effective_academic_year
             )
         )
+
+        credit_norm = (
+            resolve_curriculum_credit_norm(
+                curriculum
+            )
+        )
+
+        if not credit_norm:
+            raise serializers.ValidationError(
+                {
+                    "curriculum": (
+                        "Для учебного года "
+                        f"{curriculum_academic_year} "
+                        "не задано количество "
+                        "часов на один "
+                        "академический кредит."
+                    )
+                }
+            )
 
         if not credit_norm:
             raise serializers.ValidationError(
@@ -1331,26 +1350,6 @@ class CurriculumDisciplineBundleSerializer(
                                 "выбранной дисциплины."
                             )
                         }
-                    )
-
-                if (
-                        workload_type
-                                .uses_annual_norm
-                ):
-                    norm_exists = (
-                        AcademicYearWorkloadNorm
-                        .objects
-                        .filter(
-                            academic_year=(
-                                academic_year
-                            ),
-                            workload_type=(
-                                workload_type
-                            ),
-                            is_active=True,
-                            is_archived=False,
-                        )
-                        .exists()
                     )
 
                     if not norm_exists:
@@ -1550,16 +1549,29 @@ class CurriculumDisciplineBundleSerializer(
             )
 
             credit_norm = (
-                AcademicYearCreditNorm
-                .objects
-                .get(
-                    academic_year=(
-                        curriculum
-                        .effective_academic_year
-                    ),
-                    is_archived=False,
+                resolve_curriculum_credit_norm(
+                    curriculum
                 )
             )
+
+            if not credit_norm:
+                academic_year = (
+                    resolve_curriculum_academic_year(
+                        curriculum
+                    )
+                )
+
+                raise serializers.ValidationError(
+                    {
+                        "curriculum": (
+                            "Для учебного года "
+                            f"{academic_year} "
+                            "не задано количество "
+                            "часов на один "
+                            "академический кредит."
+                        )
+                    }
+                )
 
             credits = (
                 total_hours
