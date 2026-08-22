@@ -150,73 +150,76 @@ const moduleRoutes: RouteRecordRaw[] = [
     },
   },
 
-  // {
-  //   path: 'teaching-setup',
-  //   name: 'teaching-setup',
-  //   component: () =>
-  //     import(
-  //       '@/modules/teaching-setup/TeachingSetupView.vue'
-  //       ),
-  //
-  //   meta: {
-  //     requiresAuth: true,
-  //     requiredPermissions: [
-  //       'teaching.view_groupcurriculumassignment',
-  //     ],
-  //     titleKey: 'navigation.teachingSetup',
-  //     icon: 'pi pi-sitemap',
-  //     breadcrumbKeys: [
-  //       'navigation.teachingSetup',
-  //     ],
-  //   },
-  // },
-
   {
     path: 'teaching-streams',
     name: 'teaching-streams',
+
     component: () =>
       import(
         '@/modules/teaching-workload/TeachingWorkloadView.vue'
         ),
+
     meta: {
       requiresAuth: true,
-      titleKey: 'navigation.teachingStreams',
+
+      requiredPermissions: [
+        'teaching.view_teachingstream',
+      ],
+
+      titleKey:
+        'navigation.teachingStreams',
+
+      icon:
+        'pi pi-sitemap',
+
+      breadcrumbKeys: [
+        'navigation.teachingStreams',
+      ],
     },
   },
+
   {
     path: 'workload',
     name: 'workload',
+
     component: () =>
       import(
         '@/modules/workload/WorkloadView.vue'
         ),
+
     meta: {
       requiresAuth: true,
+
+      requiredPermissions: [
+        'teaching.view_plannedworkload',
+        'workload.view_workloaddistribution',
+      ],
+
+      permissionMode: 'any',
+
       titleKey:
         'navigation.workload',
+
+      descriptionKey:
+        'modules.workloadDescription',
+
+      icon:
+        'pi pi-chart-bar',
+
+      breadcrumbKeys: [
+        'navigation.workload',
+      ],
     },
   },
 
   {
     path: 'workload-distribution',
-    redirect: '/workload',
-  },
-  {
-    path: 'schedules',
-    name: 'schedules',
-    component: () =>
-      import('@/views/ModulePlaceholderView.vue'),
-    meta: {
-      requiresAuth: true,
-      titleKey: 'navigation.schedules',
-      descriptionKey:
-        'modules.schedulesDescription',
-      icon: 'pi pi-calendar',
-      breadcrumbKeys: [
-        'navigation.schedules',
-      ],
+
+    redirect: {
+      name: 'workload',
     },
   },
+
   {
     path: 'reports',
     name: 'reports',

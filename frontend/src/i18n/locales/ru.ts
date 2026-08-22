@@ -83,8 +83,7 @@ const ru = {
     curriculumReferences: 'Справочники учебного плана',
     curriculumDisciplines: 'Состав учебного плана',
     teachingSetup: 'Подготовка учебных групп',
-    teachingWorkload: 'Учебные потоки и нагрузка',
-    workloadDistribution: 'Распределение нагрузки',
+    teachingStreams: 'Учебные потоки',
   },
 
   profile: {

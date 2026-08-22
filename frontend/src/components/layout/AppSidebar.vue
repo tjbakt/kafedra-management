@@ -141,22 +141,26 @@ const menuDefinitions: TranslatedSidebarItem[] = [
       // },
       {
         label: '',
-        labelKey: 'navigation.teachingWorkload',
-        icon: 'pi pi-chart-bar',
-        route: '/workload',
+        labelKey: 'navigation.teachingStreams',
+        icon: 'pi pi-sitemap',
+        route: '/teaching-streams',
         permissions: [
           'teaching.view_teachingstream',
         ],
       },
+
       {
         label: '',
-        labelKey: 'navigation.workloadDistribution',
-        icon: 'pi pi-user-edit',
-        route: '/workload-distribution',
+        labelKey: 'navigation.workload',
+        icon: 'pi pi-chart-bar',
+        route: '/workload',
         permissions: [
+          'teaching.view_plannedworkload',
           'workload.view_workloaddistribution',
         ],
+        permissionMode: 'any',
       },
+
       {
         label: '',
         labelKey: 'navigation.schedules',

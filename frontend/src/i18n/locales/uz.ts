@@ -80,8 +80,7 @@ const uz = {
     curriculumReferences: 'O‘quv rejasi ma’lumotnomalari',
     curriculumDisciplines: 'O‘quv rejasi tarkibi',
     teachingSetup: 'O‘quv guruhlarini tayyorlash',
-    teachingWorkload: 'O‘quv oqimlari va yuklama',
-    workloadDistribution: 'Yuklamani taqsimlash',
+    teachingStreams: 'O‘quv oqimlari',
   },
   profile: {
     profile: 'Profil',
