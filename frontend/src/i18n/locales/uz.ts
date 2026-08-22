@@ -2352,6 +2352,13 @@ const uz = {
     },
   },
 
+  workload: {
+    tabs: {
+      planned: 'Rejalashtirilgan yuklama',
+      distribution: 'Yuklamani taqsimlash',
+    },
+  },
+
   teachingWorkload: {
     title: 'O‘quv oqimlari va yuklama',
     description: 'O‘quv oqimlarini shakllantirish, guruhlarni birlashtirish va rejalashtirilgan o‘quv yuklamasini hisoblash.',
@@ -2377,9 +2384,6 @@ const uz = {
     tabs: {
       streams:
         'O‘quv oqimlari',
-
-      planned:
-        'Rejalashtirilgan yuklama',
     },
 
     common: {
@@ -2615,14 +2619,11 @@ const uz = {
   },
 
   workloadDistribution: {
-    title:
-      'O‘quv yuklamasini taqsimlash',
+    create: 'Yuklamani taqsimlash',
+    title: 'O‘quv yuklamasini taqsimlash',
 
     description:
       'Hisoblangan fan yuklamasi soatlarini kafedra o‘qituvchilari o‘rtasida taqsimlash.',
-
-    create:
-      'Yuklamani taqsimlash',
 
     createTitle:
       'O‘qituvchiga yuklama taqsimlash',

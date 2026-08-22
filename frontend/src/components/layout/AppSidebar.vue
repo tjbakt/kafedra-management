@@ -195,12 +195,6 @@ const menuDefinitions: TranslatedSidebarItem[] = [
       },
       {
         label: '',
-        labelKey: '-- 000 --',
-        icon: 'pi pi-sliders-h',
-        route: '/qwerty',
-      },
-      {
-        label: '',
         labelKey:
           'access.debugTitle',
 

@@ -6,46 +6,122 @@ import TabPanels from 'primevue/tabpanels'
 import Tabs from 'primevue/tabs'
 
 import {
+  defineAsyncComponent,
+  ref,
+} from 'vue'
+
+import {
   useI18n,
 } from 'vue-i18n'
 
-import PlannedWorkloadView
-  from '@/modules/teaching-workload/components/PlannedWorkloadView.vue'
+const PlannedWorkloadView =
+  defineAsyncComponent(
+    () =>
+      import(
+        '@/modules/teaching-workload/components/PlannedWorkloadView.vue'
+      ),
+  )
 
-import WorkloadDistributionView
-  from '@/modules/workload-distribution/WorkloadDistributionView.vue'
+const WorkloadDistributionView =
+  defineAsyncComponent(
+    () =>
+      import(
+        '@/modules/workload-distribution/WorkloadDistributionView.vue'
+      ),
+  )
 
-const { t } = useI18n()
+type WorkloadTab =
+  | 'planned'
+  | 'distribution'
+
+const activeTab =
+  ref<WorkloadTab>(
+    'planned',
+  )
+
+const { t } =
+  useI18n()
 </script>
 
 <template>
-  <Tabs value="planned">
-    <TabList>
-      <Tab value="planned">
-        {{
-          t(
-            'workload.tabs.planned',
-          )
-        }}
-      </Tab>
+  <div
+    class="
+      workload-view
+    "
+  >
+    <Tabs
+      v-model:value="
+        activeTab
+      "
+    >
+      <TabList>
+        <Tab
+          value="planned"
+        >
+          {{
+            t(
+              'workload.tabs.planned',
+            )
+          }}
+        </Tab>
 
-      <Tab value="distribution">
-        {{
-          t(
-            'workload.tabs.distribution',
-          )
-        }}
-      </Tab>
-    </TabList>
+        <Tab
+          value="distribution"
+        >
+          {{
+            t(
+              'workloadDistribution.title',
+            )
+          }}
+        </Tab>
+      </TabList>
 
-    <TabPanels>
-      <TabPanel value="planned">
-        <PlannedWorkloadView />
-      </TabPanel>
+      <TabPanels>
+        <TabPanel
+          value="planned"
+        >
+          <PlannedWorkloadView
+            v-if="
+              activeTab ===
+              'planned'
+            "
+          />
+        </TabPanel>
 
-      <TabPanel value="distribution">
-        <WorkloadDistributionView />
-      </TabPanel>
-    </TabPanels>
-  </Tabs>
+        <TabPanel
+          value="distribution"
+        >
+          <WorkloadDistributionView
+            v-if="
+              activeTab ===
+              'distribution'
+            "
+          />
+        </TabPanel>
+      </TabPanels>
+    </Tabs>
+  </div>
 </template>
+
+<style scoped>
+.workload-view {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+
+:deep(.p-tabs) {
+  min-width: 0;
+}
+
+:deep(.p-tabpanels) {
+  padding:
+    1rem
+    0
+    0;
+}
+
+:deep(.p-tabpanel) {
+  min-width: 0;
+}
+</style>

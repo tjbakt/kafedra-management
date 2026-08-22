@@ -598,45 +598,21 @@ onMounted(
     >
       <template #center>
         <Select
-          v-model="
-            selectedYear
-          "
-          :options="
-            yearOptions
-          "
-          option-label="
-            label
-          "
-          option-value="
-            value
-          "
-          class="
-            workload-filter
-          "
-          @change="
-            applyFilters
-          "
+          v-model="selectedYear"
+          :options="yearOptions"
+          option-label="label"
+          option-value="value"
+          class="workload-filter"
+          @change="applyFilters"
         />
 
         <Select
-          v-model="
-            selectedStatus
-          "
-          :options="
-            statusOptions
-          "
-          option-label="
-            label
-          "
-          option-value="
-            value
-          "
-          class="
-            workload-filter
-          "
-          @change="
-            applyFilters
-          "
+          v-model="selectedStatus"
+          :options="statusOptions"
+          option-label="label"
+          option-value="value"
+          class="workload-filter"
+          @change="applyFilters"
         />
       </template>
 
