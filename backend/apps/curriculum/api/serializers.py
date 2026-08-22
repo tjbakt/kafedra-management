@@ -1497,6 +1497,8 @@ class CurriculumDisciplineBundleSerializer(
                 Decimal("0.00")
             )
 
+            practice_hours = Decimal("0.00")
+
             for workload in (
                 semester["workloads"]
             ):
@@ -1505,6 +1507,50 @@ class CurriculumDisciplineBundleSerializer(
                         "workload_type"
                     ]
                 )
+
+                if workload_type.uses_weekly_norm:
+                    norm = (
+                        AcademicYearWorkloadNorm
+                        .objects
+                        .filter(
+                            academic_year=(
+                                resolve_curriculum_academic_year(
+                                    curriculum
+                                )
+                            ),
+                            workload_type=(
+                                workload_type
+                            ),
+                            is_active=True,
+                            is_archived=False,
+                        )
+                        .first()
+                    )
+
+                    if not norm:
+                        raise serializers.ValidationError(
+                            {
+                                "semesters": (
+                                    "Для вида работы "
+                                    f"«{workload_type.name_ru}» "
+                                    "не задана годовая норма."
+                                )
+                            }
+                        )
+
+                    if workload.get(
+                            "is_active",
+                            True,
+                    ):
+                        practice_hours += (
+                                norm.coefficient
+                                *
+                                Decimal(
+                                    semester[
+                                        "weeks_count"
+                                    ]
+                                )
+                        )
 
                 values = (
                     self
@@ -1546,6 +1592,7 @@ class CurriculumDisciplineBundleSerializer(
             total_hours = (
                 classroom_hours
                 + independent_hours
+                + practice_hours
             )
 
             credit_norm = (

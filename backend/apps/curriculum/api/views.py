@@ -37,6 +37,11 @@ from apps.curriculum.models import (
     WorkloadType,
 )
 
+from apps.curriculum.services.norm_resolver import (
+    resolve_curriculum_academic_year,
+    resolve_curriculum_credit_norm,
+)
+
 
 class DisciplineViewSet(BaseArchiveModelViewSet):
     model = Discipline
@@ -106,6 +111,79 @@ class CurriculumViewSet(DjangoValidationErrorMixin, BaseArchiveModelViewSet,):
                     distinct=True,
                 )
             )
+        )
+
+    @action(
+        detail=True,
+        methods=["get"],
+        url_path="planning-norms",
+    )
+    def planning_norms(
+            self,
+            request,
+            pk=None,
+    ):
+        curriculum = self.get_object()
+
+        academic_year = (
+            resolve_curriculum_academic_year(
+                curriculum
+            )
+        )
+
+        credit_norm = (
+            resolve_curriculum_credit_norm(
+                curriculum
+            )
+        )
+
+        annual_norms = (
+            AcademicYearWorkloadNorm
+            .objects
+            .filter(
+                academic_year=academic_year,
+                is_active=True,
+                is_archived=False,
+            )
+            .select_related(
+                "workload_type"
+            )
+        )
+
+        return Response(
+            {
+                "academic_year":
+                    academic_year.id,
+
+                "academic_year_name":
+                    str(academic_year),
+
+                "hours_per_credit":
+                    (
+                        str(
+                            credit_norm
+                            .hours_per_credit
+                        )
+                        if credit_norm
+                        else None
+                    ),
+
+                "workload_norms": [
+                    {
+                        "workload_type":
+                            item.workload_type_id,
+
+                        "code":
+                            item.workload_type.code,
+
+                        "coefficient":
+                            str(
+                                item.coefficient
+                            ),
+                    }
+                    for item in annual_norms
+                ],
+            }
         )
 
 

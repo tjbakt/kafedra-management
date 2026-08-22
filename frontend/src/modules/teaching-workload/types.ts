@@ -91,12 +91,30 @@ export interface TeachingStream
 
 export interface TeachingStreamPayload {
   academic_year: number
-  academic_semester: number
+  // academic_semester: number
 
   curriculum: number
   semester_number: number
 
   code: string
+  name: string
+
+  status: TeachingStreamStatus
+
+  is_active: boolean
+
+  notes: string
+}
+
+export interface TeachingStreamBulkPayload {
+  academic_year: number
+
+  curriculum: number
+
+  semester_numbers: number[]
+
+  code: string
+
   name: string
 
   status: TeachingStreamStatus
@@ -161,6 +179,16 @@ export interface PlannedWorkload
   groups_count: number
   subgroups_count: number
   students_count: number
+
+  group_semester: number | null
+
+  student_group: number | null
+
+  student_group_code: string | null
+
+  semester_number: number
+
+  season: 'autumn' | 'spring'
 
   status: string
   status_name: string

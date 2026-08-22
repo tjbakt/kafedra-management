@@ -715,7 +715,6 @@ class CurriculumDiscipline(BaseModel):
     """
     Дисциплина в определённом семестре учебного плана.
     """
-
     class ControlForm(models.TextChoices):
         NONE = "none", _("Без итогового контроля")
         EXAM = "exam", _("Экзамен")

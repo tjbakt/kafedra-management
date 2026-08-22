@@ -77,6 +77,8 @@ export interface GroupSemester
 
   semester_number: number
 
+  weeks_count: number
+
   season: SemesterSeason
 
   students_count: number
@@ -105,11 +107,13 @@ export interface GroupSemesterPayload {
   group_curriculum: number
 
   academic_year: number
-  academic_semester: number
 
   semester_number: number
 
+  weeks_count: number
+
   students_count: number
+
   subgroup_count: number
 
   status: GroupSemesterStatus

@@ -1645,8 +1645,8 @@ const uz = {
         nameUz:
           'O‘zbek tilidagi nomi',
 
-        department:
-          'Standart kafedra',
+        department: 'Standart kafedra',
+        workloadTypes: 'Ish turini'
       },
 
       validation: {
@@ -1952,11 +1952,9 @@ const uz = {
     },
 
     sections: {
-      discipline:
-        'Fan va semestr',
-
-      hours:
-        'Kreditlar va akademik hajm',
+      main: 'Asosiy ma’lumotlar',
+      discipline: 'Fan va semestr',
+      hours: 'Kreditlar va akademik hajm',
     },
 
     summary: {
@@ -2314,8 +2312,8 @@ const uz = {
         semesterNumber:
           'Semestr raqami',
 
-        academicSemester:
-          'Kalendar semestr',
+        academicSemester: 'Kalendar semestr',
+        weeksCount: 'O‘quv haftalari',
 
         studentsCount:
           'Talabalar soni',
@@ -2356,11 +2354,8 @@ const uz = {
   },
 
   teachingWorkload: {
-    title:
-      'O‘quv oqimlari va yuklama',
-
-    description:
-      'O‘quv oqimlarini shakllantirish, guruhlarni birlashtirish va rejalashtirilgan o‘quv yuklamasini hisoblash.',
+    title: 'O‘quv oqimlari va yuklama',
+    description: 'O‘quv oqimlarini shakllantirish, guruhlarni birlashtirish va rejalashtirilgan o‘quv yuklamasini hisoblash.',
 
     calculate:
       'Yuklamani hisoblash',
@@ -2582,61 +2577,40 @@ const uz = {
     },
 
     planned: {
-      searchPlaceholder:
-        'Oqim, fan yoki kafedra bo‘yicha qidirish...',
+      searchPlaceholder: 'Oqim, fan yoki kafedra bo‘yicha qidirish...',
+      description: 'Semestrlar, oqimlar va o‘quv guruhlari bo‘yicha rejalashtirilgan o‘quv yuklamasi.',
+      empty: 'Rejalashtirilgan o‘quv yuklamasi mavjud emas',
+
+      scope: {
+        stream: 'Поток',
+        group: 'Учебная группа',
+      },
 
       statuses: {
-        calculated:
-          'Hisoblangan',
-
-        approved:
-          'Tasdiqlangan',
-
-        partially_distributed:
-          'Qisman taqsimlangan',
-
-        distributed:
-          'To‘liq taqsimlangan',
-
-        cancelled:
-          'Bekor qilingan',
+        calculated: 'Hisoblangan',
+        approved: 'Tasdiqlangan',
+        partially_distributed: 'Qisman taqsimlangan',
+        distributed: 'To‘liq taqsimlangan',
+        cancelled: 'Bekor qilingan',
       },
 
       fields: {
-        stream:
-          'Oqim',
-
-        discipline:
-          'Fan',
-
-        workloadType:
-          'Yuklama turi',
-
-        baseHours:
-          'Asosiy soatlar',
-
-        quantity:
-          'Miqdor',
-
-        totalHours:
-          'Jami soatlar',
-
-        remainingHours:
-          'Qoldiq',
-
-        distribution:
-          'Taqsimot',
-
-        status:
-          'Holat',
+        stream: 'Oqim',
+        discipline: 'Fan',
+        workloadType: 'Yuklama turi',
+        baseHours: 'Asosiy soatlar',
+        quantity: 'Miqdor',
+        totalHours: 'Jami soatlar',
+        remainingHours: 'Qoldiq',
+        distribution: 'Taqsimot',
+        distributedHours: 'Taqsimlangan',
+        status: 'Holat',
       },
 
       summary: {
-        totalHours:
-          'Rejalashtirilgan yuklamaning umumiy hajmi',
-
-        records:
-          'Yuklama pozitsiyalari',
+        totalHours: 'Rejalashtirilgan yuklamaning umumiy hajmi',
+        records: 'Yuklama pozitsiyalari',
+        yearTotal: 'O‘quv yili bo‘yicha jami',
       },
     },
   },

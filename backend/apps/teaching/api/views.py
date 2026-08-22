@@ -7,9 +7,7 @@ from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.exceptions import (
-    MethodNotAllowed,
-)
+from rest_framework.exceptions import MethodNotAllowed
 
 from apps.common.api.viewsets import BaseArchiveModelViewSet
 from apps.common.api.mixins import (
@@ -26,6 +24,7 @@ from apps.teaching.api.serializers import (
     GroupCurriculumAssignmentSerializer,
     GroupSemesterSerializer,
     PlannedWorkloadSerializer,
+    TeachingStreamBulkSerializer,
     TeachingStreamGroupSerializer,
     TeachingStreamSerializer,
 )
@@ -41,6 +40,9 @@ from apps.teaching.services.workload_calculator import (
 )
 from apps.academics.services.closed_academic_year_guard import (
     ClosedAcademicYearMutationGuard,
+)
+from apps.academics.models import (
+    AcademicSemester,
 )
 
 
@@ -309,6 +311,156 @@ class TeachingStreamViewSet(
                 "errors": errors,
             },
             status=status.HTTP_200_OK,
+        )
+
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="bulk-create",
+    )
+    @transaction.atomic
+    def bulk_create(
+            self,
+            request,
+    ):
+        serializer = (
+            TeachingStreamBulkSerializer(
+                data=request.data,
+            )
+        )
+
+        serializer.is_valid(
+            raise_exception=True
+        )
+
+        data = (
+            serializer.validated_data
+        )
+
+        result = []
+
+        for semester_number in (
+                data[
+                    "semester_numbers"
+                ]
+        ):
+            season = (
+                AcademicSemester
+                .Season
+                .AUTUMN
+                if semester_number % 2
+                else AcademicSemester
+                .Season
+                .SPRING
+            )
+
+            academic_semester = (
+                AcademicSemester.objects.get(
+                    academic_year=(
+                        data[
+                            "academic_year"
+                        ]
+                    ),
+                    season=season,
+                    is_active=True,
+                    is_archived=False,
+                )
+            )
+
+            stream = (
+                TeachingStream.objects.create(
+                    academic_year=(
+                        data[
+                            "academic_year"
+                        ]
+                    ),
+
+                    academic_semester=(
+                        academic_semester
+                    ),
+
+                    curriculum=(
+                        data[
+                            "curriculum"
+                        ]
+                    ),
+
+                    semester_number=(
+                        semester_number
+                    ),
+
+                    code=(
+                        f"{data['code']}"
+                        f"-S{semester_number}"
+                    ),
+
+                    name=(
+                        f"{data['name']} — "
+                        f"{semester_number} сем."
+                    ),
+
+                    notes=(
+                        data["notes"]
+                    ),
+
+                    created_by=(
+                        request.user
+                    ),
+                )
+            )
+
+            group_semesters = (
+                GroupSemester.objects
+                .filter(
+                    academic_year=(
+                        data[
+                            "academic_year"
+                        ]
+                    ),
+
+                    semester_number=(
+                        semester_number
+                    ),
+
+                    group_curriculum__curriculum=(
+                        data[
+                            "curriculum"
+                        ]
+                    ),
+
+                    is_active=True,
+                    is_archived=False,
+                )
+            )
+
+            for group_semester in (
+                    group_semesters
+            ):
+                TeachingStreamGroup.objects.create(
+                    teaching_stream=stream,
+
+                    group_semester=(
+                        group_semester
+                    ),
+
+                    created_by=(
+                        request.user
+                    ),
+                )
+
+            result.append(
+                stream
+            )
+
+        return Response(
+            TeachingStreamSerializer(
+                result,
+                many=True,
+                context=(
+                    self.get_serializer_context()
+                ),
+            ).data,
+            status=status.HTTP_201_CREATED,
         )
 
 class PlannedWorkloadViewSet(

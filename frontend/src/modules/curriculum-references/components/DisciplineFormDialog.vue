@@ -564,18 +564,19 @@ watch(
         </BaseFormField>
 
         <BaseFormField
-          :label=" t( 'curriculumReferences.disciplines.fields.workloadTypes', ) "
+          class="discipline-form__wide"
+          :label="t('curriculumReferences.disciplines.fields.workloadTypes',)"
           name="workload_types"
-          :error=" fieldError( 'workload_types', ) "
+          :error="fieldError('workload_types',)"
         >
           <MultiSelect
-            v-model=" form.workload_types "
-            :options=" workloadTypeOptions "
+            v-model="form.workload_types"
+            :options="workloadTypeOptions"
             option-label="label"
             option-value="value"
             display="chip"
             filter
-            class="w-full"
+            class="w-full workload-types-select"
             :disabled="loading"
             @change="handleWorkloadTypesChange"
           />
@@ -701,6 +702,56 @@ watch(
   min-height: 2.75rem;
   font-size: 0.82rem;
   font-weight: 600;
+}
+
+.discipline-form {
+  display: grid;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  align-items: start;
+}
+
+.discipline-form__wide {
+  grid-column: 1 / -1;
+}
+
+:deep(.workload-types-select) {
+  width: 100%;
+  min-height: 2.75rem;
+  height: auto;
+}
+
+:deep(
+  .workload-types-select
+  .p-multiselect-label
+) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.35rem;
+
+  min-height: 2.75rem;
+  height: auto;
+
+  white-space: normal;
+}
+
+:deep(
+  .workload-types-select
+  .p-multiselect-label-container
+) {
+  overflow: visible;
+}
+
+@media (max-width: 850px) {
+  .discipline-form {
+    grid-template-columns: 1fr;
+  }
+
+  .discipline-form__wide {
+    grid-column: auto;
+  }
 }
 
 .select-option {

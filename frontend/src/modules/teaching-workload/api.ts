@@ -17,6 +17,7 @@ import type {
   PlannedWorkload,
   PlannedWorkloadSummary,
   TeachingStream,
+  TeachingStreamBulkPayload,
   TeachingStreamGroup,
   TeachingStreamGroupPayload,
   TeachingStreamPayload,
@@ -48,6 +49,21 @@ export const plannedWorkloadsApi =
   >(
     '/teaching/planned-workloads/',
   )
+
+export async function createTeachingStreamsBulk(
+  payload:
+    TeachingStreamBulkPayload,
+): Promise<TeachingStream[]> {
+  const response =
+    await http.post<
+      TeachingStream[]
+    >(
+      '/teaching/teaching-streams/bulk-create/',
+      payload,
+    )
+
+  return response.data
+}
 
 export async function calculateStream(
   streamId: number,

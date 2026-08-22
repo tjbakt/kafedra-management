@@ -10,6 +10,13 @@ from apps.teaching.models import (
     TeachingStream,
     TeachingStreamGroup,
 )
+from apps.academics.models import (
+    AcademicSemester,
+    AcademicYear,
+)
+from apps.curriculum.models import (
+    Curriculum,
+)
 
 class LocalizedNameMixin:
     def get_localized_name(self, obj) -> str:
@@ -244,6 +251,8 @@ class GroupSemesterSerializer(AuditFieldsSerializer):
             "student_group",
             "curriculum",
             "season",
+            "academic_semester",
+            "academic_semester_name",
             "created_at",
             "updated_at",
             "created_by",
@@ -322,7 +331,167 @@ class GroupSemesterSerializer(AuditFieldsSerializer):
                     }
                 )
 
+        allowed = self.allowed_semester_numbers(
+            group_curriculum,
+            academic_year,
+        )
+        if (
+                semester_number
+                not in allowed
+        ):
+            raise serializers.ValidationError(
+                {
+                    "semester_number": (
+                            "Для выбранного учебного года "
+                            "доступны семестры: "
+                            + ", ".join(
+                        map(str, allowed)
+                    )
+                    )
+                }
+            )
+
         return attrs
+
+    def resolve_academic_semester(
+            self,
+            *,
+            academic_year,
+            semester_number,
+    ):
+        season = (
+            AcademicSemester.Season.AUTUMN
+            if semester_number % 2 == 1
+            else AcademicSemester.Season.SPRING
+        )
+
+        try:
+            return (
+                AcademicSemester.objects.get(
+                    academic_year=academic_year,
+                    season=season,
+                    is_active=True,
+                    is_archived=False,
+                )
+            )
+        except AcademicSemester.DoesNotExist:
+            raise serializers.ValidationError(
+                {
+                    "semester_number": (
+                        "Для выбранного учебного года "
+                        "не создан соответствующий "
+                        "академический семестр."
+                    )
+                }
+            )
+
+    def allowed_semester_numbers(
+            self,
+            group_curriculum,
+            academic_year,
+    ):
+        if (
+                not group_curriculum
+                or not academic_year
+        ):
+            return []
+
+        year_index = (
+                academic_year.start_year
+                -
+                group_curriculum
+                .start_academic_year
+                .start_year
+        )
+
+        if year_index < 0:
+            return []
+
+        first = (
+                year_index * 2 + 1
+        )
+
+        result = [
+            first,
+            first + 1,
+        ]
+
+        semesters_count = (
+            group_curriculum
+            .curriculum
+            .semesters_count
+        )
+
+        return [
+            value
+            for value in result
+            if (
+                    semesters_count is None
+                    or value <= semesters_count
+            )
+        ]
+
+    def create(
+            self,
+            validated_data,
+    ):
+        academic_year = (
+            validated_data[
+                "academic_year"
+            ]
+        )
+
+        semester_number = (
+            validated_data[
+                "semester_number"
+            ]
+        )
+
+        validated_data[
+            "academic_semester"
+        ] = (
+            self.resolve_academic_semester(
+                academic_year=academic_year,
+                semester_number=semester_number,
+            )
+        )
+
+        return super().create(
+            validated_data
+        )
+
+    def update(
+            self,
+            instance,
+            validated_data,
+    ):
+        academic_year = (
+            validated_data.get(
+                "academic_year",
+                instance.academic_year,
+            )
+        )
+
+        semester_number = (
+            validated_data.get(
+                "semester_number",
+                instance.semester_number,
+            )
+        )
+
+        validated_data[
+            "academic_semester"
+        ] = (
+            self.resolve_academic_semester(
+                academic_year=academic_year,
+                semester_number=semester_number,
+            )
+        )
+
+        return super().update(
+            instance,
+            validated_data,
+        )
 
 class TeachingStreamGroupSerializer(
     AuditFieldsSerializer
@@ -727,6 +896,52 @@ class TeachingStreamSerializer(
                 )
         return attrs
 
+class TeachingStreamBulkSerializer(
+    serializers.Serializer
+):
+    academic_year = (
+        serializers.PrimaryKeyRelatedField(
+            queryset=(
+                AcademicYear.objects.filter(
+                    is_archived=False,
+                )
+            )
+        )
+    )
+
+    curriculum = (
+        serializers.PrimaryKeyRelatedField(
+            queryset=(
+                Curriculum.objects.filter(
+                    is_archived=False,
+                )
+            )
+        )
+    )
+
+    semester_numbers = (
+        serializers.ListField(
+            child=serializers.IntegerField(
+                min_value=1,
+            ),
+            allow_empty=False,
+        )
+    )
+
+    code = serializers.CharField(
+        max_length=100,
+    )
+
+    name = serializers.CharField(
+        max_length=255,
+    )
+
+    notes = serializers.CharField(
+        allow_blank=True,
+        required=False,
+        default="",
+    )
+
 class PlannedWorkloadSerializer(LocalizedNameMixin, AuditFieldsSerializer):
     teaching_stream_code = serializers.CharField(
         source="teaching_stream.code",
@@ -800,6 +1015,41 @@ class PlannedWorkloadSerializer(LocalizedNameMixin, AuditFieldsSerializer):
 
     status_name = serializers.CharField(
         source="get_status_display",
+        read_only=True,
+    )
+    student_group = serializers.IntegerField(
+        source=(
+            "group_semester."
+            "group_curriculum."
+            "student_group_id"
+        ),
+        read_only=True,
+        allow_null=True,
+    )
+
+    student_group_code = serializers.CharField(
+        source=(
+            "group_semester."
+            "group_curriculum."
+            "student_group.code"
+        ),
+        read_only=True,
+        allow_null=True,
+    )
+
+    semester_number = serializers.IntegerField(
+        source=(
+            "teaching_stream."
+            "semester_number"
+        ),
+        read_only=True,
+    )
+
+    season = serializers.CharField(
+        source=(
+            "teaching_stream."
+            "season"
+        ),
         read_only=True,
     )
 
@@ -876,6 +1126,13 @@ class PlannedWorkloadSerializer(LocalizedNameMixin, AuditFieldsSerializer):
             "groups_count",
             "subgroups_count",
             "students_count",
+
+            "group_semester",
+            "student_group",
+            "student_group_code",
+
+            "semester_number",
+            "season",
 
             "status",
             "status_name",

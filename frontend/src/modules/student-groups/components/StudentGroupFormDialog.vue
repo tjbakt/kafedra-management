@@ -90,12 +90,6 @@ const localeStore =
 const form = reactive({
   code: '',
 
-  academic_year_admission:
-    null as number | null,
-
-  graduation_academic_year:
-    null as number | null,
-
   faculty:
     null as number | null,
 
@@ -147,63 +141,6 @@ function localizedName(
     '—'
   )
 }
-
-const admissionYearOptions =
-  computed<
-    SelectOption<number>[]
-  >(() => {
-    const result =
-      props.academicYears
-        .filter(
-          (year) =>
-            !year.is_archived,
-        )
-        .map((year) => ({
-          value: year.id,
-
-          label: year.name,
-
-          description:
-            year.is_current
-              ? t(
-                  'studentGroups.currentYear',
-                )
-              : year.is_closed
-                ? t(
-                    'studentGroups.closedYear',
-                  )
-                : '',
-        }))
-
-    return result
-  })
-
-const graduationYearOptions =
-  computed<
-    SelectOption<number>[]
-  >(() => {
-    const admissionYear =
-      props.academicYears.find(
-        (year) =>
-          year.id ===
-          form.academic_year_admission,
-      )
-
-    return props.academicYears
-      .filter(
-        (year) =>
-          !year.is_archived &&
-          (
-            !admissionYear ||
-            year.start_year >
-              admissionYear.start_year
-          ),
-      )
-      .map((year) => ({
-        value: year.id,
-        label: year.name,
-      }))
-  })
 
 const selectedProgram =
   computed(
@@ -461,12 +398,6 @@ function clearLocalErrors(): void {
 function resetForm(): void {
   form.code = ''
 
-  form.academic_year_admission =
-    null
-
-  form.graduation_academic_year =
-    null
-
   form.faculty = null
   form.study_program = null
   form.study_form = null
@@ -486,12 +417,6 @@ function fillForm(
 ): void {
   form.code =
     record.code
-
-  form.academic_year_admission =
-    record.academic_year_admission
-
-  form.graduation_academic_year =
-    record.graduation_academic_year
 
   form.faculty =
     record.faculty
@@ -536,15 +461,6 @@ function validate(): boolean {
     localErrors.code =
       t(
         'studentGroups.validation.codeRequired',
-      )
-  }
-
-  if (
-    !form.academic_year_admission
-  ) {
-    localErrors.academic_year_admission =
-      t(
-        'studentGroups.validation.admissionYearRequired',
       )
   }
 
@@ -631,37 +547,6 @@ function validate(): boolean {
       )
   }
 
-  if (
-    form.academic_year_admission &&
-    form.graduation_academic_year
-  ) {
-    const admission =
-      props.academicYears.find(
-        (year) =>
-          year.id ===
-          form.academic_year_admission,
-      )
-
-    const graduation =
-      props.academicYears.find(
-        (year) =>
-          year.id ===
-          form.graduation_academic_year,
-      )
-
-    if (
-      admission &&
-      graduation &&
-      graduation.start_year <=
-        admission.start_year
-    ) {
-      localErrors.graduation_academic_year =
-        t(
-          'studentGroups.validation.graduationYear',
-        )
-    }
-  }
-
   return (
     Object.keys(localErrors)
       .length === 0
@@ -674,7 +559,6 @@ function submit(): void {
   }
 
   if (
-    !form.academic_year_admission ||
     !form.faculty ||
     !form.study_program ||
     !form.study_form
@@ -687,12 +571,6 @@ function submit(): void {
       form.code
         .trim()
         .toUpperCase(),
-
-    academic_year_admission:
-      form.academic_year_admission,
-
-    graduation_academic_year:
-      form.graduation_academic_year,
 
     faculty:
       form.faculty,
@@ -733,30 +611,6 @@ watch(
 
     if (!allowed) {
       form.study_form = null
-    }
-  },
-)
-
-watch(
-  () =>
-    form.academic_year_admission,
-  () => {
-    if (
-      !form.graduation_academic_year
-    ) {
-      return
-    }
-
-    const valid =
-      graduationYearOptions.value.some(
-        (option) =>
-          option.value ===
-          form.graduation_academic_year,
-      )
-
-    if (!valid) {
-      form.graduation_academic_year =
-        null
     }
   },
 )
@@ -867,18 +721,6 @@ watch(
               )
             "
           >
-            <Select
-              v-model="
-                form.academic_year_admission
-              "
-              :options="
-                admissionYearOptions
-              "
-              option-label="label"
-              option-value="value"
-              class="w-full"
-              :disabled="loading"
-            />
           </BaseFormField>
 
           <BaseFormField
@@ -896,22 +738,7 @@ watch(
               )
             "
           >
-            <Select
-              v-model="
-                form.graduation_academic_year
-              "
-              :options="
-                graduationYearOptions
-              "
-              option-label="label"
-              option-value="value"
-              show-clear
-              class="w-full"
-              :disabled="
-                loading ||
-                !form.academic_year_admission
-              "
-            />
+
           </BaseFormField>
 
           <BaseFormField

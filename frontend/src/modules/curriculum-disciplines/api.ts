@@ -131,25 +131,28 @@ export async function configureCurriculumDiscipline(
   return response.data
 }
 
-// export async function getDepartments(): Promise<
-//   PaginatedResponse<DepartmentLookup>
-// > {
-//   const response =
-//     await http.get<
-//       PaginatedResponse<DepartmentLookup>
-//     >(
-//       '/organizations/departments/',
-//       {
-//         params: {
-//           page_size: 500,
-//
-//           is_active: true,
-//
-//           ordering:
-//             'sort_order,name_ru',
-//         },
-//       },
-//     )
-//
-//   return response.data
-// }
+export interface CurriculumPlanningNorm {
+  academic_year: number
+
+  academic_year_name: string
+
+  hours_per_credit:
+    string | null
+
+  workload_norms: Array<{
+    workload_type: number
+    code: string
+    coefficient: string
+  }>
+}
+
+export async function getCurriculumPlanningNorms(
+  curriculumId: number,
+): Promise<CurriculumPlanningNorm> {
+  const response =
+    await http.get<CurriculumPlanningNorm>(
+      `/curriculum/curricula/${curriculumId}/planning-norms/`,
+    )
+
+  return response.data
+}

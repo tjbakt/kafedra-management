@@ -73,7 +73,7 @@ const moduleRoutes: RouteRecordRaw[] = [
     name: 'student-groups',
     component: () =>
       import(
-        '@/modules/student-groups/StudentGroupsView.vue'
+        '@/modules/student-groups/StudentGroupsWorkspaceView.vue'
         ),
     meta: {
       requiresAuth: true,
@@ -150,65 +150,56 @@ const moduleRoutes: RouteRecordRaw[] = [
     },
   },
 
+  // {
+  //   path: 'teaching-setup',
+  //   name: 'teaching-setup',
+  //   component: () =>
+  //     import(
+  //       '@/modules/teaching-setup/TeachingSetupView.vue'
+  //       ),
+  //
+  //   meta: {
+  //     requiresAuth: true,
+  //     requiredPermissions: [
+  //       'teaching.view_groupcurriculumassignment',
+  //     ],
+  //     titleKey: 'navigation.teachingSetup',
+  //     icon: 'pi pi-sitemap',
+  //     breadcrumbKeys: [
+  //       'navigation.teachingSetup',
+  //     ],
+  //   },
+  // },
+
   {
-    path: 'teaching-setup',
-    name: 'teaching-setup',
+    path: 'teaching-streams',
+    name: 'teaching-streams',
     component: () =>
       import(
-        '@/modules/teaching-setup/TeachingSetupView.vue'
+        '@/modules/teaching-workload/TeachingWorkloadView.vue'
         ),
-
     meta: {
       requiresAuth: true,
-      requiredPermissions: [
-        'teaching.view_groupcurriculumassignment',
-      ],
-      titleKey: 'navigation.teachingSetup',
-      icon: 'pi pi-sitemap',
-      breadcrumbKeys: [
-        'navigation.teachingSetup',
-      ],
+      titleKey: 'navigation.teachingStreams',
     },
   },
-
   {
     path: 'workload',
     name: 'workload',
     component: () =>
-      import('@/modules/teaching-workload/TeachingWorkloadView.vue'),
-    meta: {
-      requiresAuth: true,
-      requiredPermissions: [
-        'teaching.view_teachingstream',
-      ],
-      titleKey: 'navigation.teachingWorkload',
-      descriptionKey:
-        'modules.workloadDescription',
-      icon: 'pi pi-chart-bar',
-      breadcrumbKeys: [
-        'navigation.teachingWorkload',
-      ],
-    },
-  },
-  {
-    path: 'workload-distribution',
-    name: 'workload-distribution',
-    component: () =>
       import(
-        '@/modules/workload-distribution/WorkloadDistributionView.vue'
+        '@/modules/workload/WorkloadView.vue'
         ),
     meta: {
       requiresAuth: true,
-      requiredPermissions: [
-        'workload.view_workloaddistribution',
-      ],
-      titleKey: 'navigation.workloadDistribution',
-      icon: 'pi pi-user-edit',
-      breadcrumbKeys: [
-        'navigation.teachingWorkload',
-        'navigation.workloadDistribution',
-      ],
+      titleKey:
+        'navigation.workload',
     },
+  },
+
+  {
+    path: 'workload-distribution',
+    redirect: '/workload',
   },
   {
     path: 'schedules',

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import Checkbox from 'primevue/checkbox'
 import InputText from 'primevue/inputtext'
+import MultiSelect from 'primevue/multiselect'
 import Select from 'primevue/select'
 import Textarea from 'primevue/textarea'
 
@@ -21,17 +22,14 @@ import BaseFormField from '@/components/base/BaseFormField.vue'
 import FormValidationSummary from '@/components/forms/FormValidationSummary.vue'
 
 import type {
-  CurriculumLookup,
-} from '@/modules/teaching-setup/types'
-
-import type {
-  AcademicSemesterLookup,
   AcademicYearLookup,
+  CurriculumLookup,
+  GroupSemester,
 } from '@/modules/teaching-setup/types'
 
 import type {
   TeachingStream,
-  TeachingStreamPayload,
+  TeachingStreamBulkPayload,
   TeachingStreamStatus,
 } from '@/modules/teaching-workload/types'
 
@@ -52,14 +50,21 @@ const props = withDefaults(
   defineProps<{
     record?: TeachingStream | null
 
-    academicYears: AcademicYearLookup[]
-    academicSemesters: AcademicSemesterLookup[]
-    curricula: CurriculumLookup[]
+    academicYears:
+      AcademicYearLookup[]
+
+    curricula:
+      CurriculumLookup[]
+
+    groupSemesters:
+      GroupSemester[]
 
     loading?: boolean
 
     fieldErrors?: FieldErrors
+
     nonFieldErrors?: string[]
+
     generalError?: string
   }>(),
   {
@@ -68,198 +73,197 @@ const props = withDefaults(
     loading: false,
 
     fieldErrors: () => ({}),
+
     nonFieldErrors: () => [],
+
     generalError: '',
   },
 )
 
 const emit = defineEmits<{
   submit: [
-    payload: TeachingStreamPayload,
+    payload:
+      TeachingStreamBulkPayload,
   ]
 }>()
 
-const { t } = useI18n()
+const { t } =
+  useI18n()
 
-const form = reactive({
-  academic_year:
-    null as number | null,
+const form =
+  reactive({
+    academic_year: null as number | null,
 
-  academic_semester:
-    null as number | null,
+    curriculum: null as number | null,
 
-  curriculum:
-    null as number | null,
+    semester_numbers: [] as number[],
 
-  semester_number:
-    null as number | null,
+    code: '',
 
-  code: '',
-  name: '',
+    name: '',
 
-  status:
-    'draft' as TeachingStreamStatus,
+    status: 'draft' as TeachingStreamStatus,
 
-  is_active: true,
+    is_active: true,
 
-  notes: '',
-})
+    notes: '',
+  })
 
 const localErrors =
-  reactive<Record<string, string>>({})
-
-const selectedCurriculum =
-  computed(
-    () =>
-      props.curricula.find(
-        (item) =>
-          item.id ===
-          form.curriculum,
-      ) ?? null,
-  )
+  reactive<
+    Record<string, string>
+  >({})
 
 const yearOptions =
-  computed(() =>
-    props.academicYears
-      .filter(
-        (year) =>
-          !year.is_archived,
-      )
-      .map(
-        (year) => ({
-          value: year.id,
-          label: year.name,
-        }),
-      ),
+  computed(
+    () =>
+      props.academicYears
+        .filter(
+          (year) =>
+            !year.is_archived,
+        )
+        .map(
+          (year) => ({
+            value:
+              year.id,
+
+            label:
+              year.name,
+          }),
+        ),
   )
 
 const curriculumOptions =
-  computed(() =>
-    props.curricula
-      .filter(
-        (item) =>
-          item.is_active &&
-          !item.is_archived,
-      )
-      .map(
-        (item) => ({
-          value: item.id,
+  computed(
+    () =>
+      props.curricula
+        .filter(
+          (item) =>
+            item.is_active &&
+            !item.is_archived,
+        )
+        .map(
+          (item) => ({
+            value:
+              item.id,
 
-          label:
-            `${item.code} · v${item.version}`,
+            label:
+              `${item.code} · v${item.version}`,
 
-          description:
-            `${item.study_program_name} · ${item.study_form_name}`,
-        }),
-      ),
+            description:
+              `${item.study_program_name} · ${item.study_form_name}`,
+          }),
+        ),
   )
 
 const semesterNumberOptions =
-  computed(() => {
-    const count =
-      selectedCurriculum.value
-        ?.semesters_count ?? 0
+  computed(
+    () => {
+      if (
+        !form.academic_year ||
+        !form.curriculum
+      ) {
+        return []
+      }
 
-    return Array.from(
-      {
-        length: count,
-      },
+      const numbers =
+        new Set<number>()
 
-      (_, index) => {
-        const semester =
-          index + 1
-
-        return {
-          value:
-            semester,
-
-          label:
-            semester % 2 === 1
-              ? `${semester} — ${t(
-                  'teachingWorkload.seasons.autumn',
-                )}`
-              : `${semester} — ${t(
-                  'teachingWorkload.seasons.spring',
-                )}`,
-        }
-      },
-    )
-  })
-
-const academicSemesterOptions =
-  computed(() => {
-    if (
-      !form.academic_year ||
-      !form.semester_number
-    ) {
-      return []
-    }
-
-    const season =
-      form.semester_number % 2 === 1
-        ? 'autumn'
-        : 'spring'
-
-    return props.academicSemesters
-      .filter(
-        (item) =>
+      for (
+        const item
+        of props.groupSemesters
+      ) {
+        if (
           item.academic_year ===
             form.academic_year &&
-          item.season === season &&
+          item.curriculum ===
+            form.curriculum &&
           item.is_active &&
-          !item.is_archived,
-      )
-      .map(
-        (item) => ({
-          value: item.id,
+          !item.is_archived
+        ) {
+          numbers.add(
+            item.semester_number,
+          )
+        }
+      }
 
-          label:
-            item.season_name,
-
-          description:
-            `${item.start_date} — ${item.end_date}`,
-        }),
+      return Array.from(
+        numbers,
       )
-  })
+        .sort(
+          (a, b) =>
+            a - b,
+        )
+        .map(
+          (value) => ({
+            value,
+
+            label:
+              `${value} — ${
+                value % 2 === 1
+                  ? t(
+                      'teachingSetup.seasons.autumn',
+                    )
+                  : t(
+                      'teachingSetup.seasons.spring',
+                    )
+              }`,
+          }),
+        )
+    },
+  )
 
 const statusOptions =
-  computed(() => [
-    {
-      value: 'draft',
-      label:
-        t(
-          'teachingWorkload.streams.statuses.draft',
-        ),
-    },
-    {
-      value: 'calculated',
-      label:
-        t(
-          'teachingWorkload.streams.statuses.calculated',
-        ),
-    },
-    {
-      value: 'approved',
-      label:
-        t(
-          'teachingWorkload.streams.statuses.approved',
-        ),
-    },
-    {
-      value: 'cancelled',
-      label:
-        t(
-          'teachingWorkload.streams.statuses.cancelled',
-        ),
-    },
-  ])
+  computed(
+    () => [
+      {
+        value: 'draft',
+
+        label:
+          t(
+            'teachingWorkload.streams.statuses.draft',
+          ),
+      },
+
+      {
+        value: 'calculated',
+
+        label:
+          t(
+            'teachingWorkload.streams.statuses.calculated',
+          ),
+      },
+
+      {
+        value: 'approved',
+
+        label:
+          t(
+            'teachingWorkload.streams.statuses.approved',
+          ),
+      },
+
+      {
+        value: 'cancelled',
+
+        label:
+          t(
+            'teachingWorkload.streams.statuses.cancelled',
+          ),
+      },
+    ],
+  )
 
 function clearErrors(): void {
   for (
-    const key of
-    Object.keys(localErrors)
+    const key
+    of Object.keys(
+      localErrors,
+    )
   ) {
-    delete localErrors[key]
+    delete localErrors[
+      key
+    ]
   }
 }
 
@@ -282,41 +286,44 @@ function resetForm(): void {
         year.is_current,
     )?.id ?? null
 
-  form.academic_semester =
-    null
-
   form.curriculum =
     null
 
-  form.semester_number =
-    null
+  form.semester_numbers =
+    []
 
-  form.code = ''
-  form.name = ''
+  form.code =
+    ''
 
-  form.status = 'draft'
+  form.name =
+    ''
 
-  form.is_active = true
+  form.status =
+    'draft'
 
-  form.notes = ''
+  form.is_active =
+    true
+
+  form.notes =
+    ''
 
   clearErrors()
 }
 
 function fillForm(
-  record: TeachingStream,
+  record:
+    TeachingStream,
 ): void {
   form.academic_year =
     record.academic_year
 
-  form.academic_semester =
-    record.academic_semester
-
   form.curriculum =
     record.curriculum
 
-  form.semester_number =
-    record.semester_number
+  form.semester_numbers =
+    [
+      record.semester_number,
+    ]
 
   form.code =
     record.code
@@ -353,17 +360,13 @@ function validate(): boolean {
       )
   }
 
-  if (!form.semester_number) {
-    localErrors.semester_number =
+  if (
+    form.semester_numbers.length ===
+    0
+  ) {
+    localErrors.semester_numbers =
       t(
         'teachingWorkload.streams.validation.semesterNumberRequired',
-      )
-  }
-
-  if (!form.academic_semester) {
-    localErrors.academic_semester =
-      t(
-        'teachingWorkload.streams.validation.semesterRequired',
       )
   }
 
@@ -382,8 +385,9 @@ function validate(): boolean {
   }
 
   return (
-    Object.keys(localErrors)
-      .length === 0
+    Object.keys(
+      localErrors,
+    ).length === 0
   )
 }
 
@@ -394,85 +398,84 @@ function submit(): void {
 
   if (
     !form.academic_year ||
-    !form.academic_semester ||
     !form.curriculum ||
-    !form.semester_number
+    form.semester_numbers.length ===
+      0
   ) {
     return
   }
 
-  emit('submit', {
-    academic_year:
-      form.academic_year,
+  emit(
+    'submit',
+    {
+      academic_year:
+        form.academic_year,
 
-    academic_semester:
-      form.academic_semester,
+      curriculum:
+        form.curriculum,
 
-    curriculum:
-      form.curriculum,
+      semester_numbers:
+        [...form.semester_numbers],
 
-    semester_number:
-      form.semester_number,
+      code:
+        form.code
+          .trim()
+          .toUpperCase(),
 
-    code:
-      form.code
-        .trim()
-        .toUpperCase(),
+      name:
+        form.name.trim(),
 
-    name:
-      form.name.trim(),
+      status:
+        form.status,
 
-    status:
-      form.status,
+      is_active:
+        form.is_active,
 
-    is_active:
-      form.is_active,
-
-    notes:
-      form.notes.trim(),
-  })
+      notes:
+        form.notes.trim(),
+    },
+  )
 }
 
 watch(
   [
-    () => form.academic_year,
-    () => form.semester_number,
+    () =>
+      form.academic_year,
+
+    () =>
+      form.curriculum,
   ],
   () => {
-    if (
-      !academicSemesterOptions.value
-        .some(
-          (option) =>
-            option.value ===
-            form.academic_semester,
-        )
-    ) {
-      form.academic_semester =
-        null
+    if (props.record) {
+      return
     }
+
+    const allowed =
+      new Set(
+        semesterNumberOptions
+          .value
+          .map(
+            (option) =>
+              option.value,
+          ),
+      )
+
+    form.semester_numbers =
+      form.semester_numbers.filter(
+        (semesterNumber) =>
+          allowed.has(
+            semesterNumber,
+          ),
+      )
   },
 )
 
 watch(
-  () => form.curriculum,
-  () => {
-    if (
-      !semesterNumberOptions.value
-        .some(
-          (option) =>
-            option.value ===
-            form.semester_number,
-        )
-    ) {
-      form.semester_number =
-        null
-    }
-  },
-)
-
-watch(
-  () => visible.value,
-  (isVisible) => {
+  () =>
+    visible.value,
+  (
+    isVisible,
+  ) => {
     if (!isVisible) {
       return
     }
@@ -481,9 +484,11 @@ watch(
       fillForm(
         props.record,
       )
-    } else {
-      resetForm()
+
+      return
     }
+
+    resetForm()
   },
 )
 </script>
@@ -504,7 +509,9 @@ watch(
     :loading="loading"
   >
     <FormValidationSummary
-      :field-errors="fieldErrors"
+      :field-errors="
+        fieldErrors
+      "
       :non-field-errors="
         nonFieldErrors
       "
@@ -518,7 +525,9 @@ watch(
         teaching-stream-form
       "
       novalidate
-      @submit.prevent="submit"
+      @submit.prevent="
+        submit
+      "
     >
       <div
         class="
@@ -565,8 +574,12 @@ watch(
           "
         >
           <Select
-            v-model="form.curriculum"
-            :options="curriculumOptions"
+            v-model="
+              form.curriculum
+            "
+            :options="
+              curriculumOptions
+            "
             option-label="label"
             option-value="value"
             filter
@@ -575,6 +588,9 @@ watch(
         </BaseFormField>
 
         <BaseFormField
+          class="
+            teaching-stream-form__wide
+          "
           :label="
             t(
               'teachingWorkload.streams.fields.semesterNumber',
@@ -583,51 +599,24 @@ watch(
           required
           :error="
             fieldError(
-              'semester_number',
+              'semester_numbers',
             )
           "
         >
-          <Select
+          <MultiSelect
             v-model="
-              form.semester_number
+              form.semester_numbers
             "
             :options="
               semesterNumberOptions
             "
             option-label="label"
             option-value="value"
+            display="chip"
             class="w-full"
             :disabled="
+              !form.academic_year ||
               !form.curriculum
-            "
-          />
-        </BaseFormField>
-
-        <BaseFormField
-          :label="
-            t(
-              'teachingWorkload.streams.fields.academicSemester',
-            )
-          "
-          required
-          :error="
-            fieldError(
-              'academic_semester',
-            )
-          "
-        >
-          <Select
-            v-model="
-              form.academic_semester
-            "
-            :options="
-              academicSemesterOptions
-            "
-            option-label="label"
-            option-value="value"
-            class="w-full"
-            :disabled="
-              !form.semester_number
             "
           />
         </BaseFormField>
@@ -640,11 +629,15 @@ watch(
           "
           required
           :error="
-            fieldError('code')
+            fieldError(
+              'code',
+            )
           "
         >
           <InputText
-            v-model="form.code"
+            v-model="
+              form.code
+            "
             class="w-full"
           />
         </BaseFormField>
@@ -657,11 +650,15 @@ watch(
           "
           required
           :error="
-            fieldError('name')
+            fieldError(
+              'name',
+            )
           "
         >
           <InputText
-            v-model="form.name"
+            v-model="
+              form.name
+            "
             class="w-full"
           />
         </BaseFormField>
@@ -674,7 +671,9 @@ watch(
           "
         >
           <Select
-            v-model="form.status"
+            v-model="
+              form.status
+            "
             :options="
               statusOptions
             "
@@ -693,7 +692,9 @@ watch(
         "
       >
         <Textarea
-          v-model="form.notes"
+          v-model="
+            form.notes
+          "
           rows="4"
           class="w-full"
         />
@@ -723,14 +724,22 @@ watch(
 
     <template #footer>
       <BaseFormActions
-        :loading="loading"
+        :loading="
+          loading
+        "
         :save-label="
-          t('common.save')
+          t(
+            'common.save',
+          )
         "
         :cancel-label="
-          t('common.cancel')
+          t(
+            'common.cancel',
+          )
         "
-        @submit="submit"
+        @submit="
+          submit
+        "
         @cancel="
           visible = false
         "
@@ -747,25 +756,41 @@ watch(
 
 .teaching-stream-form__grid {
   display: grid;
+
   grid-template-columns:
     repeat(
       2,
       minmax(0, 1fr)
     );
+
   gap: 1rem;
+}
+
+.teaching-stream-form__wide {
+  grid-column:
+    1 / -1;
 }
 
 .teaching-stream-form__active {
   display: flex;
+
   align-items: center;
+
   gap: 0.5rem;
 
   width: fit-content;
 }
 
-@media (max-width: 767px) {
+@media (
+  max-width: 767px
+) {
   .teaching-stream-form__grid {
-    grid-template-columns: 1fr;
+    grid-template-columns:
+      1fr;
+  }
+
+  .teaching-stream-form__wide {
+    grid-column: auto;
   }
 }
 </style>

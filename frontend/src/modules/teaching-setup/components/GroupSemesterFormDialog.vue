@@ -21,7 +21,6 @@ import BaseFormField from '@/components/base/BaseFormField.vue'
 import FormValidationSummary from '@/components/forms/FormValidationSummary.vue'
 
 import type {
-  AcademicSemesterLookup,
   AcademicYearLookup,
   CurriculumLookup,
   GroupCurriculumAssignment,
@@ -61,13 +60,12 @@ const props = withDefaults(
     academicYears:
       AcademicYearLookup[]
 
-    academicSemesters:
-      AcademicSemesterLookup[]
-
     loading?: boolean
 
     fieldErrors?: FieldErrors
+
     nonFieldErrors?: string[]
+
     generalError?: string
   }>(),
   {
@@ -76,60 +74,81 @@ const props = withDefaults(
     loading: false,
 
     fieldErrors: () => ({}),
+
     nonFieldErrors: () => [],
+
     generalError: '',
   },
 )
 
 const emit = defineEmits<{
   submit: [
-    payload: GroupSemesterPayload,
+    payload:
+      GroupSemesterPayload,
   ]
 }>()
 
-const { t } = useI18n()
+const { t } =
+  useI18n()
 
-const form = reactive({
-  group_curriculum:
-    null as number | null,
+const form =
+  reactive({
+    group_curriculum:
+      null as number | null,
 
-  academic_year:
-    null as number | null,
+    academic_year:
+      null as number | null,
 
-  academic_semester:
-    null as number | null,
+    semester_number:
+      null as number | null,
 
-  semester_number:
-    null as number | null,
+    weeks_count: 15,
 
-  students_count: 0,
-  subgroup_count: 1,
-  status: 'planned' as GroupSemesterStatus,
-  is_active: true,
-  notes: '',
-})
+    students_count: 0,
+
+    subgroup_count: 1,
+
+    status: 'planned' as GroupSemesterStatus,
+
+    is_active: true,
+
+    notes: '',
+  })
 
 const localErrors =
-  reactive<Record<string, string>>({})
+  reactive<
+    Record<string, string>
+  >({})
 
-const title = computed(
-  () =>
-    props.record
-      ? t(
-          'teachingSetup.groupSemesters.editTitle',
-        )
-      : t(
-          'teachingSetup.groupSemesters.createTitle',
-        ),
-)
+const title =
+  computed(
+    () =>
+      props.record
+        ? t(
+            'teachingSetup.groupSemesters.editTitle',
+          )
+        : t(
+            'teachingSetup.groupSemesters.createTitle',
+          ),
+  )
 
 const selectedAssignment =
   computed(
     () =>
       props.groupCurricula.find(
-        (assignment) =>
-          assignment.id ===
+        (item) =>
+          item.id ===
           form.group_curriculum,
+      ) ?? null,
+  )
+
+const selectedAcademicYear =
+  computed(
+    () =>
+      props.academicYears.find(
+        (item) =>
+          item.id ===
+          form.academic_year,
       ) ?? null,
   )
 
@@ -208,9 +227,11 @@ const academicYearOptions =
       )
       .map(
         (year) => ({
-          value: year.id,
+          value:
+            year.id,
 
-          label: year.name,
+          label:
+            year.name,
 
           description:
             year.is_current
@@ -226,99 +247,102 @@ const academicYearOptions =
       ),
   )
 
+/**
+ * Семестры ограничиваются выбранным
+ * учебным годом назначения плана.
+ *
+ * Например:
+ * начало обучения 2024/2025
+ *
+ * 2024/2025 -> 1, 2
+ * 2025/2026 -> 3, 4
+ * 2026/2027 -> 5, 6
+ */
 const semesterNumberOptions =
   computed<
     SelectOption<number>[]
   >(() => {
-    const count =
+    const assignment =
+      selectedAssignment.value
+
+    const academicYear =
+      selectedAcademicYear.value
+
+    const curriculum =
       selectedCurriculum.value
-        ?.semesters_count ?? 0
 
-    return Array.from(
-      {
-        length: count,
-      },
-
-      (_, index) => {
-        const semester =
-          index + 1
-
-        const season =
-          semester % 2 === 1
-            ? t(
-                'teachingSetup.seasons.autumn',
-              )
-            : t(
-                'teachingSetup.seasons.spring',
-              )
-
-        return {
-          value: semester,
-
-          label:
-            t(
-              'teachingSetup.groupSemesters.semesterOption',
-              {
-                semester,
-                season,
-              },
-            ),
-        }
-      },
-    )
-  })
-
-const expectedSeason =
-  computed<
-    'autumn' | 'spring' | null
-  >(() => {
     if (
-      !form.semester_number
-    ) {
-      return null
-    }
-
-    return (
-      form.semester_number %
-        2 ===
-      1
-        ? 'autumn'
-        : 'spring'
-    )
-  })
-
-const academicSemesterOptions =
-  computed<
-    SelectOption<number>[]
-  >(() => {
-    if (
-      !form.academic_year ||
-      !expectedSeason.value
+      !assignment ||
+      !academicYear ||
+      !curriculum
     ) {
       return []
     }
 
-    return props.academicSemesters
+    const startYear =
+      props.academicYears.find(
+        (item) =>
+          item.id ===
+          assignment.start_academic_year,
+      )
+
+    if (!startYear) {
+      return []
+    }
+
+    const yearIndex =
+      academicYear.start_year -
+      startYear.start_year
+
+    if (yearIndex < 0) {
+      return []
+    }
+
+    const firstSemester =
+      yearIndex * 2 + 1
+
+    const semestersCount =
+      Number(
+        curriculum.semesters_count ??
+        0,
+      )
+
+    return [
+      firstSemester,
+      firstSemester + 1,
+    ]
       .filter(
-        (semester) =>
-          !semester.is_archived &&
-          semester.is_active &&
-          semester.academic_year ===
-            form.academic_year &&
-          semester.season ===
-            expectedSeason.value,
+        (semesterNumber) =>
+          semesterNumber <=
+          semestersCount,
       )
       .map(
-        (semester) => ({
-          value:
-            semester.id,
+        (semesterNumber) => {
+          const season =
+            semesterNumber % 2 === 1
+              ? t(
+                  'teachingSetup.seasons.autumn',
+                )
+              : t(
+                  'teachingSetup.seasons.spring',
+                )
 
-          label:
-            semester.season_name,
+          return {
+            value:
+              semesterNumber,
 
-          description:
-            `${semester.start_date} — ${semester.end_date}`,
-        }),
+            label:
+              t(
+                'teachingSetup.groupSemesters.semesterOption',
+                {
+                  semester:
+                    semesterNumber,
+
+                  season,
+                },
+              ),
+          }
+        },
       )
   })
 
@@ -365,10 +389,14 @@ const statusOptions =
 
 function clearErrors(): void {
   for (
-    const key of
-    Object.keys(localErrors)
+    const key
+    of Object.keys(
+      localErrors,
+    )
   ) {
-    delete localErrors[key]
+    delete localErrors[
+      key
+    ]
   }
 }
 
@@ -382,11 +410,11 @@ function resetForm(): void {
         year.is_current,
     )?.id ?? null
 
-  form.academic_semester =
-    null
-
   form.semester_number =
     null
+
+  form.weeks_count =
+    15
 
   form.students_count =
     0
@@ -414,11 +442,10 @@ function fillForm(
   form.academic_year =
     record.academic_year
 
-  form.academic_semester =
-    record.academic_semester
-
   form.semester_number =
     record.semester_number
+
+  form.weeks_count = record.weeks_count ?? 15
 
   form.students_count =
     record.students_count
@@ -474,10 +501,13 @@ function validate(): boolean {
       )
   }
 
-  if (!form.academic_semester) {
-    localErrors.academic_semester =
+  if (
+    form.weeks_count < 1 ||
+    form.weeks_count > 30
+  ) {
+    localErrors.weeks_count =
       t(
-        'teachingSetup.groupSemesters.validation.academicSemesterRequired',
+        'teachingSetup.groupSemesters.validation.weeksCount',
       )
   }
 
@@ -502,8 +532,9 @@ function validate(): boolean {
   }
 
   return (
-    Object.keys(localErrors)
-      .length === 0
+    Object.keys(
+      localErrors,
+    ).length === 0
   )
 }
 
@@ -515,40 +546,42 @@ function submit(): void {
   if (
     !form.group_curriculum ||
     !form.academic_year ||
-    !form.academic_semester ||
     !form.semester_number
   ) {
     return
   }
 
-  emit('submit', {
-    group_curriculum:
-      form.group_curriculum,
+  emit(
+    'submit',
+    {
+      group_curriculum:
+        form.group_curriculum,
 
-    academic_year:
-      form.academic_year,
+      academic_year:
+        form.academic_year,
 
-    academic_semester:
-      form.academic_semester,
+      semester_number:
+        form.semester_number,
 
-    semester_number:
-      form.semester_number,
+      weeks_count:
+        form.weeks_count,
 
-    students_count:
-      form.students_count,
+      students_count:
+        form.students_count,
 
-    subgroup_count:
-      form.subgroup_count,
+      subgroup_count:
+        form.subgroup_count,
 
-    status:
-      form.status,
+      status:
+        form.status,
 
-    is_active:
-      form.is_active,
+      is_active:
+        form.is_active,
 
-    notes:
-      form.notes.trim(),
-  })
+      notes:
+        form.notes.trim(),
+    },
+  )
 }
 
 watch(
@@ -576,39 +609,69 @@ watch(
 )
 
 watch(
-  [
-    () => form.academic_year,
-    () => form.semester_number,
-  ],
+  () =>
+    form.academic_year,
   () => {
-    if (!form.academic_semester) {
+    if (props.record) {
+      return
+    }
+
+    if (!form.semester_number) {
       return
     }
 
     const valid =
-      academicSemesterOptions.value
+      semesterNumberOptions.value
         .some(
           (option) =>
             option.value ===
-            form.academic_semester,
+            form.semester_number,
         )
 
     if (!valid) {
-      form.academic_semester =
+      form.semester_number =
         null
     }
   },
 )
 
 watch(
-  () => visible.value,
-  (isVisible) => {
+  semesterNumberOptions,
+  (
+    options,
+  ) => {
+    if (
+      props.record ||
+      form.semester_number ||
+      options.length !== 1
+    ) {
+      return
+    }
+
+    const first =
+      options[0]
+
+    if (first) {
+      form.semester_number =
+        first.value
+    }
+  },
+)
+
+watch(
+  () =>
+    visible.value,
+  (
+    isVisible,
+  ) => {
     if (!isVisible) {
       return
     }
 
     if (props.record) {
-      fillForm(props.record)
+      fillForm(
+        props.record,
+      )
     } else {
       resetForm()
     }
@@ -640,7 +703,9 @@ watch(
         group-semester-form
       "
       novalidate
-      @submit.prevent="submit"
+      @submit.prevent="
+        submit
+      "
     >
       <div
         class="
@@ -677,19 +742,31 @@ watch(
             option-value="value"
             filter
             class="w-full"
-            :disabled="loading"
+            :disabled="
+              loading
+            "
           >
             <template
-              #option="{ option }"
+              #option="
+                { option }
+              "
             >
               <div
-                class="select-option"
+                class="
+                  select-option
+                "
               >
                 <strong>
-                  {{ option.label }}
+                  {{
+                    option.label
+                  }}
                 </strong>
 
-                <small>
+                <small
+                  v-if="
+                    option.description
+                  "
+                >
                   {{
                     option.description
                   }}
@@ -705,7 +782,9 @@ watch(
               'teachingSetup.groupSemesters.fields.academicYear',
             )
           "
-          name="academic_year"
+          name="
+            academic_year
+          "
           required
           :error="
             fieldError(
@@ -723,7 +802,10 @@ watch(
             option-label="label"
             option-value="value"
             class="w-full"
-            :disabled="loading"
+            :disabled="
+              loading ||
+              !form.group_curriculum
+            "
           />
         </BaseFormField>
 
@@ -755,7 +837,8 @@ watch(
             class="w-full"
             :disabled="
               loading ||
-              !form.group_curriculum
+              !form.group_curriculum ||
+              !form.academic_year
             "
           />
         </BaseFormField>
@@ -763,33 +846,34 @@ watch(
         <BaseFormField
           :label="
             t(
-              'teachingSetup.groupSemesters.fields.academicSemester',
+              'teachingSetup.groupSemesters.fields.weeksCount',
             )
           "
           name="
-            academic_semester
+            weeks_count
           "
           required
           :error="
             fieldError(
-              'academic_semester',
+              'weeks_count',
             )
           "
         >
-          <Select
+          <InputNumber
             v-model="
-              form.academic_semester
+              form.weeks_count
             "
-            :options="
-              academicSemesterOptions
+            :min="1"
+            :max="30"
+            :use-grouping="
+              false
             "
-            option-label="label"
-            option-value="value"
             class="w-full"
+            input-class="
+              w-full
+            "
             :disabled="
-              loading ||
-              !form.academic_year ||
-              !form.semester_number
+              loading
             "
           />
         </BaseFormField>
@@ -813,7 +897,9 @@ watch(
             option-label="label"
             option-value="value"
             class="w-full"
-            :disabled="loading"
+            :disabled="
+              loading
+            "
           />
         </BaseFormField>
 
@@ -839,10 +925,16 @@ watch(
             "
             :min="0"
             :max="1000"
-            :use-grouping="false"
+            :use-grouping="
+              false
+            "
             class="w-full"
-            input-class="w-full"
-            :disabled="loading"
+            input-class="
+              w-full
+            "
+            :disabled="
+              loading
+            "
           />
         </BaseFormField>
 
@@ -868,10 +960,16 @@ watch(
             "
             :min="1"
             :max="100"
-            :use-grouping="false"
+            :use-grouping="
+              false
+            "
             class="w-full"
-            input-class="w-full"
-            :disabled="loading"
+            input-class="
+              w-full
+            "
+            :disabled="
+              loading
+            "
           />
         </BaseFormField>
       </div>
@@ -884,7 +982,9 @@ watch(
         "
         name="notes"
         :error="
-          fieldError('notes')
+          fieldError(
+            'notes',
+          )
         "
       >
         <Textarea
@@ -894,7 +994,9 @@ watch(
           rows="4"
           auto-resize
           class="w-full"
-          :disabled="loading"
+          :disabled="
+            loading
+          "
         />
       </BaseFormField>
 
@@ -908,7 +1010,9 @@ watch(
             form.is_active
           "
           binary
-          :disabled="loading"
+          :disabled="
+            loading
+          "
         />
 
         <span>
@@ -923,11 +1027,15 @@ watch(
 
     <template #footer>
       <BaseFormActions
-        :loading="loading"
+        :loading="
+          loading
+        "
         @cancel="
           visible = false
         "
-        @submit="submit"
+        @submit="
+          submit
+        "
       />
     </template>
   </BaseDialog>
@@ -941,11 +1049,13 @@ watch(
 
 .group-semester-form__grid {
   display: grid;
+
   grid-template-columns:
     repeat(
       2,
       minmax(0, 1fr)
     );
+
   gap: 1rem;
 }
 
@@ -956,9 +1066,13 @@ watch(
 
 .group-semester-form__active {
   display: flex;
+
   width: fit-content;
+
   align-items: center;
+
   gap: 0.5rem;
+
   font-size: 0.82rem;
   font-weight: 600;
 }
@@ -970,11 +1084,17 @@ watch(
 
 .select-option small {
   color:
-    var(--app-text-muted);
+    var(
+      --app-text-muted,
+      #6b7280
+    );
+
   font-size: 0.7rem;
 }
 
-@media (max-width: 767px) {
+@media (
+  max-width: 767px
+) {
   .group-semester-form__grid {
     grid-template-columns:
       1fr;

@@ -55,9 +55,6 @@ export interface StudentGroup
 export interface StudentGroupPayload {
   code: string
 
-  academic_year_admission: number
-  graduation_academic_year: number | null
-
   faculty: number
   study_program: number
   study_form: number

@@ -20,21 +20,24 @@ import {
 } from 'vue-i18n'
 
 import BaseCard from '@/components/base/BaseCard.vue'
-// import BaseDialog from '@/components/base/BaseDialog.vue'
 import BaseDataTable from '@/components/base/BaseDataTable.vue'
 import BasePageHeader from '@/components/base/BasePageHeader.vue'
 import BaseToolbar from '@/components/base/BaseToolbar.vue'
 
 import CurriculumDisciplineFormDialog from '@/modules/curriculum-disciplines/components/CurriculumDisciplineFormDialog.vue'
-// import CurriculumWorkloadPanel from '@/modules/curriculum-disciplines/components/CurriculumWorkloadPanel.vue'
 
 import {
   curriculumDisciplinesApi,
   getCurriculum,
+  getCurriculumPlanningNorms,
   getDisciplines,
   configureCurriculumDiscipline,
   getDisciplineSemesters,
   getWorkloadTypes,
+} from '@/modules/curriculum-disciplines/api'
+
+import type {
+  CurriculumPlanningNorm,
 } from '@/modules/curriculum-disciplines/api'
 
 import {
@@ -54,10 +57,6 @@ import type {
   WorkloadType,
 } from '@/modules/curriculum-references/types'
 
-// import type {
-//   StudyProgram,
-// } from '@/modules/study-programs/types'
-
 import type {
   CurriculumComponentType,
   CurriculumControlForm,
@@ -65,14 +64,6 @@ import type {
   CurriculumDisciplineBundlePayload,
   SelectOption,
 } from '@/modules/curriculum-disciplines/types'
-
-import {
-  academicYearCreditNormsApi,
-} from '@/modules/academic-settings/api'
-
-import type {
-  AcademicYearCreditNorm,
-} from '@/modules/academic-settings/types'
 
 import {
   useCrudList,
@@ -132,29 +123,75 @@ const curriculum =
     null,
   )
 
-// const studyProgram =
-//   ref<StudyProgram | null>(
-//     null,
-//   )
-
-const disciplines =
-  ref<Discipline[]>([])
-
-const creditNorm =
-  ref<AcademicYearCreditNorm | null>(
+const planningNorms =
+  ref<CurriculumPlanningNorm | null>(
     null,
   )
 
 const creditHoursPerCredit =
   computed(
     () =>
-      creditNorm.value
-        ? Number(
-            creditNorm.value
-              .hours_per_credit,
-          )
-        : 0,
+      Number(
+        planningNorms.value
+          ?.hours_per_credit ??
+        0,
+      ),
   )
+const disciplines =
+  ref<Discipline[]>([])
+
+
+// const creditHoursPerCredit =
+//   computed(
+//     () =>
+//       creditNorm.value
+//         ? Number(
+//             creditNorm.value
+//               .hours_per_credit,
+//           )
+//         : 0,
+//   )
+
+const curriculumTotals =
+  computed(() => {
+    return items.value.reduce(
+      (
+        result,
+        row,
+      ) => {
+        result.credits +=
+          Number(
+            row.credits ?? 0,
+          )
+
+        result.totalHours +=
+          Number(
+            row.total_academic_hours ??
+            0,
+          )
+
+        result.independent +=
+          Number(
+            row.independent_hours ??
+            0,
+          )
+
+        result.classroom +=
+          Number(
+            row.planned_contact_hours ??
+            0,
+          )
+
+        return result
+      },
+      {
+        credits: 0,
+        classroom: 0,
+        independent: 0,
+        totalHours: 0,
+      },
+    )
+  })
 
 const selectedRecord =
   ref<
@@ -753,6 +790,11 @@ async function loadMetadata(): Promise<void> {
       getCurriculumWorkloadRules(curriculumId,),
     ])
 
+    planningNorms.value =
+      await getCurriculumPlanningNorms(
+        curriculumId,
+      )
+
     disciplines.value = disciplinesResponse.results
 
     workloadTypes.value = workloadTypesResponse.results
@@ -776,31 +818,6 @@ async function loadMetadata(): Promise<void> {
   }
 }
 
-
-async function loadCreditNorm(): Promise<void> {
-  creditNorm.value =
-    null
-
-  const academicYearId =
-    curriculum.value
-      ?.effective_academic_year
-
-  if (!academicYearId) {
-    return
-  }
-
-  const response =
-    await academicYearCreditNormsApi.list({
-      academic_year:
-        academicYearId,
-
-      page_size: 10,
-    })
-
-  creditNorm.value =
-    response.results[0] ??
-    null
-}
 function openCreate(): void {
   selectedRecord.value = null
   existingEntries.value = []
@@ -1027,9 +1044,7 @@ function goBack(): void {
 onMounted(
   async () => {
     if (
-      !Number.isInteger(
-        curriculumId,
-      ) ||
+      !Number.isInteger(curriculumId,) ||
       curriculumId <= 0
     ) {
       metadataError.value =
@@ -1043,18 +1058,13 @@ onMounted(
     await Promise.all([
       load(),
       loadMetadata(),
-      loadCreditNorm(),
     ])
   },
 )
 </script>
 
 <template>
-  <div
-    class="
-      curriculum-disciplines-page
-    "
-  >
+  <div class="curriculum-disciplines-page" >
     <BasePageHeader
       :title="
         curriculum
@@ -1111,14 +1121,8 @@ onMounted(
       {{ metadataError }}
     </Message>
 
-    <BaseCard
-      v-if="curriculum"
-    >
-      <div
-        class="
-          curriculum-summary
-        "
-      >
+    <BaseCard v-if="curriculum" >
+      <div class="curriculum-summary" >
         <div>
           <span>
             {{
@@ -1160,8 +1164,7 @@ onMounted(
 
           <strong>
             {{
-              curriculum.semesters_count ??
-              '—'
+              curriculum.semesters_count ?? '—'
             }}
           </strong>
         </div>
@@ -1184,15 +1187,10 @@ onMounted(
 
     <BaseToolbar
       v-if="curriculum"
-      v-model:search="
-        searchInput
-      "
+      v-model:search="searchInput"
       :show-create="false"
       :show-reset="true"
-      :loading="
-        loading ||
-        metadataLoading
-      "
+      :loading="loading || metadataLoading"
       :search-placeholder="
         t(
           'curriculumDisciplines.searchPlaceholder',
@@ -1203,72 +1201,39 @@ onMounted(
     >
       <template #center>
         <Select
-          v-model="
-            selectedSemester
-          "
-          :options="
-            semesterOptions
-          "
+          v-model="selectedSemester"
+          :options="semesterOptions"
           option-label="label"
           option-value="value"
-          class="
-            matrix-filter
-          "
-          @change="
-            applySemesterFilter
-          "
+          class="matrix-filter"
+          @change="applySemesterFilter"
         />
 
         <Select
-          v-model="
-            selectedComponentType
-          "
-          :options="
-            componentTypeOptions
-          "
+          v-model="selectedComponentType"
+          :options="componentTypeOptions"
           option-label="label"
           option-value="value"
-          class="
-            matrix-filter
-          "
-          @change="
-            applyComponentTypeFilter
-          "
+          class="matrix-filter"
+          @change="applyComponentTypeFilter"
         />
 
         <Select
-          v-model="
-            selectedControlForm
-          "
-          :options="
-            controlFormOptions
-          "
+          v-model="selectedControlForm"
+          :options="controlFormOptions"
           option-label="label"
           option-value="value"
-          class="
-            matrix-filter
-          "
-          @change="
-            applyControlFormFilter
-          "
+          class="matrix-filter"
+          @change="applyControlFormFilter"
         />
 
         <Select
-          v-model="
-            selectedActive
-          "
-          :options="
-            activeOptions
-          "
+          v-model="selectedActive"
+          :options="activeOptions"
           option-label="label"
           option-value="value"
-          class="
-            matrix-filter
-            matrix-filter--status
-          "
-          @change="
-            applyStatusFilter
-          "
+          class="matrix-filter matrix-filter--status"
+          @change="applyStatusFilter"
         />
       </template>
     </BaseToolbar>
@@ -1280,10 +1245,7 @@ onMounted(
       <BaseDataTable
         :value="items"
         :columns="columns"
-        :loading="
-          loading ||
-          metadataLoading
-        "
+        :loading="loading || metadataLoading"
         :error="error"
         :first="first"
         :rows="query.pageSize"
@@ -1346,9 +1308,7 @@ onMounted(
 
         <template #contactHours="{ row }" >
           <Tag
-            :value="
-              row.planned_contact_hours
-            "
+            :value="row.planned_contact_hours"
             severity="info"
           />
         </template>
@@ -1374,9 +1334,7 @@ onMounted(
           />
         </template>
 
-        <template
-          #actions="{ row }"
-        >
+        <template #actions="{ row }" >
 <!--          <Button-->
 <!--            v-if=" canViewWorkloads "-->
 <!--            v-tooltip.bottom=" t( 'curriculumDisciplines.workloads', ) "-->
@@ -1389,37 +1347,29 @@ onMounted(
 
           <Button
             v-if="canEdit"
-            v-tooltip.bottom="
-      t('common.edit')
-    "
+            v-tooltip.bottom="t('common.edit')"
             icon="pi pi-pencil"
             text
             rounded
-            @click.stop="
-      openEdit(row)
-    "
+            @click.stop="openEdit(row)"
           />
 
           <Button
             v-if="canDelete"
             v-tooltip.bottom="
-      t(
-        'curriculumDisciplines.archive',
-      )
-    "
+              t(
+                'curriculumDisciplines.archive',
+              )
+            "
             icon="pi pi-box"
             severity="danger"
             text
             rounded
-            @click.stop="
-      archiveRecord(row)
-    "
+            @click.stop="archiveRecord(row)"
           />
         </template>
 
-        <template
-          #emptyActions
-        >
+        <template #emptyActions>
           <Button
             v-if="canCreate"
             :label="
@@ -1432,6 +1382,70 @@ onMounted(
           />
         </template>
       </BaseDataTable>
+      <div
+        v-if="items.length"
+        class="curriculum-totals"
+      >
+        <strong>
+          {{
+            t(
+              'curriculumDisciplines.grandTotal',
+            )
+          }}
+        </strong>
+
+        <span>
+          {{
+                  t(
+                    'curriculumDisciplines.auditoriumTotal',
+                  )
+                }}:
+          {{
+            curriculumTotals
+              .classroom
+              .toFixed(2)
+          }}
+        </span>
+
+        <span>
+          {{
+                  t(
+                    'curriculumDisciplines.fields.independentHours',
+                  )
+                }}:
+          {{
+                  curriculumTotals
+                    .independent
+                    .toFixed(2)
+                }}
+        </span>
+
+        <span>
+          {{
+                  t(
+                    'curriculumDisciplines.totalAcademic',
+                  )
+                }}:
+          {{
+                  curriculumTotals
+                    .totalHours
+                    .toFixed(2)
+                }}
+        </span>
+
+        <span>
+          {{
+                  t(
+                    'curriculumDisciplines.fields.credits',
+                  )
+                }}:
+          {{
+                  curriculumTotals
+                    .credits
+                    .toFixed(2)
+                }}
+        </span>
+      </div>
     </BaseCard>
 
     <CurriculumDisciplineFormDialog
@@ -1439,34 +1453,17 @@ onMounted(
       v-model="formVisible"
       :curriculum="curriculum"
       :credit-hours-per-credit="creditHoursPerCredit"
-      :record="
-    selectedRecord
-  "
-      :existing-entries="
-    existingEntries
-  "
-      :disciplines="
-    disciplines
-  "
-      :workload-types="
-    workloadTypes
-  "
-      :workload-rules="
-    workloadRules
-  "
+      :annual-workload-norms="planningNorms?.workload_norms ?? []"
+      :record="selectedRecord"
+      :existing-entries="existingEntries"
+      :disciplines="disciplines"
+      :workload-types="workloadTypes"
+      :workload-rules="workloadRules"
       :loading="saving"
-      :field-errors="
-    fieldErrors
-  "
-      :non-field-errors="
-    nonFieldErrors
-  "
-      :general-error="
-    generalFormError
-  "
-      @submit="
-    saveRecord
-  "
+      :field-errors="fieldErrors"
+      :non-field-errors="nonFieldErrors"
+      :general-error="generalFormError"
+      @submit="saveRecord"
     />
 
 <!--    <BaseDialog-->
@@ -1581,5 +1578,27 @@ onMounted(
     grid-template-columns:
       1fr;
   }
+}
+
+.curriculum-totals {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.25rem;
+
+  margin-top: 1rem;
+  padding: 1rem;
+
+  border:
+    1px solid
+    var(--app-border-color, #d1d5db);
+
+  border-radius: 0.5rem;
+
+  font-size: 0.85rem;
+}
+
+.curriculum-totals strong {
+  margin-right: auto;
 }
 </style>

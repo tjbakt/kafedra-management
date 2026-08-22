@@ -1,12 +1,7 @@
 <script setup lang="ts">
 import Button from 'primevue/button'
-import ProgressBar from 'primevue/progressbar'
 import Select from 'primevue/select'
-import Tab from 'primevue/tab'
-import TabList from 'primevue/tablist'
-import TabPanel from 'primevue/tabpanel'
-import TabPanels from 'primevue/tabpanels'
-import Tabs from 'primevue/tabs'
+
 import Tag from 'primevue/tag'
 
 import {
@@ -30,24 +25,20 @@ import TeachingStreamGroupsDialog from '@/modules/teaching-workload/components/T
 import {
   calculateAllStreams,
   calculateStream,
-  getAcademicSemesters,
+  createTeachingStreamsBulk,
   getAcademicYears,
   getCurricula,
   getGroupSemesters,
-  getPlannedWorkloadSummary,
-  plannedWorkloadsApi,
   teachingStreamsApi,
 } from '@/modules/teaching-workload/api'
 
 import type {
-  AcademicSemesterLookup,
   AcademicYearLookup,
   CurriculumLookup,
   GroupSemester,
-  PlannedWorkload,
-  PlannedWorkloadSummary,
   SelectOption,
   TeachingStream,
+  TeachingStreamBulkPayload,
   TeachingStreamPayload,
   TeachingStreamStatus,
 } from '@/modules/teaching-workload/types'
@@ -93,14 +84,8 @@ const {
   can,
 } = usePermissions()
 
-const activeTab =
-  ref('streams')
-
 const academicYears =
   ref<AcademicYearLookup[]>([])
-
-const academicSemesters =
-  ref<AcademicSemesterLookup[]>([])
 
 const curricula =
   ref<CurriculumLookup[]>([])
@@ -143,9 +128,6 @@ const generalError =
 const selectedStreamYear =
   ref<number | null>(null)
 
-const selectedStreamSemester =
-  ref<number | null>(null)
-
 const selectedStreamStatus =
   ref<TeachingStreamStatus | null>(
     null,
@@ -153,23 +135,6 @@ const selectedStreamStatus =
 
 const selectedStreamActive =
   ref<boolean | null>(null)
-
-const selectedPlannedYear =
-  ref<number | null>(null)
-
-const selectedPlannedSemester =
-  ref<number | null>(null)
-
-const selectedPlannedStatus =
-  ref<string | null>(null)
-
-const selectedFullyDistributed =
-  ref<boolean | null>(null)
-
-const summary =
-  ref<PlannedWorkloadSummary | null>(
-    null,
-  )
 
 const canCreateStream =
   computed(
@@ -240,57 +205,6 @@ const yearOptions =
     ),
   ])
 
-function semesterFilterOptions(
-  year:
-    number | null,
-): SelectOption<
-  number | null
->[] {
-  return [
-    {
-      value: null,
-
-      label:
-        t(
-          'teachingWorkload.filters.allSemesters',
-        ),
-    },
-
-    ...academicSemesters.value
-      .filter(
-        (semester) =>
-          !year ||
-          semester.academic_year ===
-            year,
-      )
-      .map(
-        (semester) => ({
-          value:
-            semester.id,
-
-          label:
-            `${semester.academic_year_name} — ${semester.season_name}`,
-        }),
-      ),
-  ]
-}
-
-const streamSemesterOptions =
-  computed(
-    () =>
-      semesterFilterOptions(
-        selectedStreamYear.value,
-      ),
-  )
-
-const plannedSemesterOptions =
-  computed(
-    () =>
-      semesterFilterOptions(
-        selectedPlannedYear.value,
-      ),
-  )
-
 const streamStatusOptions =
   computed(() => [
     {
@@ -341,35 +255,6 @@ const streamStatusOptions =
     },
   ])
 
-const plannedStatusOptions =
-  computed(() => [
-    {
-      value: null,
-
-      label:
-        t(
-          'teachingWorkload.filters.allStatuses',
-        ),
-    },
-
-    ...[
-      'calculated',
-      'approved',
-      'partially_distributed',
-      'distributed',
-      'cancelled',
-    ].map(
-      (status) => ({
-        value: status,
-
-        label:
-          t(
-            `teachingWorkload.planned.statuses.${status}`,
-          ),
-      }),
-    ),
-  ])
-
 const activityOptions =
   computed(() => [
     {
@@ -396,36 +281,6 @@ const activityOptions =
       label:
         t(
           'teachingWorkload.common.inactive',
-        ),
-    },
-  ])
-
-const distributedOptions =
-  computed(() => [
-    {
-      value: null,
-
-      label:
-        t(
-          'teachingWorkload.filters.allDistribution',
-        ),
-    },
-
-    {
-      value: true,
-
-      label:
-        t(
-          'teachingWorkload.filters.fullyDistributed',
-        ),
-    },
-
-    {
-      value: false,
-
-      label:
-        t(
-          'teachingWorkload.filters.notFullyDistributed',
         ),
     },
   ])
@@ -533,134 +388,6 @@ const streamColumns =
     },
   ])
 
-const plannedColumns =
-  computed<
-    CrudColumn<PlannedWorkload>[]
-  >(() => [
-    {
-      field:
-        'teaching_stream_code',
-
-      header:
-        t(
-          'teachingWorkload.planned.fields.stream',
-        ),
-
-      minWidth: '10rem',
-    },
-
-    {
-      field:
-        'discipline_name',
-
-      header:
-        t(
-          'teachingWorkload.planned.fields.discipline',
-        ),
-
-      minWidth: '15rem',
-    },
-
-    {
-      field:
-        'workload_type_name',
-
-      header:
-        t(
-          'teachingWorkload.planned.fields.workloadType',
-        ),
-
-      minWidth: '12rem',
-    },
-
-    {
-      field:
-        'base_hours',
-
-      header:
-        t(
-          'teachingWorkload.planned.fields.baseHours',
-        ),
-
-      width: '8rem',
-
-      align: 'center',
-    },
-
-    {
-      field:
-        'calculation_quantity',
-
-      header:
-        t(
-          'teachingWorkload.planned.fields.quantity',
-        ),
-
-      width: '8rem',
-
-      align: 'center',
-    },
-
-    {
-      field:
-        'total_hours',
-
-      header:
-        t(
-          'teachingWorkload.planned.fields.totalHours',
-        ),
-
-      sortable: true,
-
-      width: '9rem',
-
-      align: 'center',
-    },
-
-    {
-      field:
-        'remaining_hours',
-
-      header:
-        t(
-          'teachingWorkload.planned.fields.remainingHours',
-        ),
-
-      width: '9rem',
-
-      align: 'center',
-    },
-
-    {
-      field:
-        'distribution_percent',
-
-      header:
-        t(
-          'teachingWorkload.planned.fields.distribution',
-        ),
-
-      bodySlot:
-        'distribution',
-
-      minWidth: '11rem',
-    },
-
-    {
-      field: 'status',
-
-      header:
-        t(
-          'teachingWorkload.planned.fields.status',
-        ),
-
-      bodySlot:
-        'plannedStatus',
-
-      minWidth: '10rem',
-    },
-  ])
-
 const streams =
   useCrudList<TeachingStream>(
     (params) =>
@@ -673,21 +400,6 @@ const streams =
 
       initialOrdering:
         '-academic_year__start_year,code',
-    },
-  )
-
-const planned =
-  useCrudList<PlannedWorkload>(
-    (params) =>
-      plannedWorkloadsApi.list(
-        params,
-      ),
-
-    {
-      initialPageSize: 20,
-
-      initialOrdering:
-        '-academic_year__start_year,calculated_at',
     },
   )
 
@@ -705,29 +417,16 @@ async function loadLookups(): Promise<void> {
   try {
     const [
       yearsResponse,
-      semestersResponse,
-      // disciplinesResponse,
-      // workloadsResponse,
       curriculaResponse,
       groupSemestersResponse,
     ] = await Promise.all([
       getAcademicYears(),
-      getAcademicSemesters(),
       getCurricula(),
       getGroupSemesters(),
     ])
-
-    academicYears.value =
-      yearsResponse.results
-
-    academicSemesters.value =
-      semestersResponse.results
-
-    curricula.value =
-      curriculaResponse.results
-
-    groupSemesters.value =
-      groupSemestersResponse.results
+    academicYears.value = yearsResponse.results
+    curricula.value = curriculaResponse.results
+    groupSemesters.value = groupSemestersResponse.results
   } catch (loadError) {
     const normalized =
       normalizeApiError(
@@ -741,31 +440,6 @@ async function loadLookups(): Promise<void> {
     )
   } finally {
     lookupLoading.value = false
-  }
-}
-
-async function loadSummary(): Promise<void> {
-  try {
-    summary.value =
-      await getPlannedWorkloadSummary({
-        academic_year:
-          selectedPlannedYear.value ??
-          undefined,
-
-        academic_semester:
-          selectedPlannedSemester.value ??
-          undefined,
-
-        status:
-          selectedPlannedStatus.value ??
-          undefined,
-
-        is_fully_distributed:
-          selectedFullyDistributed.value ??
-          undefined,
-      })
-  } catch {
-    summary.value = null
   }
 }
 
@@ -803,7 +477,7 @@ function openGroups(
 
 async function saveStream(
   payload:
-    TeachingStreamPayload,
+    TeachingStreamBulkPayload,
 ): Promise<void> {
   saving.value = true
 
@@ -813,9 +487,44 @@ async function saveStream(
     if (
       selectedStream.value
     ) {
+      const semesterNumber =
+        payload.semester_numbers[0]
+
+      if (!semesterNumber) {
+        return
+      }
+
+      const updatePayload:
+        TeachingStreamPayload =
+        {
+          academic_year:
+            payload.academic_year,
+
+          curriculum:
+            payload.curriculum,
+
+          semester_number:
+            semesterNumber,
+
+          code:
+            payload.code,
+
+          name:
+            payload.name,
+
+          status:
+            payload.status,
+
+          is_active:
+            payload.is_active,
+
+          notes:
+            payload.notes,
+        }
+
       await teachingStreamsApi.update(
         selectedStream.value.id,
-        payload,
+        updatePayload,
       )
 
       toast.success(
@@ -823,7 +532,7 @@ async function saveStream(
         t('crud.updated'),
       )
     } else {
-      await teachingStreamsApi.create(
+      await createTeachingStreamsBulk(
         payload,
       )
 
@@ -833,9 +542,11 @@ async function saveStream(
       )
     }
 
-    streamDialog.value = false
+    streamDialog.value =
+      false
 
-    selectedStream.value = null
+    selectedStream.value =
+      null
 
     await streams.refresh()
   } catch (saveError) {
@@ -854,7 +565,8 @@ async function saveStream(
     generalError.value =
       normalized.message
   } finally {
-    saving.value = false
+    saving.value =
+      false
   }
 }
 
@@ -946,11 +658,7 @@ async function calculateOne(
       result.detail,
     )
 
-    await Promise.all([
-      streams.refresh(),
-      planned.refresh(),
-      loadSummary(),
-    ])
+    await streams.refresh()
   } catch (calculateError) {
     toast.error(
       t('common.error'),
@@ -977,10 +685,6 @@ async function calculateAll(): Promise<void> {
       await calculateAllStreams({
         academic_year:
           selectedStreamYear.value ??
-          undefined,
-
-        academic_semester:
-          selectedStreamSemester.value ??
           undefined,
 
         status:
@@ -1025,11 +729,7 @@ async function calculateAll(): Promise<void> {
       )
     }
 
-    await Promise.all([
-      streams.refresh(),
-      planned.refresh(),
-      loadSummary(),
-    ])
+    await streams.refresh()
   } catch (calculateError) {
     toast.error(
       t('common.error'),
@@ -1069,79 +769,11 @@ function streamStatusSeverity(
   return 'secondary'
 }
 
-function plannedStatusSeverity(
-  status: string,
-):
-  | 'success'
-  | 'info'
-  | 'warn'
-  | 'secondary'
-  | 'danger' {
-  if (
-    status === 'distributed'
-  ) {
-    return 'success'
-  }
-
-  if (
-    status ===
-    'partially_distributed'
-  ) {
-    return 'warn'
-  }
-
-  if (
-    status === 'approved'
-  ) {
-    return 'info'
-  }
-
-  if (
-    status === 'cancelled'
-  ) {
-    return 'danger'
-  }
-
-  return 'secondary'
-}
-
-function asNumber(
-  value:
-    string | number | null | undefined,
-): number {
-  const result =
-    Number(value ?? 0)
-
-  return Number.isFinite(
-    result,
-  )
-    ? result
-    : 0
-}
-
 async function applyStreamYear(): Promise<void> {
   streams.setFilter(
     'academic_year',
     selectedStreamYear.value,
   )
-
-  selectedStreamSemester.value =
-    null
-
-  streams.setFilter(
-    'academic_semester',
-    undefined,
-  )
-
-  await streams.load()
-}
-
-async function applyStreamSemester(): Promise<void> {
-  streams.setFilter(
-    'academic_semester',
-    selectedStreamSemester.value,
-  )
-
   await streams.load()
 }
 
@@ -1167,9 +799,6 @@ async function resetStreamFilters(): Promise<void> {
   selectedStreamYear.value =
     null
 
-  selectedStreamSemester.value =
-    null
-
   selectedStreamStatus.value =
     null
 
@@ -1181,697 +810,331 @@ async function resetStreamFilters(): Promise<void> {
   await streams.reset()
 }
 
-async function applyPlannedFilters(): Promise<void> {
-  planned.setFilter(
-    'academic_year',
-    selectedPlannedYear.value,
-  )
-
-  planned.setFilter(
-    'academic_semester',
-    selectedPlannedSemester.value,
-  )
-
-  planned.setFilter(
-    'status',
-    selectedPlannedStatus.value,
-  )
-
-  planned.setFilter(
-    'is_fully_distributed',
-    selectedFullyDistributed.value,
-  )
-
-  await Promise.all([
-    planned.load(),
-    loadSummary(),
-  ])
-}
-
-async function changePlannedYear(): Promise<void> {
-  selectedPlannedSemester.value =
-    null
-
-  await applyPlannedFilters()
-}
-
-async function resetPlannedFilters(): Promise<void> {
-  selectedPlannedYear.value =
-    null
-
-  selectedPlannedSemester.value =
-    null
-
-  selectedPlannedStatus.value =
-    null
-
-  selectedFullyDistributed.value =
-    null
-
-  planned.clearFilters()
-
-  await Promise.all([
-    planned.reset(),
-    loadSummary(),
-  ])
-}
-
 onMounted(
   async () => {
     await Promise.all([
       streams.load(),
-      planned.load(),
       loadLookups(),
-      loadSummary(),
     ])
   },
 )
 </script>
 
 <template>
-  <div
-    class="
-      teaching-workload-page
-    "
-  >
+  <div class="teaching-workload-page" >
+
     <BasePageHeader
-      :title="
-        t(
-          'teachingWorkload.title',
-        )
-      "
-      :description="
-        t(
-          'teachingWorkload.description',
-        )
-      "
+      :title="t('teachingWorkload.title')"
+      :description="t('teachingWorkload.description')"
       icon="pi pi-chart-bar"
     />
 
-    <Tabs
-      v-model:value="
-        activeTab
+    <div
+      class="
+        teaching-workload-page__panel
       "
     >
-      <TabList>
-        <Tab value="streams">
-          {{
-            t(
-              'teachingWorkload.tabs.streams',
-            )
-          }}
-        </Tab>
+      <BaseToolbar
+        v-model:search="
+          streams.searchInput.value
+        "
+        :show-create="false"
+        :show-reset="true"
+        :loading="
+          streams.loading.value ||
+          lookupLoading
+        "
+        :search-placeholder="
+          t(
+            'teachingWorkload.streams.searchPlaceholder',
+          )
+        "
+        @refresh="
+          streams.refresh
+        "
+        @reset="
+          resetStreamFilters
+        "
+      >
+        <template #start>
+          <Button
+            v-if="
+              canCreateStream
+            "
+            :label="
+              t(
+                'teachingWorkload.streams.create',
+              )
+            "
+            icon="pi pi-plus"
+            @click="
+              openCreateStream
+            "
+          />
 
-        <Tab value="planned">
-          {{
-            t(
-              'teachingWorkload.tabs.planned',
-            )
-          }}
-        </Tab>
-      </TabList>
+          <Button
+            v-if="
+              canCalculate
+            "
+            :label="
+              t(
+                'teachingWorkload.calculateAll',
+              )
+            "
+            icon="
+              pi pi-calculator
+            "
+            severity="info"
+            :loading="
+              calculatingAll
+            "
+            @click="
+              calculateAll
+            "
+          />
+        </template>
 
-      <TabPanels>
-        <TabPanel value="streams">
-          <div
+        <template #center>
+          <Select
+            v-model="
+              selectedStreamYear
+            "
+            :options="
+              yearOptions
+            "
+            option-label="label"
+            option-value="value"
             class="
-              teaching-workload-page__panel
+              workload-filter
+            "
+            @change="
+              applyStreamYear
+            "
+          />
+
+          <Select
+            v-model="
+              selectedStreamStatus
+            "
+            :options="
+              streamStatusOptions
+            "
+            option-label="label"
+            option-value="value"
+            class="
+              workload-filter
+            "
+            @change="
+              applyStreamStatus
+            "
+          />
+
+          <Select
+            v-model="
+              selectedStreamActive
+            "
+            :options="
+              activityOptions
+            "
+            option-label="label"
+            option-value="value"
+            class="
+              workload-filter
+            "
+            @change="
+              applyStreamActive
+            "
+          />
+        </template>
+      </BaseToolbar>
+
+      <BaseCard
+        :padding="false"
+      >
+        <BaseDataTable
+          :value="
+            streams.items.value
+          "
+          :columns="
+            streamColumns
+          "
+          :loading="
+            streams.loading.value
+          "
+          :error="
+            streams.error.value
+          "
+          :first="
+            streams.first.value
+          "
+          :rows="
+            streams.query.value
+              .pageSize
+          "
+          :total-records="
+            streams
+              .totalRecords.value
+          "
+          show-row-actions
+          @page="
+            streams.handlePage
+          "
+          @sort="
+            streams.handleSort
+          "
+          @retry="
+            streams.refresh
+          "
+        >
+          <template
+            #streamStatus="
+              { row }
             "
           >
-            <BaseToolbar
-              v-model:search="
-                streams.searchInput.value
-              "
-              :show-create="false"
-              :show-reset="true"
-              :loading="
-                streams.loading.value ||
-                lookupLoading
-              "
-              :search-placeholder="
+            <Tag
+              :value="
                 t(
-                  'teachingWorkload.streams.searchPlaceholder',
+                  `teachingWorkload.streams.statuses.${row.status}`,
                 )
               "
-              @refresh="
-                streams.refresh
+              :severity="
+                streamStatusSeverity(
+                  row.status,
+                )
               "
-              @reset="
-                resetStreamFilters
-              "
-            >
-              <template #start>
-                <Button
-                  v-if="
-                    canCreateStream
-                  "
-                  :label="
-                    t(
-                      'teachingWorkload.streams.create',
-                    )
-                  "
-                  icon="pi pi-plus"
-                  @click="
-                    openCreateStream
-                  "
-                />
+            />
+          </template>
 
-                <Button
-                  v-if="
-                    canCalculate
-                  "
-                  :label="
-                    t(
-                      'teachingWorkload.calculateAll',
-                    )
-                  "
-                  icon="
-                    pi pi-calculator
-                  "
-                  severity="info"
-                  :loading="
-                    calculatingAll
-                  "
-                  @click="
-                    calculateAll
-                  "
-                />
-              </template>
-
-              <template #center>
-                <Select
-                  v-model="
-                    selectedStreamYear
-                  "
-                  :options="
-                    yearOptions
-                  "
-                  option-label="label"
-                  option-value="value"
-                  class="
-                    workload-filter
-                  "
-                  @change="
-                    applyStreamYear
-                  "
-                />
-
-                <Select
-                  v-model="
-                    selectedStreamSemester
-                  "
-                  :options="
-                    streamSemesterOptions
-                  "
-                  option-label="label"
-                  option-value="value"
-                  class="
-                    workload-filter
-                  "
-                  @change="
-                    applyStreamSemester
-                  "
-                />
-
-                <Select
-                  v-model="
-                    selectedStreamStatus
-                  "
-                  :options="
-                    streamStatusOptions
-                  "
-                  option-label="label"
-                  option-value="value"
-                  class="
-                    workload-filter
-                  "
-                  @change="
-                    applyStreamStatus
-                  "
-                />
-
-                <Select
-                  v-model="
-                    selectedStreamActive
-                  "
-                  :options="
-                    activityOptions
-                  "
-                  option-label="label"
-                  option-value="value"
-                  class="
-                    workload-filter
-                  "
-                  @change="
-                    applyStreamActive
-                  "
-                />
-              </template>
-            </BaseToolbar>
-
-            <BaseCard
-              :padding="false"
-            >
-              <BaseDataTable
-                :value="
-                  streams.items.value
-                "
-                :columns="streamColumns"
-                :loading="
-                  streams.loading.value
-                "
-                :error="
-                  streams.error.value
-                "
-                :first="
-                  streams.first.value
-                "
-                :rows="
-                  streams.query.value
-                    .pageSize
-                "
-                :total-records="
-                  streams
-                    .totalRecords.value
-                "
-                show-row-actions
-                @page="
-                  streams.handlePage
-                "
-                @sort="
-                  streams.handleSort
-                "
-                @retry="
-                  streams.refresh
-                "
-              >
-                <template
-                  #streamStatus="{ row }"
-                >
-                  <Tag
-                    :value="
-                      t(
-                        `teachingWorkload.streams.statuses.${row.status}`,
-                      )
-                    "
-                    :severity="
-                      streamStatusSeverity(
-                        row.status,
-                      )
-                    "
-                  />
-                </template>
-
-                <template
-                  #streamActive="{ row }"
-                >
-                  <Tag
-                    :value="
-                      row.is_active
-                        ? t(
-                            'teachingWorkload.common.active',
-                          )
-                        : t(
-                            'teachingWorkload.common.inactive',
-                          )
-                    "
-                    :severity="
-                      row.is_active
-                        ? 'success'
-                        : 'secondary'
-                    "
-                  />
-                </template>
-
-                <template
-                  #actions="{ row }"
-                >
-                  <Button
-                    v-if="
-                      canManageStreamGroups
-                    "
-                    v-tooltip.bottom="
-                      t(
-                        'teachingWorkload.streamGroups.title',
-                      )
-                    "
-                    icon="pi pi-users"
-                    severity="info"
-                    text
-                    rounded
-                    @click.stop="
-                      openGroups(row)
-                    "
-                  />
-
-                  <Button
-                    v-if="canCalculate"
-                    v-tooltip.bottom="
-                      t(
-                        'teachingWorkload.calculate',
-                      )
-                    "
-                    icon="
-                      pi pi-calculator
-                    "
-                    severity="success"
-                    text
-                    rounded
-                    :loading="
-                      calculatingId ===
-                      row.id
-                    "
-                    @click.stop="
-                      calculateOne(row)
-                    "
-                  />
-
-                  <Button
-                    v-if="
-                      canEditStream
-                    "
-                    v-tooltip.bottom="
-                      t('common.edit')
-                    "
-                    icon="pi pi-pencil"
-                    text
-                    rounded
-                    @click.stop="
-                      openEditStream(row)
-                    "
-                  />
-
-                  <Button
-                    v-if="
-                      canDeleteStream
-                    "
-                    v-tooltip.bottom="
-                      t(
-                        'teachingWorkload.common.archive',
-                      )
-                    "
-                    icon="pi pi-box"
-                    severity="danger"
-                    text
-                    rounded
-                    @click.stop="
-                      archiveStream(row)
-                    "
-                  />
-                </template>
-              </BaseDataTable>
-            </BaseCard>
-          </div>
-        </TabPanel>
-
-        <TabPanel value="planned">
-          <div
-            class="
-              teaching-workload-page__panel
+          <template
+            #streamActive="
+              { row }
             "
           >
-            <div
-              class="
-                workload-summary
+            <Tag
+              :value="
+                row.is_active
+                  ? t(
+                      'teachingWorkload.common.active',
+                    )
+                  : t(
+                      'teachingWorkload.common.inactive',
+                    )
               "
-            >
-              <BaseCard>
-                <div
-                  class="
-                    workload-summary__item
-                  "
-                >
-                  <span>
-                    {{
-                      t(
-                        'teachingWorkload.planned.summary.totalHours',
-                      )
-                    }}
-                  </span>
-
-                  <strong>
-                    {{
-                      asNumber(
-                        summary
-                          ?.total_hours,
-                      ).toFixed(2)
-                    }}
-                  </strong>
-                </div>
-              </BaseCard>
-
-              <BaseCard>
-                <div
-                  class="
-                    workload-summary__item
-                  "
-                >
-                  <span>
-                    {{
-                      t(
-                        'teachingWorkload.planned.summary.records',
-                      )
-                    }}
-                  </span>
-
-                  <strong>
-                    {{
-                      planned
-                        .totalRecords
-                        .value
-                    }}
-                  </strong>
-                </div>
-              </BaseCard>
-            </div>
-
-            <BaseToolbar
-              v-model:search="
-                planned.searchInput.value
+              :severity="
+                row.is_active
+                  ? 'success'
+                  : 'secondary'
               "
-              :show-create="false"
-              :show-reset="true"
-              :loading="
-                planned.loading.value
+            />
+          </template>
+
+          <template
+            #actions="
+              { row }
+            "
+          >
+            <Button
+              v-if="
+                canManageStreamGroups
               "
-              :search-placeholder="
+              v-tooltip.bottom="
                 t(
-                  'teachingWorkload.planned.searchPlaceholder',
+                  'teachingWorkload.streamGroups.title',
                 )
               "
-              @refresh="
-                planned.refresh
+              icon="pi pi-users"
+              severity="info"
+              text
+              rounded
+              @click.stop="
+                openGroups(row)
               "
-              @reset="
-                resetPlannedFilters
+            />
+
+            <Button
+              v-if="
+                canCalculate
               "
-            >
-              <template #center>
-                <Select
-                  v-model="
-                    selectedPlannedYear
-                  "
-                  :options="
-                    yearOptions
-                  "
-                  option-label="label"
-                  option-value="value"
-                  class="
-                    workload-filter
-                  "
-                  @change="
-                    changePlannedYear
-                  "
-                />
+              v-tooltip.bottom="
+                t(
+                  'teachingWorkload.calculate',
+                )
+              "
+              icon="
+                pi pi-calculator
+              "
+              severity="success"
+              text
+              rounded
+              :loading="
+                calculatingId ===
+                row.id
+              "
+              @click.stop="
+                calculateOne(row)
+              "
+            />
 
-                <Select
-                  v-model="
-                    selectedPlannedSemester
-                  "
-                  :options="
-                    plannedSemesterOptions
-                  "
-                  option-label="label"
-                  option-value="value"
-                  class="
-                    workload-filter
-                  "
-                  @change="
-                    applyPlannedFilters
-                  "
-                />
+            <Button
+              v-if="
+                canEditStream
+              "
+              v-tooltip.bottom="
+                t(
+                  'common.edit',
+                )
+              "
+              icon="
+                pi pi-pencil
+              "
+              text
+              rounded
+              @click.stop="
+                openEditStream(row)
+              "
+            />
 
-                <Select
-                  v-model="
-                    selectedPlannedStatus
-                  "
-                  :options="
-                    plannedStatusOptions
-                  "
-                  option-label="label"
-                  option-value="value"
-                  class="
-                    workload-filter
-                  "
-                  @change="
-                    applyPlannedFilters
-                  "
-                />
-
-                <Select
-                  v-model="
-                    selectedFullyDistributed
-                  "
-                  :options="
-                    distributedOptions
-                  "
-                  option-label="label"
-                  option-value="value"
-                  class="
-                    workload-filter
-                  "
-                  @change="
-                    applyPlannedFilters
-                  "
-                />
-              </template>
-            </BaseToolbar>
-
-            <BaseCard
-              :padding="false"
-            >
-              <BaseDataTable
-                :value="
-                  planned.items.value
-                "
-                :columns="
-                  plannedColumns
-                "
-                :loading="
-                  planned.loading.value
-                "
-                :error="
-                  planned.error.value
-                "
-                :first="
-                  planned.first.value
-                "
-                :rows="
-                  planned.query.value
-                    .pageSize
-                "
-                :total-records="
-                  planned
-                    .totalRecords.value
-                "
-                @page="
-                  planned.handlePage
-                "
-                @sort="
-                  planned.handleSort
-                "
-                @retry="
-                  planned.refresh
-                "
-              >
-                <template
-                  #distribution="{ row }"
-                >
-                  <div
-                    class="
-                      distribution-cell
-                    "
-                  >
-                    <ProgressBar
-                      :value="
-                        Math.min(
-                          100,
-                          asNumber(
-                            row.distribution_percent,
-                          ),
-                        )
-                      "
-                    />
-
-                    <small>
-                      {{
-                        asNumber(
-                          row.distributed_hours,
-                        ).toFixed(2)
-                      }}
-                      /
-                      {{
-                        asNumber(
-                          row.total_hours,
-                        ).toFixed(2)
-                      }}
-                    </small>
-                  </div>
-                </template>
-
-                <template
-                  #plannedStatus="{ row }"
-                >
-                  <Tag
-                    :value="
-                      t(
-                        `teachingWorkload.planned.statuses.${row.status}`,
-                      )
-                    "
-                    :severity="
-                      plannedStatusSeverity(
-                        row.status,
-                      )
-                    "
-                  />
-                </template>
-              </BaseDataTable>
-            </BaseCard>
-          </div>
-        </TabPanel>
-      </TabPanels>
-    </Tabs>
+            <Button
+              v-if="
+                canDeleteStream
+              "
+              v-tooltip.bottom="
+                t(
+                  'teachingWorkload.common.archive',
+                )
+              "
+              icon="
+                pi pi-box
+              "
+              severity="danger"
+              text
+              rounded
+              @click.stop="
+                archiveStream(row)
+              "
+            />
+          </template>
+        </BaseDataTable>
+      </BaseCard>
+    </div>
 
     <TeachingStreamFormDialog
-      v-model="
-        streamDialog
-      "
-      :record="
-        selectedStream
-      "
-      :academic-years="
-        academicYears
-      "
-      :academic-semesters="academicSemesters"
+      v-model="streamDialog"
+      :record="selectedStream"
+      :academic-years="academicYears"
       :curricula="curricula"
+      :group-semesters="groupSemesters"
       :loading="saving"
-      :field-errors="
-        fieldErrors
-      "
-      :non-field-errors="
-        nonFieldErrors
-      "
-      :general-error="
-        generalError
-      "
-      @submit="
-        saveStream
-      "
+      :field-errors="fieldErrors"
+      :non-field-errors="nonFieldErrors"
+      :general-error="generalError"
+      @submit="saveStream"
     />
-
     <TeachingStreamGroupsDialog
-      v-model="
-        groupsDialog
-      "
-      :stream="
-        selectedStream
-      "
-      :group-semesters="
-        groupSemesters
-      "
-      @changed="
-        handleGroupsChanged
-      "
+      v-model="groupsDialog"
+      :stream="selectedStream"
+      :group-semesters="groupSemesters"
+      @changed="handleGroupsChanged"
     />
   </div>
 </template>
@@ -1887,61 +1150,9 @@ onMounted(
   width: 13rem;
 }
 
-.workload-summary {
-  display: grid;
-
-  grid-template-columns:
-    repeat(
-      2,
-      minmax(0, 1fr)
-    );
-
-  gap: 1rem;
-}
-
-.workload-summary__item {
-  display: grid;
-  gap: 0.25rem;
-}
-
-.workload-summary__item span {
-  color:
-    var(--app-text-muted);
-
-  font-size: 0.72rem;
-}
-
-.workload-summary__item strong {
-  font-size: 1.25rem;
-}
-
-.distribution-cell {
-  display: grid;
-  gap: 0.2rem;
-
-  min-width: 10rem;
-}
-
-.distribution-cell small {
-  color:
-    var(--app-text-muted);
-
-  text-align: center;
-
-  font-size: 0.68rem;
-}
-
-:deep(.p-tabpanels) {
-  padding: 1rem 0 0;
-}
-
 @media (max-width: 991px) {
   .workload-filter {
     width: 100%;
-  }
-
-  .workload-summary {
-    grid-template-columns: 1fr;
   }
 }
 </style>

@@ -142,31 +142,41 @@ class GroupCurriculumAssignment(BaseModel):
                 }
             )
 
-        if (
-            self.student_group_id
-            and self.start_academic_year_id
-        ):
-            admission_year = (
-                self.student_group
-                .academic_year_admission
+        def sync_student_group_years(self):
+            if (
+                    not self.student_group_id
+                    or not self.start_academic_year_id
+                    or not self.is_primary
+                    or not self.is_active
+                    or self.is_archived
+            ):
+                return
+
+            group = self.student_group
+
+            group.academic_year_admission = (
+                self.start_academic_year
             )
 
-            if (
-                self.start_academic_year
-                .start_year
-                <
-                admission_year.start_year
-            ):
-                raise ValidationError(
-                    {
-                        "start_academic_year": _(
-                            "Учебный план группы "
-                            "не может применяться "
-                            "раньше года поступления "
-                            "группы."
-                        )
-                    }
+            group.save(
+                update_fields=(
+                    "academic_year_admission",
+                    "graduation_academic_year",
+                    "updated_at",
                 )
+            )
+
+        def save(self, *args, **kwargs):
+            self.full_clean()
+
+            result = super().save(
+                *args,
+                **kwargs,
+            )
+
+            self.sync_student_group_years()
+
+            return result
 
     def __str__(self):
         return f"{self.student_group} — {self.curriculum.code}"
@@ -207,6 +217,13 @@ class GroupSemester(BaseModel):
         _("Номер семестра по учебному плану"),
         validators=[MinValueValidator(1)],
         db_index=True,
+    )
+    weeks_count = models.PositiveSmallIntegerField(
+        _("Количество учебных недель"),
+        default=15,
+        validators=[
+            MinValueValidator(1),
+        ],
     )
     students_count = models.PositiveSmallIntegerField(
         _("Количество студентов в семестре"),
@@ -741,6 +758,14 @@ class PlannedWorkload(BaseModel):
         related_name="planned_workloads",
         on_delete=models.PROTECT,
     )
+    group_semester = models.ForeignKey(
+        GroupSemester,
+        verbose_name=_("Семестр учебной группы"),
+        related_name="planned_workloads",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+    )
     calculation_mode = models.CharField(
         _("Способ расчёта"),
         max_length=20,
@@ -803,7 +828,26 @@ class PlannedWorkload(BaseModel):
                     "teaching_stream",
                     "curriculum_workload",
                 ),
-                name="unique_stream_curriculum_workload",
+                condition=models.Q(
+                    group_semester__isnull=True,
+                ),
+                name=(
+                    "unique_stream_level_workload"
+                ),
+            ),
+
+            models.UniqueConstraint(
+                fields=(
+                    "teaching_stream",
+                    "curriculum_workload",
+                    "group_semester",
+                ),
+                condition=models.Q(
+                    group_semester__isnull=False,
+                ),
+                name=(
+                    "unique_group_level_workload"
+                ),
             ),
         ]
 

@@ -1,11 +1,9 @@
 <script setup lang="ts">
-// import Button from 'primevue/button'
 import Checkbox from 'primevue/checkbox'
 import InputNumber from 'primevue/inputnumber'
 import Message from 'primevue/message'
 import MultiSelect from 'primevue/multiselect'
 import Select from 'primevue/select'
-// import Textarea from 'primevue/textarea'
 
 import {
   computed,
@@ -74,6 +72,12 @@ interface SemesterForm {
     >
 }
 
+interface AnnualWorkloadNorm {
+  workload_type: number
+  code: string
+  coefficient: string
+}
+
 const visible =
   defineModel<boolean>({
     default: false,
@@ -87,6 +91,7 @@ const props = withDefaults(
     disciplines: Discipline[]
     workloadTypes: WorkloadType[]
     workloadRules: CurriculumWorkloadRule[]
+    annualWorkloadNorms?: AnnualWorkloadNorm[]
     creditHoursPerCredit?: number
     loading?: boolean
     fieldErrors?: FieldErrors
@@ -96,6 +101,7 @@ const props = withDefaults(
   {
     record: null,
     existingEntries: () => [],
+    annualWorkloadNorms: () => [],
     creditHoursPerCredit: 0,
     loading: false,
     fieldErrors: () => ({}),
@@ -234,6 +240,55 @@ const componentOptions =
       },
     ],
   )
+
+function weeklyPracticeHours(
+  semester: SemesterForm,
+): number {
+  let total = 0
+
+  for (
+    const type of
+    activeWorkloadTypes.value
+  ) {
+    if (
+      !type.uses_weekly_norm
+    ) {
+      continue
+    }
+
+    const row =
+      getWorkloadRow(
+        semester.semester_number,
+        type.id,
+      )
+
+    if (!row.enabled) {
+      continue
+    }
+
+    const norm =
+      props.annualWorkloadNorms
+        .find(
+          (item) =>
+            item.workload_type ===
+            type.id,
+        )
+
+    if (!norm) {
+      continue
+    }
+
+    total += (
+      Number(
+        norm.coefficient,
+      )
+      *
+      semester.weeks_count
+    )
+  }
+
+  return total
+}
 
 function ruleFor(
   workloadTypeId: number,
@@ -491,14 +546,18 @@ function independentHours(
 }
 
 function totalAcademicHours(
-  semester:
-    SemesterForm,
+  semester: SemesterForm,
 ): number {
   return (
     classroomHours(
       semester,
-    ) +
+    )
+    +
     independentHours(
+      semester,
+    )
+    +
+    weeklyPracticeHours(
       semester,
     )
   )
@@ -507,11 +566,8 @@ function totalAcademicHours(
 function semesterCredits(
   semester: SemesterForm,
 ): number {
-  const hoursPerCredit =
-    props.creditHoursPerCredit
-
   if (
-    hoursPerCredit <= 0
+    props.creditHoursPerCredit <= 0
   ) {
     return 0
   }
@@ -520,8 +576,9 @@ function semesterCredits(
     (
       totalAcademicHours(
         semester,
-      ) /
-      hoursPerCredit
+      )
+      /
+      props.creditHoursPerCredit
     ).toFixed(2),
   )
 }
@@ -2042,5 +2099,48 @@ watch(
   white-space: nowrap;
 
   font-size: 0.65rem;
+}
+
+:deep(
+  .semester-matrix
+  .matrix-number
+  .p-inputnumber-input
+) {
+  width: 100%;
+
+  padding:
+    0.5rem
+    0.25rem;
+
+  border: 0;
+  border-radius: 0;
+
+  background: transparent;
+
+  box-shadow: none;
+
+  text-align: center;
+}
+
+:deep(
+  .semester-matrix
+  .matrix-number
+  .p-inputnumber-input:focus
+) {
+  outline: 0;
+
+  box-shadow:
+    inset
+    0 -2px 0
+    var(--p-primary-color);
+}
+
+.semester-matrix td {
+  overflow: hidden;
+}
+
+.matrix-number {
+  width: 100%;
+  min-width: 0;
 }
 </style>

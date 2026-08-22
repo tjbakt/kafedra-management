@@ -548,6 +548,8 @@ class StudentGroup(BaseModel):
         verbose_name=_("Учебный год поступления"),
         related_name="admitted_groups",
         on_delete=models.PROTECT,
+        null=True,
+        blank=True,
     )
     faculty = models.ForeignKey(
         Faculty,
@@ -610,7 +612,6 @@ class StudentGroup(BaseModel):
         verbose_name = _("Учебная группа")
         verbose_name_plural = _("Учебные группы")
         ordering = (
-            "-academic_year_admission__start_year",
             "code",
         )
 

@@ -444,14 +444,9 @@ const ru = {
     },
 
     sections: {
-      general:
-        'Основная информация',
-
-      contacts:
-        'Контактная информация',
-
-      audit:
-        'История изменений',
+      general: 'Основная информация',
+      contacts: 'Контактная информация',
+      audit: 'История изменений',
     },
 
     validation: {
@@ -1717,8 +1712,8 @@ const ru = {
         nameUz:
           'Название на узбекском',
 
-        department:
-          'Кафедра по умолчанию',
+        department: 'Кафедра по умолчанию',
+        workloadTypes: 'Вид учебной работы'
       },
 
       validation: {
@@ -2009,11 +2004,9 @@ const ru = {
     },
 
     sections: {
-      discipline:
-        'Дисциплина и семестр',
-
-      hours:
-        'Кредиты и академический объём',
+      main: 'Основные данные',
+      discipline: 'Дисциплина и семестр',
+      hours: 'Кредиты и академический объём',
     },
 
     summary: {
@@ -2369,6 +2362,8 @@ const ru = {
         academicSemester:
           'Календарный семестр',
 
+        weeksCount: 'Учебные недели',
+
         studentsCount:
           'Количество студентов',
 
@@ -2647,61 +2642,40 @@ const ru = {
     },
 
     planned: {
-      searchPlaceholder:
-        'Поиск по потоку, дисциплине или кафедре...',
+      searchPlaceholder: 'Поиск по потоку, дисциплине или кафедре...',
+      description: 'Плановая учебная нагрузка по семестрам, потокам и учебным группам.',
+      empty: 'Плановая нагрузка отсутствует.',
+
+      scope: {
+        stream: 'Поток',
+        group: 'Учебная группа',
+      },
 
       statuses: {
-        calculated:
-          'Рассчитана',
-
-        approved:
-          'Утверждена',
-
-        partially_distributed:
-          'Частично распределена',
-
-        distributed:
-          'Полностью распределена',
-
-        cancelled:
-          'Отменена',
+        calculated: 'Рассчитана',
+        approved: 'Утверждена',
+        partially_distributed: 'Частично распределена',
+        distributed: 'Полностью распределена',
+        cancelled: 'Отменена',
       },
 
       fields: {
-        stream:
-          'Поток',
-
-        discipline:
-          'Дисциплина',
-
-        workloadType:
-          'Вид нагрузки',
-
-        baseHours:
-          'Базовые часы',
-
-        quantity:
-          'Количество',
-
-        totalHours:
-          'Всего часов',
-
-        remainingHours:
-          'Остаток',
-
-        distribution:
-          'Распределение',
-
-        status:
-          'Статус',
+        stream: 'Поток',
+        discipline: 'Дисциплина',
+        workloadType: 'Вид нагрузки',
+        baseHours: 'Базовые часы',
+        quantity: 'Количество',
+        totalHours: 'Всего часов',
+        remainingHours: 'Остаток',
+        distribution: 'Распределение',
+        distributedHours: 'Распределено',
+        status: 'Статус',
       },
 
       summary: {
-        totalHours:
-          'Общий объём плановой нагрузки',
-
-        records:
-          'Позиций нагрузки',
+        totalHours: 'Общий объём плановой нагрузки',
+        records: 'Позиций нагрузки',
+        yearTotal: 'Всего за учебный год',
       },
     },
   },
