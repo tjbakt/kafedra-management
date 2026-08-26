@@ -5,17 +5,17 @@ from apps.workload.api.filters import (
 )
 
 
-class WorkloadDistributionFilterTests(
-    SimpleTestCase
-):
+class WorkloadDistributionFilterTests(SimpleTestCase):
     def test_declared_filters(self):
         expected = {
             "academic_year",
             "academic_semester",
+            "semester_number",
             "teaching_department",
             "faculty",
             "planned_workload",
             "teaching_stream",
+            "student_group",
             "discipline",
             "workload_type",
             "curriculum",
@@ -26,9 +26,6 @@ class WorkloadDistributionFilterTests(
         }
 
         self.assertEqual(
-            set(
-                WorkloadDistributionFilter
-                .base_filters
-            ),
+            set(WorkloadDistributionFilter.base_filters),
             expected,
         )

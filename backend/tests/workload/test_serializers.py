@@ -67,20 +67,34 @@ class WorkloadDistributionSerializerTests(
             "workload_scope",
             serializer.data,
         )
-
         self.assertEqual(
-            serializer.data[
-                "workload_scope"
-            ],
-            "group",
-        )
-
-        self.assertEqual(
-            serializer.data[
-                "workload_scope"
-            ],
+            serializer.data["workload_scope"],
             "stream",
         )
+
+        self.assertIsNone(
+            serializer.data["group_semester"],
+        )
+        self.assertIsNone(
+            serializer.data["student_group"],
+        )
+        self.assertIsNone(
+            serializer.data["student_group_code"],
+        )
+
+        self.assertEqual(
+            serializer.data["teacher"],
+            distribution.staff_employment.staff_member_id,
+        )
+        self.assertEqual(
+            serializer.data["department_name"],
+            distribution.planned_workload.teaching_department.name_ru,
+        )
+        self.assertEqual(
+            Decimal(serializer.data["planned_total_hours"]),
+            distribution.planned_workload.total_hours,
+        )
+
 
         self.assertEqual(
             serializer.data["teacher"],
