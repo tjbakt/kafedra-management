@@ -354,18 +354,36 @@ class TeachingStreamViewSet(
                 .SPRING
             )
 
-            academic_semester = (
-                AcademicSemester.objects.get(
-                    academic_year=(
-                        data[
-                            "academic_year"
-                        ]
-                    ),
-                    season=season,
-                    is_active=True,
-                    is_archived=False,
+            try:
+                academic_semester = (
+                    AcademicSemester.objects.get(
+                        academic_year=(
+                            data[
+                                "academic_year"
+                            ]
+                        ),
+                        season=season,
+                        is_active=True,
+                        is_archived=False,
+                    )
                 )
-            )
+            except AcademicSemester.DoesNotExist:
+                return Response(
+                    {
+                        "semester_numbers": [
+                            (
+                                "Для семестра "
+                                f"{semester_number} "
+                                "не создан соответствующий "
+                                "академический семестр."
+                            )
+                        ]
+                    },
+                    status=(
+                        status
+                        .HTTP_400_BAD_REQUEST
+                    ),
+                )
 
             stream = (
                 TeachingStream.objects.create(
@@ -399,11 +417,27 @@ class TeachingStreamViewSet(
                         f"{semester_number} сем."
                     ),
 
+                    status=(
+                        data[
+                            "status"
+                        ]
+                    ),
+
+                    is_active=(
+                        data[
+                            "is_active"
+                        ]
+                    ),
+
                     notes=(
                         data["notes"]
                     ),
 
                     created_by=(
+                        request.user
+                    ),
+
+                    updated_by=(
                         request.user
                     ),
                 )
@@ -531,6 +565,9 @@ class PlannedWorkloadViewSet(
                 "curriculum_workload__curriculum_discipline",
                 "curriculum_workload__curriculum_discipline__discipline",
                 "curriculum_workload__curriculum_discipline__teaching_department",
+                "group_semester",
+                "group_semester__group_curriculum",
+                "group_semester__group_curriculum__student_group",
             )
         )
 

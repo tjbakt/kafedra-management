@@ -81,80 +81,6 @@ class TeachingStreamWorkloadCalculator:
 
         return norm.coefficient
 
-    def get_quantity(
-        self,
-        workload: CurriculumWorkload,
-    ) -> Decimal:
-        workload_type = (
-            workload.workload_type
-        )
-
-        #
-        # Научная и квалификационная практика:
-        #
-        # коэффициент × недели × группы.
-        #
-        if workload_type.uses_weekly_norm:
-            weeks_count = (
-                workload
-                .curriculum_discipline
-                .weeks_count
-            )
-
-            return (
-                Decimal(
-                    self.stream.groups_count
-                )
-                *
-                Decimal(
-                    weeks_count
-                )
-            )
-
-        mode = (
-            workload.calculation_mode
-        )
-
-        if (
-            mode
-            == WorkloadType
-            .CalculationMode
-            .FIXED
-        ):
-            return Decimal("1.00")
-
-        if (
-            mode
-            == WorkloadType
-            .CalculationMode
-            .PER_GROUP
-        ):
-            return Decimal(
-                self.stream.groups_count
-            )
-
-        if (
-            mode
-            == WorkloadType
-            .CalculationMode
-            .PER_SUBGROUP
-        ):
-            return Decimal(
-                self.stream.subgroups_count
-            )
-
-        if (
-            mode
-            == WorkloadType
-            .CalculationMode
-            .PER_STUDENT
-        ):
-            return Decimal(
-                self.stream.students_count
-            )
-
-        return Decimal("0.00")
-
     def get_curriculum_workloads(self):
         return (
             CurriculumWorkload.objects
@@ -185,8 +111,20 @@ class TeachingStreamWorkloadCalculator:
             )
         )
 
-    def is_stream_level(workload):
-        return (workload.workload_type.code == WorkloadType.Code.LECTURE)
+    def is_stream_level(
+            self,
+            workload:
+            CurriculumWorkload,
+    ) -> bool:
+        return (
+                workload
+                .workload_type
+                .code
+                ==
+                WorkloadType
+                .Code
+                .LECTURE
+        )
 
     def get_group_quantity(
             self,
@@ -202,8 +140,7 @@ class TeachingStreamWorkloadCalculator:
                         .uses_weekly_norm
         ):
             return Decimal(
-                workload
-                .curriculum_discipline
+                group_semester
                 .weeks_count
             )
 
@@ -251,18 +188,18 @@ class TeachingStreamWorkloadCalculator:
 
         return Decimal("0.00")
 
-    def get_stream_quantity(
-            self,
-            workload,
-    ):
-        if (
-                workload.workload_type.code
-                ==
-                WorkloadType.Code.LECTURE
-        ):
-            return Decimal("1.00")
-
-        return Decimal("0.00")
+    # def get_stream_quantity(
+    #         self,
+    #         workload,
+    # ):
+    #     if (
+    #             workload.workload_type.code
+    #             ==
+    #             WorkloadType.Code.LECTURE
+    #     ):
+    #         return Decimal("1.00")
+    #
+    #     return Decimal("0.00")
 
     @transaction.atomic
     def calculate(
@@ -281,9 +218,18 @@ class TeachingStreamWorkloadCalculator:
                 "Учебный поток не указан."
             )
 
-        workloads = (
+        workloads = list(
             self.get_curriculum_workloads()
         )
+        if not workloads:
+            raise ValueError(
+                (
+                    "Для выбранного семестра "
+                    "учебного плана нет видов "
+                    "работ, включаемых в "
+                    "нагрузку преподавателя."
+                )
+            )
 
         stream_groups = list(
             stream.stream_groups
@@ -297,6 +243,16 @@ class TeachingStreamWorkloadCalculator:
                 "group_semester__group_curriculum__student_group",
             )
         )
+
+        if not stream_groups:
+            raise ValueError(
+                (
+                    "Нельзя рассчитать "
+                    "плановую нагрузку "
+                    "учебного потока без "
+                    "учебных групп."
+                )
+            )
 
         calculated = []
 

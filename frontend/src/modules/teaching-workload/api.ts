@@ -58,7 +58,7 @@ export async function createTeachingStreamsBulk(
     await http.post<
       TeachingStream[]
     >(
-      '/teaching/teaching-streams/bulk-create/',
+      '/teaching/streams/bulk-create/',
       payload,
     )
 

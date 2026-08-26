@@ -99,84 +99,151 @@ class GroupCurriculumAssignment(BaseModel):
     def clean(self):
         super().clean()
 
-        if not self.student_group_id or not self.curriculum_id:
+        if (
+                not self.student_group_id
+                or not self.curriculum_id
+        ):
             return
 
         if (
-            self.student_group.study_program_id
-            != self.curriculum.study_program_id
+                self.student_group.study_program_id
+                != self.curriculum.study_program_id
         ):
             raise ValidationError(
                 {
                     "curriculum": _(
-                        "Направление учебного плана не совпадает "
-                        "с направлением учебной группы."
+                        "Направление учебного плана "
+                        "не совпадает с направлением "
+                        "учебной группы."
                     )
                 }
             )
 
         if (
-            self.student_group.study_form_id
-            != self.curriculum.study_form_id
+                self.student_group.study_form_id
+                != self.curriculum.study_form_id
         ):
             raise ValidationError(
                 {
                     "curriculum": _(
-                        "Форма обучения учебного плана не совпадает "
-                        "с формой обучения группы."
+                        "Форма обучения учебного плана "
+                        "не совпадает с формой обучения "
+                        "группы."
                     )
                 }
             )
 
         if (
-            self.end_academic_year_id
-            and self.end_academic_year.start_year
-            < self.start_academic_year.start_year
+                self.end_academic_year_id
+                and
+                self.end_academic_year.start_year
+                <
+                self.start_academic_year.start_year
         ):
             raise ValidationError(
                 {
                     "end_academic_year": _(
-                        "Учебный год окончания не может быть раньше "
+                        "Учебный год окончания "
+                        "не может быть раньше "
                         "учебного года начала."
                     )
                 }
             )
 
-        def sync_student_group_years(self):
-            if (
-                    not self.student_group_id
-                    or not self.start_academic_year_id
-                    or not self.is_primary
-                    or not self.is_active
-                    or self.is_archived
-            ):
-                return
+    def resolve_graduation_academic_year(
+            self,
+    ):
+        if (
+                not self.start_academic_year_id
+                or not self.curriculum_id
+        ):
+            return None
 
-            group = self.student_group
+        semesters_count = (
+            self.curriculum
+            .semesters_count
+        )
 
-            group.academic_year_admission = (
-                self.start_academic_year
+        if not semesters_count:
+            return None
+
+        study_years = (
+                              semesters_count + 1
+                      ) // 2
+
+        graduation_start_year = (
+                self.start_academic_year.start_year
+                + study_years
+                - 1
+        )
+
+        return (
+            AcademicYear.objects
+            .filter(
+                start_year=(
+                    graduation_start_year
+                ),
+                end_year=(
+                        graduation_start_year + 1
+                ),
+                is_archived=False,
             )
+            .first()
+        )
 
-            group.save(
-                update_fields=(
-                    "academic_year_admission",
-                    "graduation_academic_year",
-                    "updated_at",
-                )
+    def sync_student_group_years(
+            self,
+    ):
+        if (
+                not self.student_group_id
+                or not self.start_academic_year_id
+                or not self.is_primary
+                or not self.is_active
+                or self.is_archived
+        ):
+            return
+
+        group = (
+            self.student_group
+        )
+
+        group.academic_year_admission = (
+            self.start_academic_year
+        )
+
+        group.graduation_academic_year = (
+            self.resolve_graduation_academic_year()
+        )
+
+        group.save(
+            update_fields=(
+                "academic_year_admission",
+                "graduation_academic_year",
+                "updated_at",
             )
+        )
 
-        def save(self, *args, **kwargs):
-            self.full_clean()
+    def save(
+            self,
+            *args,
+            **kwargs,
+    ):
+        self.full_clean()
 
-            result = super().save(
-                *args,
-                **kwargs,
-            )
+        result = super().save(
+            *args,
+            **kwargs,
+        )
 
-            self.sync_student_group_years()
+        self.sync_student_group_years()
 
-            return result
+        return result
+
+    def __str__(self):
+        return (
+            f"{self.student_group} — "
+            f"{self.curriculum.code}"
+        )
 
     def __str__(self):
         return f"{self.student_group} — {self.curriculum.code}"

@@ -229,6 +229,7 @@ class GroupSemesterSerializer(AuditFieldsSerializer):
             "academic_semester_name",
             "semester_number",
             "season",
+            "weeks_count",
             "students_count",
             "subgroup_count",
             "status",
@@ -902,7 +903,8 @@ class TeachingStreamBulkSerializer(
     academic_year = (
         serializers.PrimaryKeyRelatedField(
             queryset=(
-                AcademicYear.objects.filter(
+                AcademicYear.objects
+                .filter(
                     is_archived=False,
                 )
             )
@@ -912,7 +914,9 @@ class TeachingStreamBulkSerializer(
     curriculum = (
         serializers.PrimaryKeyRelatedField(
             queryset=(
-                Curriculum.objects.filter(
+                Curriculum.objects
+                .filter(
+                    is_active=True,
                     is_archived=False,
                 )
             )
@@ -921,8 +925,10 @@ class TeachingStreamBulkSerializer(
 
     semester_numbers = (
         serializers.ListField(
-            child=serializers.IntegerField(
-                min_value=1,
+            child=(
+                serializers.IntegerField(
+                    min_value=1,
+                )
             ),
             allow_empty=False,
         )
@@ -936,11 +942,110 @@ class TeachingStreamBulkSerializer(
         max_length=255,
     )
 
+    status = serializers.ChoiceField(
+        choices=(
+            TeachingStream
+            .Status
+            .choices
+        ),
+        default=(
+            TeachingStream
+            .Status
+            .DRAFT
+        ),
+    )
+
+    is_active = (
+        serializers.BooleanField(
+            default=True,
+        )
+    )
+
     notes = serializers.CharField(
         allow_blank=True,
         required=False,
         default="",
     )
+
+    def validate_semester_numbers(
+        self,
+        values,
+    ):
+        values = sorted(
+            set(values)
+        )
+
+        if len(values) > 2:
+            raise serializers.ValidationError(
+                (
+                    "За один учебный год "
+                    "можно выбрать не более "
+                    "двух семестров."
+                )
+            )
+
+        return values
+
+    def validate(self, attrs):
+        academic_year = (
+            attrs["academic_year"]
+        )
+
+        curriculum = (
+            attrs["curriculum"]
+        )
+
+        semester_numbers = (
+            attrs[
+                "semester_numbers"
+            ]
+        )
+
+        available_numbers = set(
+            GroupSemester.objects
+            .filter(
+                academic_year=(
+                    academic_year
+                ),
+                group_curriculum__curriculum=(
+                    curriculum
+                ),
+                is_active=True,
+                is_archived=False,
+            )
+            .values_list(
+                "semester_number",
+                flat=True,
+            )
+        )
+
+        invalid = [
+            number
+            for number
+            in semester_numbers
+            if number
+            not in available_numbers
+        ]
+
+        if invalid:
+            raise serializers.ValidationError(
+                {
+                    "semester_numbers": (
+                        "Для выбранного "
+                        "учебного года и "
+                        "учебного плана "
+                        "недоступны семестры: "
+                        + ", ".join(
+                            map(
+                                str,
+                                invalid,
+                            )
+                        )
+                    )
+                }
+            )
+
+        return attrs
 
 class PlannedWorkloadSerializer(LocalizedNameMixin, AuditFieldsSerializer):
     teaching_stream_code = serializers.CharField(
