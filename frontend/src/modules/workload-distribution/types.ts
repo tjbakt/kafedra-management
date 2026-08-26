@@ -17,6 +17,25 @@ export interface WorkloadDistribution
 
   stream_code: string
 
+  semester_number: number
+
+  season:
+    | 'autumn'
+    | 'spring'
+
+  group_semester:
+    number | null
+
+  student_group:
+    number | null
+
+  student_group_code:
+    string | null
+
+  workload_scope:
+    | 'stream'
+    | 'group'
+
   discipline_code: string
   discipline_name: string
 

@@ -296,6 +296,59 @@ class WorkloadDistributionSerializer(
         source="planned_workload.teaching_stream.code",
         read_only=True,
     )
+    semester_number = serializers.IntegerField(
+        source=(
+            "planned_workload."
+            "teaching_stream."
+            "semester_number"
+        ),
+        read_only=True,
+    )
+
+    season = serializers.CharField(
+        source=(
+            "planned_workload."
+            "teaching_stream."
+            "season"
+        ),
+        read_only=True,
+    )
+
+    group_semester = serializers.IntegerField(
+        source=(
+            "planned_workload."
+            "group_semester_id"
+        ),
+        read_only=True,
+        allow_null=True,
+    )
+
+    student_group = serializers.IntegerField(
+        source=(
+            "planned_workload."
+            "group_semester."
+            "group_curriculum."
+            "student_group_id"
+        ),
+        read_only=True,
+        allow_null=True,
+    )
+
+    student_group_code = serializers.CharField(
+        source=(
+            "planned_workload."
+            "group_semester."
+            "group_curriculum."
+            "student_group."
+            "code"
+        ),
+        read_only=True,
+        allow_null=True,
+    )
+
+    workload_scope = (
+        serializers.SerializerMethodField()
+    )
     discipline_name = serializers.SerializerMethodField()
     workload_type_name = serializers.SerializerMethodField()
     planned_total_hours = serializers.DecimalField(
@@ -334,6 +387,27 @@ class WorkloadDistributionSerializer(
         decimal_places=2,
         read_only=True,
     )
+
+    @extend_schema_field(
+        serializers.ChoiceField(
+            choices=(
+                    "stream",
+                    "group",
+            )
+        )
+    )
+    def get_workload_scope(
+            self,
+            obj,
+    ) -> str:
+        if (
+                obj.planned_workload
+                        .group_semester_id
+                is None
+        ):
+            return "stream"
+
+        return "group"
 
     @extend_schema_field(serializers.CharField())
     def get_position_name(self, obj) -> str:
@@ -375,6 +449,12 @@ class WorkloadDistributionSerializer(
             "discipline_code",
             "planned_total_hours",
             "stream_code",
+            "semester_number",
+            "season",
+            "group_semester",
+            "student_group",
+            "student_group_code",
+            "workload_scope",
             "discipline_name",
             "workload_type_name",
             "department_name",

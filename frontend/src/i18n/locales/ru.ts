@@ -2685,104 +2685,61 @@ const ru = {
   workloadDistribution: {
     create: 'Распределить нагрузку',
     title: 'Распределение учебной нагрузки',
+    description: 'Распределение рассчитанных часов дисциплин между преподавателями кафедр.',
+    createTitle: 'Распределение нагрузки преподавателю',
+    editTitle: 'Редактирование распределения',
+    searchPlaceholder: 'Поиск по преподавателю, дисциплине или потоку...',
+    approve: 'Утвердить',
+    cancel: 'Отменить',
+    cancelTitle: 'Отмена распределения',
+    returnToDraft: 'Вернуть в черновик',
+    returnTitle: 'Возврат распределения в черновик',
+    archive: 'Архивировать',
+    archiveTitle: 'Архивирование распределения',
+    archiveConfirm: 'Архивировать распределение нагрузки преподавателя «{teacher}»?',
+    archived: 'Распределение перемещено в архив.',
+    remainingHint: 'Доступный остаток позиции: {remaining} ч. Общий объём: {total} ч.',
+    teacherNormHint: 'Рекомендуемая годовая нагрузка преподавателя: {recommended} ч. Уже распределено: {distributed} ч. Остаток нормы: {remaining} ч.',
 
-    description:
-      'Распределение рассчитанных часов дисциплин между преподавателями кафедр.',
+    scope: {
+      stream: 'Поток',
+      group: 'Группа',
+    },
 
-    createTitle:
-      'Распределение нагрузки преподавателю',
+    seasons: {
+      autumn: 'Осенний',
+      spring: 'Весенний',
+    },
 
-    editTitle:
-      'Редактирование распределения',
-
-    searchPlaceholder:
-      'Поиск по преподавателю, дисциплине или потоку...',
-
-    approve:
-      'Утвердить',
-
-    cancel:
-      'Отменить',
-
-    cancelTitle:
-      'Отмена распределения',
-
-    returnToDraft:
-      'Вернуть в черновик',
-
-    returnTitle:
-      'Возврат распределения в черновик',
-
-    archive:
-      'Архивировать',
-
-    archiveTitle:
-      'Архивирование распределения',
-
-    archiveConfirm:
-      'Архивировать распределение нагрузки преподавателя «{teacher}»?',
-
-    archived:
-      'Распределение перемещено в архив.',
-
-    remainingHint:
-      'Доступный остаток позиции: {remaining} ч. Общий объём: {total} ч.',
-
-    teacherNormHint:
-      'Рекомендуемая годовая нагрузка преподавателя: {recommended} ч. Уже распределено: {distributed} ч. Остаток нормы: {remaining} ч.',
+    shortSemester: 'сем.',
+    shortHours: 'ч.',
 
     statuses: {
-      draft:
-        'Черновик',
-
-      approved:
-        'Утверждено',
-
-      cancelled:
-        'Отменено',
+      draft: 'Черновик',
+      approved: 'Утверждено',
+      cancelled: 'Отменено',
     },
 
     filters: {
-      allYears:
-        'Все учебные годы',
-
-      allDepartments:
-        'Все кафедры',
-
-      allStatuses:
-        'Все статусы',
+      allYears: 'Все учебные годы',
+      allDepartments: 'Все кафедры',
+      allStatuses: 'Все статусы',
+      allSemesters: 'Все семестры',
     },
 
     fields: {
-      plannedWorkload:
-        'Позиция плановой нагрузки',
-
-      curriculum:
-        'Учебный план',
-
-      discipline:
-        'Дисциплина',
-
-      workloadType:
-        'Вид нагрузки',
-
-      department:
-        'Кафедра',
-
-      teacher:
-        'Преподаватель',
-
-      allocatedHours:
-        'Распределяемые часы',
-
-      status:
-        'Статус',
-
-      notes:
-        'Примечание',
-
-      reason:
-        'Причина',
+      plannedWorkload: 'Позиция плановой нагрузки',
+      curriculum: 'Учебный план',
+      discipline: 'Дисциплина',
+      workloadType: 'Вид нагрузки',
+      department: 'Кафедра',
+      teacher: 'Преподаватель',
+      allocatedHours: 'Распределяемые часы',
+      semester: 'Семестр',
+      scope: 'Поток / группа',
+      status: 'Статус',
+      notes: 'Примечание',
+      reason: 'Причина',
     },
 
     validation: {

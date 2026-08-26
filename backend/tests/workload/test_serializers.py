@@ -38,6 +38,50 @@ class WorkloadDistributionSerializerTests(
             )
         )
 
+        self.assertIn(
+            "semester_number",
+            serializer.data,
+        )
+
+        self.assertIn(
+            "season",
+            serializer.data,
+        )
+
+        self.assertIn(
+            "group_semester",
+            serializer.data,
+        )
+
+        self.assertIn(
+            "student_group",
+            serializer.data,
+        )
+
+        self.assertIn(
+            "student_group_code",
+            serializer.data,
+        )
+
+        self.assertIn(
+            "workload_scope",
+            serializer.data,
+        )
+
+        self.assertEqual(
+            serializer.data[
+                "workload_scope"
+            ],
+            "group",
+        )
+
+        self.assertEqual(
+            serializer.data[
+                "workload_scope"
+            ],
+            "stream",
+        )
+
         self.assertEqual(
             serializer.data["teacher"],
             (

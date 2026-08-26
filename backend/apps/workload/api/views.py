@@ -312,6 +312,9 @@ class WorkloadDistributionViewSet(
 
         "planned_workload__curriculum_workload__"
         "curriculum_discipline__discipline__name_uz",
+
+        "planned_workload__group_semester__"
+        "group_curriculum__student_group__code"
     )
     ordering_fields = (
         "allocated_hours",
@@ -349,6 +352,9 @@ class WorkloadDistributionViewSet(
             "planned_workload__curriculum_workload__workload_type",
             "planned_workload__teaching_stream__curriculum",
             "planned_workload__curriculum_workload__curriculum_discipline",
+            "planned_workload__group_semester",
+            "planned_workload__group_semester__group_curriculum",
+            "planned_workload__group_semester__group_curriculum__student_group",
             "planned_workload__curriculum_workload__"
             "curriculum_discipline__discipline",
             "staff_employment",

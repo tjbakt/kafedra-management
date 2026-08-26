@@ -2621,104 +2621,61 @@ const uz = {
   workloadDistribution: {
     create: 'Yuklamani taqsimlash',
     title: 'O‘quv yuklamasini taqsimlash',
+    description: 'Hisoblangan fan yuklamasi soatlarini kafedra o‘qituvchilari o‘rtasida taqsimlash.',
+    createTitle: 'O‘qituvchiga yuklama taqsimlash',
+    editTitle: 'Yuklama taqsimotini tahrirlash',
+    searchPlaceholder: 'O‘qituvchi, fan yoki oqim bo‘yicha qidirish...',
+    approve: 'Tasdiqlash',
+    cancel: 'Bekor qilish',
+    cancelTitle: 'Taqsimotni bekor qilish',
+    returnToDraft: 'Qoralamaga qaytarish',
+    returnTitle: 'Taqsimotni qoralamaga qaytarish',
+    archive: 'Arxivlash',
+    archiveTitle: 'Taqsimotni arxivlash',
+    archiveConfirm: '«{teacher}» o‘qituvchisining yuklama taqsimotini arxivlaysizmi?',
+    archived: 'Taqsimot arxivga ko‘chirildi.',
+    remainingHint: 'Pozitsiyaning mavjud qoldig‘i: {remaining} soat. Umumiy hajm: {total} soat.',
+    teacherNormHint: 'O‘qituvchining tavsiya etilgan yillik yuklamasi: {recommended} soat. Taqsimlangan: {distributed} soat. Norma qoldig‘i: {remaining} soat.',
 
-    description:
-      'Hisoblangan fan yuklamasi soatlarini kafedra o‘qituvchilari o‘rtasida taqsimlash.',
+    scope: {
+      stream: 'Oqim',
+      group: 'Guruh',
+    },
 
-    createTitle:
-      'O‘qituvchiga yuklama taqsimlash',
+    seasons: {
+      autumn: 'Kuzgi',
+      spring: 'Bahorgi',
+    },
 
-    editTitle:
-      'Yuklama taqsimotini tahrirlash',
-
-    searchPlaceholder:
-      'O‘qituvchi, fan yoki oqim bo‘yicha qidirish...',
-
-    approve:
-      'Tasdiqlash',
-
-    cancel:
-      'Bekor qilish',
-
-    cancelTitle:
-      'Taqsimotni bekor qilish',
-
-    returnToDraft:
-      'Qoralamaga qaytarish',
-
-    returnTitle:
-      'Taqsimotni qoralamaga qaytarish',
-
-    archive:
-      'Arxivlash',
-
-    archiveTitle:
-      'Taqsimotni arxivlash',
-
-    archiveConfirm:
-      '«{teacher}» o‘qituvchisining yuklama taqsimotini arxivlaysizmi?',
-
-    archived:
-      'Taqsimot arxivga ko‘chirildi.',
-
-    remainingHint:
-      'Pozitsiyaning mavjud qoldig‘i: {remaining} soat. Umumiy hajm: {total} soat.',
-
-    teacherNormHint:
-      'O‘qituvchining tavsiya etilgan yillik yuklamasi: {recommended} soat. Taqsimlangan: {distributed} soat. Norma qoldig‘i: {remaining} soat.',
+    shortSemester: 'semestr',
+    shortHours: 'soat',
 
     statuses: {
-      draft:
-        'Qoralama',
-
-      approved:
-        'Tasdiqlangan',
-
-      cancelled:
-        'Bekor qilingan',
+      draft: 'Qoralama',
+      approved: 'Tasdiqlangan',
+      cancelled: 'Bekor qilingan',
     },
 
     filters: {
-      allYears:
-        'Barcha o‘quv yillari',
-
-      allDepartments:
-        'Barcha kafedralar',
-
-      allStatuses:
-        'Barcha holatlar',
+      allYears: 'Barcha o‘quv yillari',
+      allDepartments: 'Barcha kafedralar',
+      allStatuses: 'Barcha holatlar',
+      allSemesters: 'Barcha semestrlar',
     },
 
     fields: {
-      plannedWorkload:
-        'Rejalashtirilgan yuklama pozitsiyasi',
-
-      curriculum:
-        'O‘quv rejasi',
-
-      discipline:
-        'Fan',
-
-      workloadType:
-        'Yuklama turi',
-
-      department:
-        'Kafedra',
-
-      teacher:
-        'O‘qituvchi',
-
-      allocatedHours:
-        'Taqsimlanadigan soatlar',
-
-      status:
-        'Holat',
-
-      notes:
-        'Izoh',
-
-      reason:
-        'Sabab',
+      plannedWorkload: 'Rejalashtirilgan yuklama pozitsiyasi',
+      curriculum: 'O‘quv rejasi',
+      discipline: 'Fan',
+      workloadType: 'Yuklama turi',
+      department: 'Kafedra',
+      teacher: 'O‘qituvchi',
+      allocatedHours: 'Taqsimlanadigan soatlar',
+      semester: 'Semestr',
+      scope: 'Oqim / guruh',
+      status: 'Holat',
+      notes: 'Izoh',
+      reason: 'Sabab',
     },
 
     validation: {

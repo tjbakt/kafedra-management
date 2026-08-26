@@ -30,6 +30,30 @@ class WorkloadDistributionFilter(
         ),
     )
 
+    semester_number = filters.NumberFilter(
+        field_name=(
+            "planned_workload__"
+            "teaching_stream__"
+            "semester_number"
+        ),
+        min_value=1,
+        label=(
+            "Номер семестра "
+            "по учебному плану"
+        ),
+    )
+
+    student_group = filters.NumberFilter(
+        field_name=(
+            "planned_workload__"
+            "group_semester__"
+            "group_curriculum__"
+            "student_group_id"
+        ),
+        min_value=1,
+        label="Учебная группа",
+    )
+
     teaching_department = filters.NumberFilter(
         field_name=(
             "planned_workload__teaching_department_id"
@@ -140,11 +164,13 @@ class WorkloadDistributionFilter(
         fields = (
             "academic_year",
             "academic_semester",
+            "semester_number",
             "curriculum",
             "teaching_department",
             "faculty",
             "planned_workload",
             "teaching_stream",
+            "student_group",
             "discipline",
             "workload_type",
             "staff_member",

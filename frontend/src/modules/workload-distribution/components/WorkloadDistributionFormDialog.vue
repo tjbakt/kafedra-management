@@ -161,16 +161,43 @@ const plannedWorkloadOptions =
           ) > 0,
       )
       .map(
-        (item) => ({
-          value:
-            item.id,
+        (item) => {
+          const scope =
+            item.group_semester ===
+            null
+              ? t(
+                  'workloadDistribution.scope.stream',
+                )
+              : (
+                  item.student_group_code ??
+                  t(
+                    'workloadDistribution.scope.group',
+                  )
+                )
 
-          label:
-            `${item.discipline_code} — ${item.discipline_name}`,
+          return {
+            value:
+              item.id,
 
-          description:
-            `${item.workload_type_name} · ${item.department_name} · ${item.remaining_hours} ч.`,
-        }),
+            label:
+              `${item.discipline_code} — ${item.discipline_name}`,
+
+            description:
+              [
+                `${item.semester_number} ${t(
+                  'workloadDistribution.shortSemester',
+                )}`,
+
+                scope,
+
+                item.workload_type_name,
+
+                `${item.remaining_hours} ${t(
+                  'workloadDistribution.shortHours',
+                )}`,
+              ].join(' · '),
+          }
+        },
       ),
   )
 
@@ -558,36 +585,19 @@ watch(
         "
         name="planned_workload"
         required
-        :error="
-          fieldError(
-            'planned_workload',
-          )
-        "
+        :error="fieldError('planned_workload',)"
       >
         <Select
-          v-model="
-            form.planned_workload
-          "
-          :options="
-            plannedWorkloadOptions
-          "
+          v-model="form.planned_workload"
+          :options="plannedWorkloadOptions"
           option-label="label"
           option-value="value"
           filter
           class="w-full"
-          :disabled="
-            loading ||
-            Boolean(record)
-          "
+          :disabled="loading || Boolean(record)"
         >
-          <template
-            #option="{ option }"
-          >
-            <div
-              class="
-                workload-option
-              "
-            >
+          <template #option="{ option }">
+            <div class="workload-option">
               <strong>
                 {{ option.label }}
               </strong>
@@ -602,6 +612,59 @@ watch(
         </Select>
       </BaseFormField>
 
+      <Message
+        v-if="selectedPlannedWorkload"
+        severity="secondary"
+        :closable="false"
+      >
+        <div class="workload-context">
+          <div>
+            <span>
+              {{ t('workloadDistribution.fields.semester',) }}
+            </span>
+
+            <strong>
+              {{
+                selectedPlannedWorkload.semester_number
+              }}
+            </strong>
+          </div>
+
+          <div>
+            <span>
+              {{ t('workloadDistribution.fields.scope',) }}
+            </span>
+
+            <strong>
+              {{
+                selectedPlannedWorkload
+                  .group_semester === null
+                  ? t(
+                    'workloadDistribution.scope.stream',
+                  )
+                  : (
+                    selectedPlannedWorkload
+                      .student_group_code ??
+                    '—'
+                  )
+              }}
+            </strong>
+          </div>
+
+          <div>
+            <span>
+              {{ t('workloadDistribution.fields.workloadType',) }}
+            </span>
+
+            <strong>
+              {{
+                selectedPlannedWorkload.workload_type_name
+              }}
+            </strong>
+          </div>
+        </div>
+      </Message>
+
       <BaseFormField
         :label="
           t(
@@ -610,36 +673,21 @@ watch(
         "
         name="staff_employment"
         required
-        :error="
-          fieldError(
-            'staff_employment',
-          )
-        "
+        :error="fieldError('staff_employment',)"
       >
         <Select
-          v-model="
-            form.staff_employment
-          "
-          :options="
-            employmentOptions
-          "
+          v-model="form.staff_employment"
+          :options="employmentOptions"
           option-label="label"
           option-value="value"
           filter
           class="w-full"
-          :disabled="
-            loading ||
-            !form.planned_workload
-          "
+          :disabled="loading || !form.planned_workload"
         >
           <template
             #option="{ option }"
           >
-            <div
-              class="
-                workload-option
-              "
-            >
+            <div class="workload-option">
               <strong>
                 {{ option.label }}
               </strong>
@@ -783,6 +831,39 @@ watch(
 .workload-distribution-form {
   display: grid;
   gap: 1rem;
+}
+
+.workload-context {
+  display: grid;
+
+  grid-template-columns:
+    repeat(
+      3,
+      minmax(0, 1fr)
+    );
+
+  gap: 1rem;
+}
+
+.workload-context > div {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.workload-context span {
+  color:
+    var(--app-text-muted);
+
+  font-size: 0.72rem;
+}
+
+@media (
+  max-width: 700px
+) {
+  .workload-context {
+    grid-template-columns:
+      1fr;
+  }
 }
 
 .workload-option {

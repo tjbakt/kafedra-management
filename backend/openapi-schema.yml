@@ -16510,6 +16510,11 @@ paths:
         description: Поиск по табельному номеру и ФИО преподавателя, коду и названию
           потока, а также названию дисциплины.
       - in: query
+        name: semester_number
+        schema:
+          type: integer
+        description: Номер семестра по учебному плану
+      - in: query
         name: staff_employment
         schema:
           type: integer
@@ -16528,6 +16533,11 @@ paths:
           - cancelled
           - draft
         description: Бизнес-статус распределения.
+      - in: query
+        name: student_group
+        schema:
+          type: number
+        description: Учебная группа
       - in: query
         name: teaching_department
         schema:
@@ -18166,6 +18176,11 @@ paths:
         description: Поиск по табельному номеру и ФИО преподавателя, коду и названию
           потока, а также названию дисциплины.
       - in: query
+        name: semester_number
+        schema:
+          type: integer
+        description: Номер семестра по учебному плану
+      - in: query
         name: staff_employment
         schema:
           type: integer
@@ -18184,6 +18199,11 @@ paths:
           - cancelled
           - draft
         description: Бизнес-статус распределения.
+      - in: query
+        name: student_group
+        schema:
+          type: number
+        description: Учебная группа
       - in: query
         name: teaching_department
         schema:
@@ -18671,6 +18691,11 @@ paths:
         schema:
           type: string
       - in: query
+        name: semester_number
+        schema:
+          type: integer
+        description: Номер семестра по учебному плану
+      - in: query
         name: staff_employment
         schema:
           type: number
@@ -18695,6 +18720,11 @@ paths:
           * `draft` - Черновик
           * `approved` - Утверждено
           * `cancelled` - Отменено
+      - in: query
+        name: student_group
+        schema:
+          type: number
+        description: Учебная группа
       - in: query
         name: teaching_department
         schema:
@@ -19223,6 +19253,11 @@ paths:
         schema:
           type: string
       - in: query
+        name: semester_number
+        schema:
+          type: integer
+        description: Номер семестра по учебному плану
+      - in: query
         name: staff_employment
         schema:
           type: number
@@ -19249,6 +19284,11 @@ paths:
           * `draft` - Черновик
           * `approved` - Утверждено
           * `cancelled` - Отменено
+      - in: query
+        name: student_group
+        schema:
+          type: number
+        description: Учебная группа
       - in: query
         name: teaching_department
         schema:
@@ -30103,6 +30143,28 @@ components:
         stream_code:
           type: string
           readOnly: true
+        semester_number:
+          type: integer
+          readOnly: true
+        season:
+          type: string
+          readOnly: true
+        group_semester:
+          type: integer
+          readOnly: true
+          nullable: true
+        student_group:
+          type: integer
+          readOnly: true
+          nullable: true
+        student_group_code:
+          type: string
+          readOnly: true
+          nullable: true
+        workload_scope:
+          allOf:
+          - $ref: '#/components/schemas/WorkloadScopeEnum'
+          readOnly: true
         discipline_name:
           type: string
           readOnly: true
@@ -30430,6 +30492,14 @@ components:
       - academic_year
       - annual_hours
       - rate
+    WorkloadScopeEnum:
+      enum:
+      - stream
+      - group
+      type: string
+      description: |-
+        * `stream` - stream
+        * `group` - group
     WorkloadType:
       type: object
       description: Базовый сериализатор для моделей с полями аудита.

@@ -143,6 +143,9 @@ const generalError =
 const selectedYear =
   ref<number | null>(null)
 
+const selectedSemester =
+  ref<number | null>(null)
+
 const selectedDepartment =
   ref<number | null>(null)
 
@@ -210,6 +213,64 @@ const years =
           label,
         }),
       ),
+    ]
+  })
+
+const semesters =
+  computed(() => {
+    const values =
+      new Set<number>()
+
+    for (
+      const workload
+      of plannedWorkloads.value
+    ) {
+      if (
+        selectedYear.value !==
+          null &&
+        workload.academic_year !==
+          selectedYear.value
+      ) {
+        continue
+      }
+
+      values.add(
+        workload.semester_number,
+      )
+    }
+
+    return [
+      {
+        value: null,
+
+        label:
+          t(
+            'workloadDistribution.filters.allSemesters',
+          ),
+      },
+
+      ...Array
+        .from(values)
+        .sort(
+          (a, b) =>
+            a - b,
+        )
+        .map(
+          (value) => ({
+            value,
+
+            label:
+              `${value} — ${
+                value % 2 === 1
+                  ? t(
+                      'workloadDistribution.seasons.autumn',
+                    )
+                  : t(
+                      'workloadDistribution.seasons.spring',
+                    )
+              }`,
+          }),
+        ),
     ]
   })
 
@@ -313,107 +374,93 @@ function statusSeverity(
 }
 
 const columns =
-  computed<
-    CrudColumn<
-      WorkloadDistribution
-    >[]
-  >(() => [
+  computed<CrudColumn<WorkloadDistribution>[]>(() => [
     {
-      field:
-        'curriculum_code',
-
+      field: 'curriculum_code',
       header:
         t(
           'workloadDistribution.fields.curriculum',
         ),
-
       minWidth: '10rem',
     },
 
     {
-      field:
-        'discipline_name',
+      field: 'semester_number',
+      header:
+        t(
+          'workloadDistribution.fields.semester',
+        ),
+      minWidth: '7rem',
+      bodySlot: 'semester',
+    },
 
+    {
+      field: 'student_group_code',
+      header:
+        t(
+          'workloadDistribution.fields.scope',
+        ),
+      minWidth: '10rem',
+      bodySlot: 'scope',
+    },
+
+    {
+      field: 'discipline_name',
       header:
         t(
           'workloadDistribution.fields.discipline',
         ),
-
       minWidth: '16rem',
     },
 
     {
-      field:
-        'workload_type_name',
-
+      field: 'workload_type_name',
       header:
         t(
           'workloadDistribution.fields.workloadType',
         ),
-
       minWidth: '11rem',
     },
 
     {
-      field:
-        'department_name',
-
+      field: 'department_name',
       header:
         t(
           'workloadDistribution.fields.department',
         ),
-
       minWidth: '13rem',
     },
 
     {
-      field:
-        'teacher_name',
-
+      field: 'teacher_name',
       header:
         t(
           'workloadDistribution.fields.teacher',
         ),
-
       sortable: true,
-
-      sortField:
-        'staff_employment__staff_member__last_name',
-
+      sortField: 'staff_employment__staff_member__last_name',
       minWidth: '15rem',
-
-      bodySlot:
-        'teacher',
+      bodySlot: 'teacher',
     },
 
     {
-      field:
-        'allocated_hours',
-
+      field: 'allocated_hours',
       header:
         t(
           'workloadDistribution.fields.allocatedHours',
         ),
-
       sortable: true,
-
       width: '9rem',
-
       align: 'center',
     },
 
     {
-      field:
-        'status',
-
+      field: 'status',
       header:
         t(
           'workloadDistribution.fields.status',
         ),
-
-      bodySlot:
-        'status',
-
+      bodySlot: 'status',
       width: '10rem',
     },
   ])
@@ -459,6 +506,12 @@ function clearErrors(): void {
   nonFieldErrors.value = []
 
   generalError.value = ''
+}
+
+async function changeYear(): Promise<void> {
+  selectedSemester.value = null
+
+  await applyFilters()
 }
 
 async function loadLookups(): Promise<void> {
@@ -797,6 +850,11 @@ async function applyFilters(): Promise<void> {
   )
 
   setFilter(
+    'semester_number',
+    selectedSemester.value,
+  )
+
+  setFilter(
     'teaching_department',
     selectedDepartment.value,
   )
@@ -810,15 +868,10 @@ async function applyFilters(): Promise<void> {
 }
 
 async function resetFilters(): Promise<void> {
-  selectedYear.value =
-    null
-
-  selectedDepartment.value =
-    null
-
-  selectedStatus.value =
-    null
-
+  selectedYear.value = null
+  selectedSemester.value = null
+  selectedDepartment.value = null
+  selectedStatus.value = null
   clearFilters()
 
   await reset()
@@ -887,18 +940,21 @@ onMounted(
     >
       <template #center>
         <Select
-          v-model="
-            selectedYear
-          "
+          v-model="selectedYear"
           :options="years"
           option-label="label"
           option-value="value"
-          class="
-            distribution-filter
-          "
-          @change="
-            applyFilters
-          "
+          class="distribution-filter"
+          @change="changeYear"
+        />
+
+        <Select
+          v-model="selectedSemester"
+          :options="semesters"
+          option-label="label"
+          option-value="value"
+          class="distribution-filter"
+          @change="applyFilters"
         />
 
         <Select
@@ -945,29 +1001,53 @@ onMounted(
         :loading="loading"
         :error="error"
         :first="first"
-        :rows="
-          query.pageSize
-        "
-        :total-records="
-          totalRecords
-        "
+        :rows="query.pageSize"
+        :total-records="totalRecords"
         show-row-actions
-        @page="
-          handlePage
-        "
-        @sort="
-          handleSort
-        "
+        @page="handlePage"
+        @sort="handleSort"
         @retry="refresh"
       >
-        <template
-          #teacher="{ row }"
-        >
-          <div
-            class="
-              teacher-cell
-            "
-          >
+
+        <template #semester="{ row }">
+          <div class="distribution-semester">
+            <strong>
+              {{
+                row.semester_number
+              }}
+            </strong>
+
+            <small>
+              {{
+                row.season ===
+                'autumn'
+                  ? t(
+                    'workloadDistribution.seasons.autumn',
+                  )
+                  : t(
+                    'workloadDistribution.seasons.spring',
+                  )
+              }}
+            </small>
+          </div>
+        </template>
+
+        <template #scope="{ row }">
+          <Tag
+            v-if="row.workload_scope === 'stream' "
+            :value="t('workloadDistribution.scope.stream',)"
+            severity="info"
+          />
+
+          <Tag
+            v-else
+            :value="row.student_group_code ?? t('workloadDistribution.scope.group',)"
+            severity="secondary"
+          />
+        </template>
+
+        <template #teacher="{ row }">
+          <div class="teacher-cell">
             <strong>
               {{
                 row.teacher_name
@@ -986,54 +1066,30 @@ onMounted(
           </div>
         </template>
 
-        <template
-          #status="{ row }"
-        >
+        <template #status="{ row }">
           <Tag
             :value="
               t(
                 `workloadDistribution.statuses.${row.status}`,
               )
             "
-            :severity="
-              statusSeverity(
-                row.status,
-              )
-            "
+            :severity="statusSeverity(row.status,)"
           />
         </template>
 
-        <template
-          #actions="{ row }"
-        >
+        <template #actions="{ row }">
           <Button
-            v-if="
-              canEdit &&
-              row.status ===
-                'draft'
-            "
-            v-tooltip.bottom="
-              t('common.edit')
-            "
+            v-if="canEdit && row.status === 'draft' "
+            v-tooltip.bottom="t('common.edit')"
             icon="pi pi-pencil"
             text
             rounded
-            @click.stop="
-              openEdit(row)
-            "
+            @click.stop="openEdit(row)"
           />
 
           <Button
-            v-if="
-              canEdit &&
-              row.status ===
-                'draft'
-            "
-            v-tooltip.bottom="
-              t(
-                'workloadDistribution.approve',
-              )
-            "
+            v-if="canEdit && row.status === 'draft' "
+            v-tooltip.bottom="t('workloadDistribution.approve',)"
             icon="pi pi-check"
             severity="success"
             text
@@ -1163,6 +1219,18 @@ onMounted(
 </template>
 
 <style scoped>
+.distribution-semester {
+  display: grid;
+  gap: 0.1rem;
+}
+
+.distribution-semester small {
+  color:
+    var(--app-text-muted);
+
+  font-size: 0.68rem;
+}
+
 .workload-distribution-page {
   display: grid;
   gap: 1rem;
