@@ -100,31 +100,48 @@ class GroupCurriculumSerializerTests(
 class GroupSemesterSerializerTests(
     TestCase
 ):
-    def test_rejects_wrong_season(self):
-        academic_year = AcademicYearFactory()
-        spring = AcademicSemesterFactory.spring(
-            academic_year=academic_year,
+    def test_rejects_semester_outside_academic_year(
+            self,
+    ):
+        assignment = (
+            GroupCurriculumAssignmentFactory()
         )
 
-        serializer = GroupSemesterSerializer(
-            data={
-                "group_curriculum": (
-                    GroupCurriculumAssignmentFactory()
-                    .pk
-                ),
-                "academic_year": academic_year.pk,
-                "academic_semester": spring.pk,
-                "semester_number": 1,
-                "students_count": 20,
-                "subgroup_count": 1,
-            }
+        academic_year = (
+            assignment
+            .start_academic_year
+        )
+
+        serializer = (
+            GroupSemesterSerializer(
+                data={
+                    "group_curriculum":
+                        assignment.pk,
+
+                    "academic_year":
+                        academic_year.pk,
+
+                    "semester_number":
+                        3,
+
+                    "weeks_count":
+                        15,
+
+                    "students_count":
+                        20,
+
+                    "subgroup_count":
+                        1,
+                }
+            )
         )
 
         self.assertFalse(
             serializer.is_valid()
         )
+
         self.assertIn(
-            "academic_semester",
+            "semester_number",
             serializer.errors,
         )
 

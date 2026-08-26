@@ -48,25 +48,47 @@ class WorkloadTypeModelTests(TestCase):
             "Лекции",
         )
 
-    def test_all_codes_are_available(self):
-        expected = {
-            "lecture",
-            "practice",
-            "laboratory",
-            "seminar",
-            "consultation",
-            "exam",
-            "credit",
-            "course_work",
-            "course_project",
-            "independent_work",
-            "other",
-        }
-
+    def test_all_codes_are_available(
+            self,
+    ):
         actual = {
             value
-            for value, _label
+            for value, _
             in WorkloadType.Code.choices
+        }
+
+        expected = {
+            WorkloadType.Code.LECTURE,
+            WorkloadType.Code.PRACTICE,
+            WorkloadType.Code.LABORATORY,
+            WorkloadType.Code.SEMINAR,
+            WorkloadType.Code.CONSULTATION,
+            WorkloadType.Code.EXAM,
+            WorkloadType.Code.CREDIT,
+
+            WorkloadType.Code.COURSE_WORK,
+            WorkloadType.Code.COURSE_PROJECT,
+
+            WorkloadType.Code.COURSE_WORK_SUPERVISION,
+            WorkloadType.Code.COURSE_WORK_DEFENSE,
+
+            WorkloadType.Code.COURSE_PROJECT_SUPERVISION,
+            WorkloadType.Code.COURSE_PROJECT_DEFENSE,
+
+            WorkloadType.Code.COURSE_WORK_PROJECT_DEFENSE,
+
+            WorkloadType.Code.SCIENTIFIC_PRACTICE_SUPERVISION,
+            WorkloadType.Code.QUALIFICATION_PRACTICE_SUPERVISION,
+
+            WorkloadType.Code.MASTER_DISSERTATION_SUPERVISION,
+            WorkloadType.Code.MASTER_DISSERTATION_DEFENSE,
+
+            WorkloadType.Code.GRADUATION_WORK_SUPERVISION,
+            WorkloadType.Code.GRADUATION_WORK_DEFENSE,
+
+            WorkloadType.Code.RATING,
+            WorkloadType.Code.INDEPENDENT_WORK,
+            WorkloadType.Code.OTHER,
         }
 
         self.assertEqual(

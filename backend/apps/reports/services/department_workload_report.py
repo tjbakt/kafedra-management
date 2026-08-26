@@ -44,16 +44,33 @@ class DepartmentWorkloadReportService:
                 group_semester__group_curriculum__student_group__is_active=True,
             )
             .select_related(
+                "academic_year",
+                "academic_semester",
+                "teaching_department",
+
+                "teaching_stream",
+                "teaching_stream__curriculum",
+
+                "curriculum_workload",
+                "curriculum_workload__workload_type",
+
+                "curriculum_workload__curriculum_discipline",
+                "curriculum_workload__curriculum_discipline__discipline",
+                "curriculum_workload__curriculum_discipline__curriculum",
+                "curriculum_workload__curriculum_discipline__curriculum__study_program",
+                "curriculum_workload__curriculum_discipline__curriculum__study_program__education_level",
+                "curriculum_workload__curriculum_discipline__curriculum__study_form",
+
                 "group_semester",
                 "group_semester__group_curriculum",
                 "group_semester__group_curriculum__student_group",
-                "group_semester__group_curriculum__student_group__faculty",
-                "group_semester__group_curriculum__student_group__study_program",
-                "group_semester__group_curriculum__student_group__study_program__education_level",
-                "group_semester__group_curriculum__student_group__study_form",
             )
             .order_by(
-                "group_semester__group_curriculum__student_group__code",
+                "curriculum_workload__curriculum_discipline__curriculum__study_program__code",
+                "curriculum_workload__curriculum_discipline__semester_number",
+                "curriculum_workload__curriculum_discipline__discipline__name_ru",
+                "teaching_stream__code",
+                "curriculum_workload__workload_type__sort_order",
                 "pk",
             )
         )
@@ -92,12 +109,20 @@ class DepartmentWorkloadReportService:
                 "academic_semester",
                 "teaching_department",
                 "teaching_stream",
-                "teaching_stream__curriculum_discipline",
-                "teaching_stream__curriculum_discipline__discipline",
-                "teaching_stream__curriculum_discipline__curriculum",
-                "teaching_stream__curriculum_discipline__curriculum__study_program",
-                "teaching_stream__curriculum_discipline__curriculum__study_program__education_level",
-                "teaching_stream__curriculum_discipline__curriculum__study_form",
+                "teaching_stream__curriculum",
+
+                "curriculum_workload",
+                "curriculum_workload__workload_type",
+                "curriculum_workload__curriculum_discipline",
+                "curriculum_workload__curriculum_discipline__discipline",
+                "curriculum_workload__curriculum_discipline__curriculum",
+                "curriculum_workload__curriculum_discipline__curriculum__study_program",
+                "curriculum_workload__curriculum_discipline__curriculum__study_program__education_level",
+                "curriculum_workload__curriculum_discipline__curriculum__study_form",
+
+                "group_semester",
+                "group_semester__group_curriculum",
+                "group_semester__group_curriculum__student_group",
                 "curriculum_workload",
                 "curriculum_workload__workload_type",
             )
@@ -130,8 +155,16 @@ class DepartmentWorkloadReportService:
         rows: dict[tuple, dict] = {}
 
         for planned in planned_workloads:
-            stream = planned.teaching_stream
-            curriculum_discipline = stream.curriculum_discipline
+            stream = (
+                planned.teaching_stream
+            )
+
+            curriculum_discipline = (
+                planned
+                .curriculum_workload
+                .curriculum_discipline
+            )
+
             curriculum = curriculum_discipline.curriculum
             report_category = (
                 planned.curriculum_workload
@@ -256,8 +289,45 @@ class DepartmentWorkloadReportService:
 
         allocations = {
             membership.pk: ZERO_HOURS
-            for membership in stream_groups
+            for membership
+            in stream_groups
         }
+
+        if (
+                planned.group_semester_id
+        ):
+            membership = next(
+                (
+                    item
+                    for item in stream_groups
+                    if (
+                        item.group_semester_id
+                        ==
+                        planned.group_semester_id
+                )
+                ),
+                None,
+            )
+
+            if membership is None:
+                raise ReportDataError(
+                    (
+                        "Группа плановой "
+                        "нагрузки отсутствует "
+                        "в учебном потоке."
+                    )
+                )
+
+            allocations[
+                membership.pk
+            ] = total_hours
+
+            cls.validate_allocations(
+                planned=planned,
+                allocations=allocations,
+            )
+
+            return allocations
 
         if (
             report_category
@@ -488,7 +558,9 @@ class DepartmentWorkloadReportService:
         group_semester,
     ) -> dict:
         curriculum_discipline = (
-            planned.teaching_stream.curriculum_discipline
+            planned
+            .curriculum_workload
+            .curriculum_discipline
         )
         curriculum = curriculum_discipline.curriculum
         study_program = curriculum.study_program

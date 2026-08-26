@@ -218,10 +218,20 @@ class TeacherWorkloadExcelService(
                 "planned_workload__curriculum_workload",
                 "planned_workload__curriculum_workload__workload_type",
                 "planned_workload__teaching_stream",
-                "planned_workload__teaching_stream__curriculum_discipline",
-                "planned_workload__teaching_stream__curriculum_discipline__discipline",
-                "planned_workload__teaching_stream__curriculum_discipline__curriculum",
-                "planned_workload__teaching_stream__curriculum_discipline__curriculum__study_program",
+                "planned_workload__teaching_stream",
+                "planned_workload__teaching_stream__curriculum",
+
+                "planned_workload__curriculum_workload",
+                "planned_workload__curriculum_workload__workload_type",
+
+                "planned_workload__curriculum_workload__curriculum_discipline",
+                "planned_workload__curriculum_workload__curriculum_discipline__discipline",
+                "planned_workload__curriculum_workload__curriculum_discipline__curriculum",
+                "planned_workload__curriculum_workload__curriculum_discipline__curriculum__study_program",
+
+                "planned_workload__group_semester",
+                "planned_workload__group_semester__group_curriculum",
+                "planned_workload__group_semester__group_curriculum__student_group",
             )
             .prefetch_related(
                 (
@@ -249,8 +259,8 @@ class TeacherWorkloadExcelService(
                 ),
             )
             .order_by(
-                "planned_workload__teaching_stream__curriculum_discipline__semester_number",
-                "planned_workload__teaching_stream__curriculum_discipline__discipline__name_ru",
+                "planned_workload__curriculum_workload__curriculum_discipline__semester_number",
+                "planned_workload__curriculum_workload__curriculum_discipline__discipline__name_ru",
                 "planned_workload__teaching_stream__code",
                 "planned_workload__curriculum_workload__workload_type__sort_order",
                 "pk",
@@ -270,7 +280,9 @@ class TeacherWorkloadExcelService(
             planned = distribution.planned_workload
             stream = planned.teaching_stream
             curriculum_discipline = (
-                stream.curriculum_discipline
+                planned
+                .curriculum_workload
+                .curriculum_discipline
             )
             discipline = curriculum_discipline.discipline
             workload_type = (

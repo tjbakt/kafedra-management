@@ -18,6 +18,7 @@ class WorkloadDistributionFilterTests(
             "teaching_stream",
             "discipline",
             "workload_type",
+            "curriculum",
             "staff_member",
             "staff_employment",
             "position",

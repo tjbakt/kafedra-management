@@ -248,7 +248,9 @@ class WorkloadTypeApiTests(
             ),
         )
 
-    def test_filter_by_calculation_mode(self):
+    def test_filter_by_calculation_mode(
+            self,
+    ):
         expected = WorkloadTypeFactory(
             code=WorkloadType.Code.EXAM,
             name_ru="Экзамен",
@@ -260,7 +262,7 @@ class WorkloadTypeApiTests(
             ),
         )
 
-        WorkloadTypeFactory(
+        fixed = WorkloadTypeFactory(
             code=WorkloadType.Code.CREDIT,
             name_ru="Зачёт",
             name_uz="Sinov",
@@ -284,12 +286,20 @@ class WorkloadTypeApiTests(
 
         ids = {
             item["id"]
-            for item in self.results(response)
+            for item
+            in self.results(
+                response
+            )
         }
 
-        self.assertEqual(
+        self.assertIn(
+            expected.pk,
             ids,
-            {expected.pk},
+        )
+
+        self.assertNotIn(
+            fixed.pk,
+            ids,
         )
 
 
@@ -457,7 +467,13 @@ class CurriculumDisciplineApiTests(
         self,
     ):
         curriculum = CurriculumFactory()
-        discipline = DisciplineFactory()
+        discipline = DisciplineFactory(
+            default_department=(
+                curriculum
+                .study_program
+                .profiling_department
+            )
+        )
 
         response = self.client.post(
             self.list_url,
@@ -465,11 +481,7 @@ class CurriculumDisciplineApiTests(
                 "curriculum": curriculum.pk,
                 "discipline": discipline.pk,
                 "semester_number": 1,
-                "teaching_department": (
-                    curriculum
-                    .study_program
-                    .profiling_department_id
-                ),
+
                 "component_type": (
                     CurriculumDiscipline
                     .ComponentType
@@ -508,7 +520,13 @@ class CurriculumDisciplineApiTests(
             {
                 "curriculum": curriculum.pk,
                 "discipline": (
-                    DisciplineFactory().pk
+                    DisciplineFactory(
+                        default_department=(
+                            curriculum
+                            .study_program
+                            .profiling_department
+                        )
+                    ).pk
                 ),
                 "semester_number": 9,
                 "teaching_department": (

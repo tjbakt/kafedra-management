@@ -91,6 +91,7 @@ class GroupSemesterFactory(
     )
 
     semester_number = 1
+    weeks_count = 15
     students_count = 25
     subgroup_count = 1
 

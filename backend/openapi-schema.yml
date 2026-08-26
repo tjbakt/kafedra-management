@@ -4447,6 +4447,743 @@ paths:
                       details: null
                   summary: Требуется аутентификация
           description: Требуется аутентификация.
+  /api/v1/curriculum/academic-year-credit-norms/:
+    get:
+      operationId: curriculum_academic_year_credit_norms_list
+      description: |-
+        Обратная совместимость.
+
+        Django ValidationError теперь обрабатывается
+        глобальным custom_exception_handler.
+      parameters:
+      - in: query
+        name: academic_year
+        schema:
+          type: integer
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - curriculum
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAcademicYearCreditNormList'
+          description: ''
+    post:
+      operationId: curriculum_academic_year_credit_norms_create
+      description: |-
+        Обратная совместимость.
+
+        Django ValidationError теперь обрабатывается
+        глобальным custom_exception_handler.
+      tags:
+      - curriculum
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AcademicYearCreditNormRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AcademicYearCreditNormRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AcademicYearCreditNormRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcademicYearCreditNorm'
+          description: ''
+  /api/v1/curriculum/academic-year-credit-norms/{id}/:
+    get:
+      operationId: curriculum_academic_year_credit_norms_retrieve
+      description: |-
+        Обратная совместимость.
+
+        Django ValidationError теперь обрабатывается
+        глобальным custom_exception_handler.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Норма академического
+          кредита.
+        required: true
+      tags:
+      - curriculum
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcademicYearCreditNorm'
+          description: ''
+    put:
+      operationId: curriculum_academic_year_credit_norms_update
+      description: |-
+        Обратная совместимость.
+
+        Django ValidationError теперь обрабатывается
+        глобальным custom_exception_handler.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Норма академического
+          кредита.
+        required: true
+      tags:
+      - curriculum
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AcademicYearCreditNormRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AcademicYearCreditNormRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AcademicYearCreditNormRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcademicYearCreditNorm'
+          description: ''
+    patch:
+      operationId: curriculum_academic_year_credit_norms_partial_update
+      description: |-
+        Обратная совместимость.
+
+        Django ValidationError теперь обрабатывается
+        глобальным custom_exception_handler.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Норма академического
+          кредита.
+        required: true
+      tags:
+      - curriculum
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedAcademicYearCreditNormRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedAcademicYearCreditNormRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedAcademicYearCreditNormRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcademicYearCreditNorm'
+          description: ''
+    delete:
+      operationId: curriculum_academic_year_credit_norms_destroy
+      description: |-
+        Обратная совместимость.
+
+        Django ValidationError теперь обрабатывается
+        глобальным custom_exception_handler.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Норма академического
+          кредита.
+        required: true
+      tags:
+      - curriculum
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/curriculum/academic-year-credit-norms/{id}/restore/:
+    post:
+      operationId: curriculum_academic_year_credit_norms_restore_create
+      description: Восстанавливает объект из архива. Операция может быть запрещена
+        правами доступа или состоянием учебного года.
+      summary: Восстановить запись
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Норма академического
+          кредита.
+        required: true
+      tags:
+      - curriculum
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestoreResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                ОшибкаВалидации:
+                  value:
+                    success: false
+                    status_code: 400
+                    error:
+                      code: validation_error
+                      message: Ошибка проверки данных.
+                      fields:
+                        name:
+                        - message: Это поле обязательно.
+                          code: required
+                      details: null
+                  summary: Ошибка валидации
+          description: Ошибка проверки данных.
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                ТребуетсяАутентификация:
+                  value:
+                    success: false
+                    status_code: 401
+                    error:
+                      code: authentication_required
+                      message: Учетные данные не были предоставлены.
+                      fields: null
+                      details: null
+                  summary: Требуется аутентификация
+          description: Требуется аутентификация.
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                НедостаточноПрав:
+                  value:
+                    success: false
+                    status_code: 403
+                    error:
+                      code: permission_denied
+                      message: Доступ запрещён.
+                      fields: null
+                      details: null
+                  summary: Недостаточно прав
+          description: Недостаточно прав.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                ОбъектНеНайден:
+                  value:
+                    success: false
+                    status_code: 404
+                    error:
+                      code: not_found
+                      message: Запрашиваемый ресурс не найден.
+                      fields: null
+                      details: null
+                  summary: Объект не найден
+          description: Ресурс не найден.
+  /api/v1/curriculum/academic-year-credit-norms/archived/:
+    get:
+      operationId: curriculum_academic_year_credit_norms_archived_retrieve
+      description: Возвращает архивные записи текущего ресурса с учётом прав доступа,
+        фильтрации, поиска и пагинации.
+      summary: Список архивных записей
+      parameters:
+      - in: query
+        name: ordering
+        schema:
+          type: string
+        description: Поле сортировки. Для обратной сортировки используется префикс
+          -.
+      - in: query
+        name: page
+        schema:
+          type: integer
+        description: Номер страницы.
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+        description: Размер страницы, максимум 100.
+      - in: query
+        name: search
+        schema:
+          type: string
+        description: Поисковая строка, если ViewSet поддерживает поиск.
+      tags:
+      - curriculum
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: Список архивных записей.
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                ТребуетсяАутентификация:
+                  value:
+                    success: false
+                    status_code: 401
+                    error:
+                      code: authentication_required
+                      message: Учетные данные не были предоставлены.
+                      fields: null
+                      details: null
+                  summary: Требуется аутентификация
+          description: Требуется аутентификация.
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                НедостаточноПрав:
+                  value:
+                    success: false
+                    status_code: 403
+                    error:
+                      code: permission_denied
+                      message: Доступ запрещён.
+                      fields: null
+                      details: null
+                  summary: Недостаточно прав
+          description: Недостаточно прав.
+  /api/v1/curriculum/academic-year-workload-norms/:
+    get:
+      operationId: curriculum_academic_year_workload_norms_list
+      description: |-
+        Обратная совместимость.
+
+        Django ValidationError теперь обрабатывается
+        глобальным custom_exception_handler.
+      parameters:
+      - in: query
+        name: academic_year
+        schema:
+          type: integer
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: workload_type
+        schema:
+          type: integer
+      tags:
+      - curriculum
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAcademicYearWorkloadNormList'
+          description: ''
+    post:
+      operationId: curriculum_academic_year_workload_norms_create
+      description: |-
+        Обратная совместимость.
+
+        Django ValidationError теперь обрабатывается
+        глобальным custom_exception_handler.
+      tags:
+      - curriculum
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AcademicYearWorkloadNormRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AcademicYearWorkloadNormRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AcademicYearWorkloadNormRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcademicYearWorkloadNorm'
+          description: ''
+  /api/v1/curriculum/academic-year-workload-norms/{id}/:
+    get:
+      operationId: curriculum_academic_year_workload_norms_retrieve
+      description: |-
+        Обратная совместимость.
+
+        Django ValidationError теперь обрабатывается
+        глобальным custom_exception_handler.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Норма учебной нагрузки.
+        required: true
+      tags:
+      - curriculum
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcademicYearWorkloadNorm'
+          description: ''
+    put:
+      operationId: curriculum_academic_year_workload_norms_update
+      description: |-
+        Обратная совместимость.
+
+        Django ValidationError теперь обрабатывается
+        глобальным custom_exception_handler.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Норма учебной нагрузки.
+        required: true
+      tags:
+      - curriculum
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AcademicYearWorkloadNormRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AcademicYearWorkloadNormRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AcademicYearWorkloadNormRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcademicYearWorkloadNorm'
+          description: ''
+    patch:
+      operationId: curriculum_academic_year_workload_norms_partial_update
+      description: |-
+        Обратная совместимость.
+
+        Django ValidationError теперь обрабатывается
+        глобальным custom_exception_handler.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Норма учебной нагрузки.
+        required: true
+      tags:
+      - curriculum
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedAcademicYearWorkloadNormRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedAcademicYearWorkloadNormRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedAcademicYearWorkloadNormRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcademicYearWorkloadNorm'
+          description: ''
+    delete:
+      operationId: curriculum_academic_year_workload_norms_destroy
+      description: |-
+        Обратная совместимость.
+
+        Django ValidationError теперь обрабатывается
+        глобальным custom_exception_handler.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Норма учебной нагрузки.
+        required: true
+      tags:
+      - curriculum
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/curriculum/academic-year-workload-norms/{id}/restore/:
+    post:
+      operationId: curriculum_academic_year_workload_norms_restore_create
+      description: Восстанавливает объект из архива. Операция может быть запрещена
+        правами доступа или состоянием учебного года.
+      summary: Восстановить запись
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Норма учебной нагрузки.
+        required: true
+      tags:
+      - curriculum
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestoreResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                ОшибкаВалидации:
+                  value:
+                    success: false
+                    status_code: 400
+                    error:
+                      code: validation_error
+                      message: Ошибка проверки данных.
+                      fields:
+                        name:
+                        - message: Это поле обязательно.
+                          code: required
+                      details: null
+                  summary: Ошибка валидации
+          description: Ошибка проверки данных.
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                ТребуетсяАутентификация:
+                  value:
+                    success: false
+                    status_code: 401
+                    error:
+                      code: authentication_required
+                      message: Учетные данные не были предоставлены.
+                      fields: null
+                      details: null
+                  summary: Требуется аутентификация
+          description: Требуется аутентификация.
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                НедостаточноПрав:
+                  value:
+                    success: false
+                    status_code: 403
+                    error:
+                      code: permission_denied
+                      message: Доступ запрещён.
+                      fields: null
+                      details: null
+                  summary: Недостаточно прав
+          description: Недостаточно прав.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                ОбъектНеНайден:
+                  value:
+                    success: false
+                    status_code: 404
+                    error:
+                      code: not_found
+                      message: Запрашиваемый ресурс не найден.
+                      fields: null
+                      details: null
+                  summary: Объект не найден
+          description: Ресурс не найден.
+  /api/v1/curriculum/academic-year-workload-norms/archived/:
+    get:
+      operationId: curriculum_academic_year_workload_norms_archived_retrieve
+      description: Возвращает архивные записи текущего ресурса с учётом прав доступа,
+        фильтрации, поиска и пагинации.
+      summary: Список архивных записей
+      parameters:
+      - in: query
+        name: ordering
+        schema:
+          type: string
+        description: Поле сортировки. Для обратной сортировки используется префикс
+          -.
+      - in: query
+        name: page
+        schema:
+          type: integer
+        description: Номер страницы.
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+        description: Размер страницы, максимум 100.
+      - in: query
+        name: search
+        schema:
+          type: string
+        description: Поисковая строка, если ViewSet поддерживает поиск.
+      tags:
+      - curriculum
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: Список архивных записей.
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                ТребуетсяАутентификация:
+                  value:
+                    success: false
+                    status_code: 401
+                    error:
+                      code: authentication_required
+                      message: Учетные данные не были предоставлены.
+                      fields: null
+                      details: null
+                  summary: Требуется аутентификация
+          description: Требуется аутентификация.
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                НедостаточноПрав:
+                  value:
+                    success: false
+                    status_code: 403
+                    error:
+                      code: permission_denied
+                      message: Доступ запрещён.
+                      fields: null
+                      details: null
+                  summary: Недостаточно прав
+          description: Недостаточно прав.
   /api/v1/curriculum/curricula/:
     get:
       operationId: curriculum_curricula_list
@@ -4682,6 +5419,32 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/v1/curriculum/curricula/{id}/planning-norms/:
+    get:
+      operationId: curriculum_curricula_planning_norms_retrieve
+      description: |-
+        Обратная совместимость.
+
+        Django ValidationError теперь обрабатывается
+        глобальным custom_exception_handler.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Учебный план.
+        required: true
+      tags:
+      - curriculum
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Curriculum'
+          description: ''
   /api/v1/curriculum/curricula/{id}/restore/:
     post:
       operationId: curriculum_curricula_restore_create
@@ -5198,6 +5961,427 @@ paths:
   /api/v1/curriculum/curriculum-disciplines/archived/:
     get:
       operationId: curriculum_curriculum_disciplines_archived_retrieve
+      description: Возвращает архивные записи текущего ресурса с учётом прав доступа,
+        фильтрации, поиска и пагинации.
+      summary: Список архивных записей
+      parameters:
+      - in: query
+        name: ordering
+        schema:
+          type: string
+        description: Поле сортировки. Для обратной сортировки используется префикс
+          -.
+      - in: query
+        name: page
+        schema:
+          type: integer
+        description: Номер страницы.
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+        description: Размер страницы, максимум 100.
+      - in: query
+        name: search
+        schema:
+          type: string
+        description: Поисковая строка, если ViewSet поддерживает поиск.
+      tags:
+      - curriculum
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: Список архивных записей.
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                ТребуетсяАутентификация:
+                  value:
+                    success: false
+                    status_code: 401
+                    error:
+                      code: authentication_required
+                      message: Учетные данные не были предоставлены.
+                      fields: null
+                      details: null
+                  summary: Требуется аутентификация
+          description: Требуется аутентификация.
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                НедостаточноПрав:
+                  value:
+                    success: false
+                    status_code: 403
+                    error:
+                      code: permission_denied
+                      message: Доступ запрещён.
+                      fields: null
+                      details: null
+                  summary: Недостаточно прав
+          description: Недостаточно прав.
+  /api/v1/curriculum/curriculum-disciplines/configure/:
+    post:
+      operationId: curriculum_curriculum_disciplines_configure_create
+      description: |-
+        Обратная совместимость.
+
+        Django ValidationError теперь обрабатывается
+        глобальным custom_exception_handler.
+      tags:
+      - curriculum
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CurriculumDisciplineRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CurriculumDisciplineRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CurriculumDisciplineRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurriculumDiscipline'
+          description: ''
+  /api/v1/curriculum/curriculum-workload-rules/:
+    get:
+      operationId: curriculum_curriculum_workload_rules_list
+      description: |-
+        Обратная совместимость.
+
+        Django ValidationError теперь обрабатывается
+        глобальным custom_exception_handler.
+      parameters:
+      - in: query
+        name: calculation_mode
+        schema:
+          type: string
+          title: Способ расчёта
+          enum:
+          - fixed
+          - per_group
+          - per_student
+          - per_subgroup
+        description: |-
+          * `fixed` - Фиксированные часы
+          * `per_group` - На учебную группу
+          * `per_subgroup` - На подгруппу
+          * `per_student` - На одного студента
+      - in: query
+        name: curriculum
+        schema:
+          type: integer
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: workload_type
+        schema:
+          type: integer
+      tags:
+      - curriculum
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCurriculumWorkloadRuleList'
+          description: ''
+    post:
+      operationId: curriculum_curriculum_workload_rules_create
+      description: |-
+        Обратная совместимость.
+
+        Django ValidationError теперь обрабатывается
+        глобальным custom_exception_handler.
+      tags:
+      - curriculum
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CurriculumWorkloadRuleRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CurriculumWorkloadRuleRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CurriculumWorkloadRuleRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurriculumWorkloadRule'
+          description: ''
+  /api/v1/curriculum/curriculum-workload-rules/{id}/:
+    get:
+      operationId: curriculum_curriculum_workload_rules_retrieve
+      description: |-
+        Обратная совместимость.
+
+        Django ValidationError теперь обрабатывается
+        глобальным custom_exception_handler.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Норма нагрузки учебного
+          плана.
+        required: true
+      tags:
+      - curriculum
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurriculumWorkloadRule'
+          description: ''
+    put:
+      operationId: curriculum_curriculum_workload_rules_update
+      description: |-
+        Обратная совместимость.
+
+        Django ValidationError теперь обрабатывается
+        глобальным custom_exception_handler.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Норма нагрузки учебного
+          плана.
+        required: true
+      tags:
+      - curriculum
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CurriculumWorkloadRuleRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CurriculumWorkloadRuleRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CurriculumWorkloadRuleRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurriculumWorkloadRule'
+          description: ''
+    patch:
+      operationId: curriculum_curriculum_workload_rules_partial_update
+      description: |-
+        Обратная совместимость.
+
+        Django ValidationError теперь обрабатывается
+        глобальным custom_exception_handler.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Норма нагрузки учебного
+          плана.
+        required: true
+      tags:
+      - curriculum
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedCurriculumWorkloadRuleRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedCurriculumWorkloadRuleRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedCurriculumWorkloadRuleRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurriculumWorkloadRule'
+          description: ''
+    delete:
+      operationId: curriculum_curriculum_workload_rules_destroy
+      description: |-
+        Обратная совместимость.
+
+        Django ValidationError теперь обрабатывается
+        глобальным custom_exception_handler.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Норма нагрузки учебного
+          плана.
+        required: true
+      tags:
+      - curriculum
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/curriculum/curriculum-workload-rules/{id}/restore/:
+    post:
+      operationId: curriculum_curriculum_workload_rules_restore_create
+      description: Восстанавливает объект из архива. Операция может быть запрещена
+        правами доступа или состоянием учебного года.
+      summary: Восстановить запись
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Норма нагрузки учебного
+          плана.
+        required: true
+      tags:
+      - curriculum
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestoreResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                ОшибкаВалидации:
+                  value:
+                    success: false
+                    status_code: 400
+                    error:
+                      code: validation_error
+                      message: Ошибка проверки данных.
+                      fields:
+                        name:
+                        - message: Это поле обязательно.
+                          code: required
+                      details: null
+                  summary: Ошибка валидации
+          description: Ошибка проверки данных.
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                ТребуетсяАутентификация:
+                  value:
+                    success: false
+                    status_code: 401
+                    error:
+                      code: authentication_required
+                      message: Учетные данные не были предоставлены.
+                      fields: null
+                      details: null
+                  summary: Требуется аутентификация
+          description: Требуется аутентификация.
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                НедостаточноПрав:
+                  value:
+                    success: false
+                    status_code: 403
+                    error:
+                      code: permission_denied
+                      message: Доступ запрещён.
+                      fields: null
+                      details: null
+                  summary: Недостаточно прав
+          description: Недостаточно прав.
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                ОбъектНеНайден:
+                  value:
+                    success: false
+                    status_code: 404
+                    error:
+                      code: not_found
+                      message: Запрашиваемый ресурс не найден.
+                      fields: null
+                      details: null
+                  summary: Объект не найден
+          description: Ресурс не найден.
+  /api/v1/curriculum/curriculum-workload-rules/archived/:
+    get:
+      operationId: curriculum_curriculum_workload_rules_archived_retrieve
       description: Возвращает архивные записи текущего ресурса с учётом прав доступа,
         фильтрации, поиска и пагинации.
       summary: Список архивных записей
@@ -15046,6 +16230,37 @@ paths:
                       details: null
                   summary: Недостаточно прав
           description: Недостаточно прав.
+  /api/v1/teaching/streams/bulk-create/:
+    post:
+      operationId: teaching_streams_bulk_create_create
+      description: |-
+        Обратная совместимость.
+
+        Django ValidationError теперь обрабатывается
+        глобальным custom_exception_handler.
+      tags:
+      - teaching
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TeachingStreamRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TeachingStreamRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TeachingStreamRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeachingStream'
+          description: ''
   /api/v1/teaching/streams/calculate-all/:
     post:
       operationId: teaching_streams_calculate_all_create
@@ -15238,6 +16453,11 @@ paths:
         schema:
           type: integer
         description: ID учебного года.
+      - in: query
+        name: curriculum
+        schema:
+          type: number
+        description: Учебный план
       - in: query
         name: discipline
         schema:
@@ -16890,6 +18110,11 @@ paths:
           type: integer
         description: ID учебного года.
       - in: query
+        name: curriculum
+        schema:
+          type: number
+        description: Учебный план
+      - in: query
         name: discipline
         schema:
           type: integer
@@ -17390,6 +18615,11 @@ paths:
           minimum: 1
         description: ID учебного года.
         required: true
+      - in: query
+        name: curriculum
+        schema:
+          type: number
+        description: Учебный план
       - in: query
         name: department
         schema:
@@ -17937,6 +19167,11 @@ paths:
           minimum: 1
         description: ID учебного года.
         required: true
+      - in: query
+        name: curriculum
+        schema:
+          type: number
+        description: Учебный план
       - in: query
         name: department
         schema:
@@ -19142,6 +20377,78 @@ components:
       - warnings_by_type
       - warnings_count
       - year_staff_records_count
+    AcademicYearCreditNorm:
+      type: object
+      description: Базовый сериализатор для моделей с полями аудита.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        academic_year:
+          type: integer
+          title: Учебный год
+        academic_year_name:
+          type: string
+          readOnly: true
+        hours_per_credit:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,2})?$
+          title: Количество часов в одном кредите
+        notes:
+          type: string
+          title: Примечание
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Дата создания
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Дата изменения
+        created_by:
+          type: integer
+          readOnly: true
+          nullable: true
+          title: Создал
+        created_by_name:
+          type: string
+          nullable: true
+          readOnly: true
+        updated_by:
+          type: integer
+          readOnly: true
+          nullable: true
+          title: Изменил
+        updated_by_name:
+          type: string
+          nullable: true
+          readOnly: true
+        is_archived:
+          type: boolean
+          readOnly: true
+          title: В архиве
+      required:
+      - academic_year
+    AcademicYearCreditNormRequest:
+      type: object
+      description: Базовый сериализатор для моделей с полями аудита.
+      properties:
+        academic_year:
+          type: integer
+          title: Учебный год
+        hours_per_credit:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,2})?$
+          title: Количество часов в одном кредите
+        notes:
+          type: string
+          title: Примечание
+      required:
+      - academic_year
     AcademicYearRequest:
       type: object
       description: Базовый сериализатор для моделей с полями аудита.
@@ -19276,6 +20583,97 @@ components:
       - planned_workloads_count
       - warnings_count
       - year_staff_records_count
+    AcademicYearWorkloadNorm:
+      type: object
+      description: Базовый сериализатор для моделей с полями аудита.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        academic_year:
+          type: integer
+          title: Учебный год
+        academic_year_name:
+          type: string
+          readOnly: true
+        workload_type:
+          type: integer
+          title: Вид учебной работы
+        workload_type_name:
+          type: string
+          readOnly: true
+        coefficient:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,4})?$
+          title: Коэффициент / базовые часы
+        is_active:
+          type: boolean
+          title: Активна
+        notes:
+          type: string
+          title: Примечание
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Дата создания
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Дата изменения
+        created_by:
+          type: integer
+          readOnly: true
+          nullable: true
+          title: Создал
+        created_by_name:
+          type: string
+          nullable: true
+          readOnly: true
+        updated_by:
+          type: integer
+          readOnly: true
+          nullable: true
+          title: Изменил
+        updated_by_name:
+          type: string
+          nullable: true
+          readOnly: true
+        is_archived:
+          type: boolean
+          readOnly: true
+          title: В архиве
+      required:
+      - academic_year
+      - coefficient
+      - workload_type
+    AcademicYearWorkloadNormRequest:
+      type: object
+      description: Базовый сериализатор для моделей с полями аудита.
+      properties:
+        academic_year:
+          type: integer
+          title: Учебный год
+        workload_type:
+          type: integer
+          title: Вид учебной работы
+        coefficient:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,4})?$
+          title: Коэффициент / базовые часы
+        is_active:
+          type: boolean
+          title: Активна
+        notes:
+          type: string
+          title: Примечание
+      required:
+      - academic_year
+      - coefficient
+      - workload_type
     ActionEnum:
       enum:
       - create
@@ -19832,6 +21230,7 @@ components:
           readOnly: true
         teaching_department:
           type: integer
+          readOnly: true
           title: Обеспечивающая кафедра
         teaching_department_name:
           type: string
@@ -19938,7 +21337,6 @@ components:
       - curriculum
       - discipline
       - semester_number
-      - teaching_department
     CurriculumDisciplineRequest:
       type: object
       description: Базовый сериализатор для моделей с полями аудита.
@@ -19955,9 +21353,6 @@ components:
           minimum: 1
           format: int64
           title: Номер семестра
-        teaching_department:
-          type: integer
-          title: Обеспечивающая кафедра
         component_type:
           allOf:
           - $ref: '#/components/schemas/ComponentTypeEnum'
@@ -19997,7 +21392,6 @@ components:
       - curriculum
       - discipline
       - semester_number
-      - teaching_department
     CurriculumRequest:
       type: object
       description: Базовый сериализатор для моделей с полями аудита.
@@ -20072,6 +21466,9 @@ components:
           title: Вид учебной работы
         workload_type_name:
           type: string
+          readOnly: true
+        uses_curriculum_rule:
+          type: boolean
           readOnly: true
         calculation_mode:
           $ref: '#/components/schemas/CalculationModeEnum'
@@ -20182,6 +21579,136 @@ components:
       required:
       - base_hours
       - curriculum_discipline
+      - workload_type
+    CurriculumWorkloadRule:
+      type: object
+      description: Базовый сериализатор для моделей с полями аудита.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        curriculum:
+          type: integer
+          title: Учебный план
+        workload_type:
+          type: integer
+          title: Вид учебной работы
+        workload_type_name:
+          type: string
+          readOnly: true
+        calculation_mode:
+          allOf:
+          - $ref: '#/components/schemas/CalculationModeEnum'
+          title: Способ расчёта
+        calculation_mode_name:
+          type: string
+          readOnly: true
+        base_hours:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,2})?$
+          title: Базовое количество часов
+        students_per_unit:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+          title: Количество студентов на одну расчётную единицу
+        is_active:
+          type: boolean
+          title: Активна
+        notes:
+          type: string
+          title: Примечание
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Дата создания
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Дата изменения
+        created_by:
+          type: integer
+          readOnly: true
+          nullable: true
+          title: Создал
+        created_by_name:
+          type: string
+          nullable: true
+          readOnly: true
+        updated_by:
+          type: integer
+          readOnly: true
+          nullable: true
+          title: Изменил
+        updated_by_name:
+          type: string
+          nullable: true
+          readOnly: true
+        is_archived:
+          type: boolean
+          readOnly: true
+          title: В архиве
+        archived_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+          title: Дата архивирования
+        archived_by:
+          type: integer
+          readOnly: true
+          nullable: true
+          title: Архивировал
+        archived_by_name:
+          type: string
+          nullable: true
+          readOnly: true
+      required:
+      - base_hours
+      - calculation_mode
+      - curriculum
+      - workload_type
+    CurriculumWorkloadRuleRequest:
+      type: object
+      description: Базовый сериализатор для моделей с полями аудита.
+      properties:
+        curriculum:
+          type: integer
+          title: Учебный план
+        workload_type:
+          type: integer
+          title: Вид учебной работы
+        calculation_mode:
+          allOf:
+          - $ref: '#/components/schemas/CalculationModeEnum'
+          title: Способ расчёта
+        base_hours:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,2})?$
+          title: Базовое количество часов
+        students_per_unit:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+          title: Количество студентов на одну расчётную единицу
+        is_active:
+          type: boolean
+          title: Активна
+        notes:
+          type: string
+          title: Примечание
+      required:
+      - base_hours
+      - calculation_mode
+      - curriculum
       - workload_type
     CustomTokenObtainPairRequest:
       type: object
@@ -20479,6 +22006,16 @@ components:
           type: string
           nullable: true
           readOnly: true
+        workload_types:
+          type: array
+          items:
+            type: integer
+        workload_type_details:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+          readOnly: true
         is_active:
           type: boolean
           title: Активна
@@ -20564,6 +22101,10 @@ components:
           title: Кафедра по умолчанию
           description: Кафедра, которая обычно обеспечивает дисциплину. В конкретном
             учебном плане её можно изменить.
+        workload_types:
+          type: array
+          items:
+            type: integer
         is_active:
           type: boolean
           title: Активна
@@ -21242,6 +22783,7 @@ components:
           readOnly: true
         academic_semester:
           type: integer
+          readOnly: true
           title: Академический семестр
         academic_semester_name:
           type: string
@@ -21255,6 +22797,12 @@ components:
         season:
           type: string
           readOnly: true
+        weeks_count:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 1
+          format: int64
+          title: Количество учебных недель
         students_count:
           type: integer
           maximum: 9223372036854775807
@@ -21328,7 +22876,6 @@ components:
           nullable: true
           readOnly: true
       required:
-      - academic_semester
       - academic_year
       - group_curriculum
       - semester_number
@@ -21343,15 +22890,18 @@ components:
         academic_year:
           type: integer
           title: Учебный год
-        academic_semester:
-          type: integer
-          title: Академический семестр
         semester_number:
           type: integer
           maximum: 9223372036854775807
           minimum: 1
           format: int64
           title: Номер семестра по учебному плану
+        weeks_count:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 1
+          format: int64
+          title: Количество учебных недель
         students_count:
           type: integer
           maximum: 9223372036854775807
@@ -21375,7 +22925,6 @@ components:
           type: string
           title: Примечание
       required:
-      - academic_semester
       - academic_year
       - group_curriculum
       - semester_number
@@ -22424,6 +23973,49 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/AcademicTitle'
+    PaginatedAcademicYearCreditNormList:
+      type: object
+      required:
+      - count
+      - page
+      - page_size
+      - total_pages
+      - results
+      properties:
+        count:
+          type: integer
+          example: 125
+          description: Общее количество записей.
+        page:
+          type: integer
+          example: 2
+          description: Номер текущей страницы.
+        page_size:
+          type: integer
+          example: 20
+          minimum: 1
+          maximum: 100
+          description: Количество записей на текущей странице.
+        total_pages:
+          type: integer
+          example: 7
+          description: Общее количество страниц.
+        next:
+          type: string
+          format: uri
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=3&page_size=20
+          description: Ссылка на следующую страницу.
+        previous:
+          type: string
+          format: uri
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=1&page_size=20
+          description: Ссылка на предыдущую страницу.
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AcademicYearCreditNorm'
     PaginatedAcademicYearList:
       type: object
       required:
@@ -22467,6 +24059,49 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/AcademicYear'
+    PaginatedAcademicYearWorkloadNormList:
+      type: object
+      required:
+      - count
+      - page
+      - page_size
+      - total_pages
+      - results
+      properties:
+        count:
+          type: integer
+          example: 125
+          description: Общее количество записей.
+        page:
+          type: integer
+          example: 2
+          description: Номер текущей страницы.
+        page_size:
+          type: integer
+          example: 20
+          minimum: 1
+          maximum: 100
+          description: Количество записей на текущей странице.
+        total_pages:
+          type: integer
+          example: 7
+          description: Общее количество страниц.
+        next:
+          type: string
+          format: uri
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=3&page_size=20
+          description: Ссылка на следующую страницу.
+        previous:
+          type: string
+          format: uri
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=1&page_size=20
+          description: Ссылка на предыдущую страницу.
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AcademicYearWorkloadNorm'
     PaginatedAuditEventList:
       type: object
       required:
@@ -22639,6 +24274,49 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CurriculumWorkload'
+    PaginatedCurriculumWorkloadRuleList:
+      type: object
+      required:
+      - count
+      - page
+      - page_size
+      - total_pages
+      - results
+      properties:
+        count:
+          type: integer
+          example: 125
+          description: Общее количество записей.
+        page:
+          type: integer
+          example: 2
+          description: Номер текущей страницы.
+        page_size:
+          type: integer
+          example: 20
+          minimum: 1
+          maximum: 100
+          description: Количество записей на текущей странице.
+        total_pages:
+          type: integer
+          example: 7
+          description: Общее количество страниц.
+        next:
+          type: string
+          format: uri
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=3&page_size=20
+          description: Ссылка на следующую страницу.
+        previous:
+          type: string
+          format: uri
+          nullable: true
+          example: https://example.test/api/v1/workload/distributions/?page=1&page_size=20
+          description: Ссылка на предыдущую страницу.
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/CurriculumWorkloadRule'
     PaginatedDepartmentList:
       type: object
       required:
@@ -24069,6 +25747,21 @@ components:
           minimum: 0
           format: int64
           title: Порядок сортировки
+    PatchedAcademicYearCreditNormRequest:
+      type: object
+      description: Базовый сериализатор для моделей с полями аудита.
+      properties:
+        academic_year:
+          type: integer
+          title: Учебный год
+        hours_per_credit:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,2})?$
+          title: Количество часов в одном кредите
+        notes:
+          type: string
+          title: Примечание
     PatchedAcademicYearRequest:
       type: object
       description: Базовый сериализатор для моделей с полями аудита.
@@ -24089,6 +25782,27 @@ components:
         is_active:
           type: boolean
           title: Активен
+    PatchedAcademicYearWorkloadNormRequest:
+      type: object
+      description: Базовый сериализатор для моделей с полями аудита.
+      properties:
+        academic_year:
+          type: integer
+          title: Учебный год
+        workload_type:
+          type: integer
+          title: Вид учебной работы
+        coefficient:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,4})?$
+          title: Коэффициент / базовые часы
+        is_active:
+          type: boolean
+          title: Активна
+        notes:
+          type: string
+          title: Примечание
     PatchedCurriculumDisciplineRequest:
       type: object
       description: Базовый сериализатор для моделей с полями аудита.
@@ -24105,9 +25819,6 @@ components:
           minimum: 1
           format: int64
           title: Номер семестра
-        teaching_department:
-          type: integer
-          title: Обеспечивающая кафедра
         component_type:
           allOf:
           - $ref: '#/components/schemas/ComponentTypeEnum'
@@ -24218,6 +25929,38 @@ components:
         notes:
           type: string
           title: Примечание
+    PatchedCurriculumWorkloadRuleRequest:
+      type: object
+      description: Базовый сериализатор для моделей с полями аудита.
+      properties:
+        curriculum:
+          type: integer
+          title: Учебный план
+        workload_type:
+          type: integer
+          title: Вид учебной работы
+        calculation_mode:
+          allOf:
+          - $ref: '#/components/schemas/CalculationModeEnum'
+          title: Способ расчёта
+        base_hours:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,2})?$
+          title: Базовое количество часов
+        students_per_unit:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          nullable: true
+          title: Количество студентов на одну расчётную единицу
+        is_active:
+          type: boolean
+          title: Активна
+        notes:
+          type: string
+          title: Примечание
     PatchedDepartmentRequest:
       type: object
       description: Базовый сериализатор для моделей с полями аудита.
@@ -24302,6 +26045,10 @@ components:
           title: Кафедра по умолчанию
           description: Кафедра, которая обычно обеспечивает дисциплину. В конкретном
             учебном плане её можно изменить.
+        workload_types:
+          type: array
+          items:
+            type: integer
         is_active:
           type: boolean
           title: Активна
@@ -24456,15 +26203,18 @@ components:
         academic_year:
           type: integer
           title: Учебный год
-        academic_semester:
-          type: integer
-          title: Академический семестр
         semester_number:
           type: integer
           maximum: 9223372036854775807
           minimum: 1
           format: int64
           title: Номер семестра по учебному плану
+        weeks_count:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 1
+          format: int64
+          title: Количество учебных недель
         students_count:
           type: integer
           maximum: 9223372036854775807
@@ -24855,6 +26605,7 @@ components:
           maxLength: 50
         academic_year_admission:
           type: integer
+          nullable: true
           title: Учебный год поступления
         graduation_academic_year:
           type: integer
@@ -25386,6 +27137,25 @@ components:
           type: integer
           readOnly: true
           title: Количество студентов
+        group_semester:
+          type: integer
+          readOnly: true
+          nullable: true
+          title: Семестр учебной группы
+        student_group:
+          type: integer
+          readOnly: true
+          nullable: true
+        student_group_code:
+          type: string
+          readOnly: true
+          nullable: true
+        semester_number:
+          type: integer
+          readOnly: true
+        season:
+          type: string
+          readOnly: true
         status:
           allOf:
           - $ref: '#/components/schemas/PlannedWorkloadStatusEnum'
@@ -25483,7 +27253,8 @@ components:
       - laboratory
       - course_work_supervision
       - course_project_supervision
-      - course_work_project_defense
+      - course_work_defense
+      - course_project_defense
       - scientific_practice
       - qualification_practice
       - master_dissertation_supervision
@@ -25499,7 +27270,8 @@ components:
         * `laboratory` - Лабораторные занятия
         * `course_work_supervision` - Руководство курсовой работой
         * `course_project_supervision` - Руководство курсовым проектом
-        * `course_work_project_defense` - Защита курсовой работы/проекта
+        * `course_work_defense` - Защита курсовой работы
+        * `course_project_defense` - Защита курсовой проекта
         * `scientific_practice` - Научная практика
         * `qualification_practice` - Квалификационная практика
         * `master_dissertation_supervision` - Руководство магистерской диссертацией
@@ -26463,6 +28235,7 @@ components:
           maxLength: 50
         academic_year_admission:
           type: integer
+          nullable: true
           title: Учебный год поступления
         admission_academic_year_name:
           type: string
@@ -26473,6 +28246,18 @@ components:
           title: Плановый учебный год выпуска
         graduation_academic_year_name:
           type: string
+          readOnly: true
+          nullable: true
+        current_course_number:
+          type: integer
+          readOnly: true
+          nullable: true
+        current_semester_number:
+          type: integer
+          readOnly: true
+          nullable: true
+        calculated_graduation_start_year:
+          type: integer
           readOnly: true
           nullable: true
         faculty:
@@ -26578,7 +28363,6 @@ components:
           nullable: true
           readOnly: true
       required:
-      - academic_year_admission
       - code
       - faculty
       - study_form
@@ -26594,6 +28378,7 @@ components:
           maxLength: 50
         academic_year_admission:
           type: integer
+          nullable: true
           title: Учебный год поступления
         graduation_academic_year:
           type: integer
@@ -26625,7 +28410,6 @@ components:
           type: string
           title: Примечание
       required:
-      - academic_year_admission
       - code
       - faculty
       - study_form
@@ -28297,6 +30081,20 @@ components:
         planned_workload:
           type: integer
           title: Плановая нагрузка
+        planned_remaining_hours:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          readOnly: true
+        curriculum:
+          type: integer
+          readOnly: true
+        curriculum_code:
+          type: string
+          readOnly: true
+        discipline_code:
+          type: string
+          readOnly: true
         planned_total_hours:
           type: string
           format: decimal
@@ -28674,6 +30472,19 @@ components:
         is_teaching_load:
           type: boolean
           title: Включать в нагрузку преподавателя
+        uses_annual_norm:
+          type: boolean
+          readOnly: true
+        uses_curriculum_rule:
+          type: boolean
+          readOnly: true
+        paired_code:
+          type: string
+          readOnly: true
+          nullable: true
+        uses_weekly_norm:
+          type: boolean
+          readOnly: true
         is_active:
           type: boolean
           title: Активен
@@ -28745,6 +30556,18 @@ components:
       - credit
       - course_work
       - course_project
+      - course_work_supervision
+      - course_project_supervision
+      - course_work_defense
+      - course_project_defense
+      - course_work_project_defense
+      - scientific_practice_supervision
+      - qualification_practice_supervision
+      - master_dissertation_supervision
+      - master_dissertation_defense
+      - graduation_work_supervision
+      - graduation_work_defense
+      - rating
       - independent_work
       - other
       type: string
@@ -28758,6 +30581,18 @@ components:
         * `credit` - Зачёт
         * `course_work` - Курсовая работа
         * `course_project` - Курсовой проект
+        * `course_work_supervision` - Руководство курсовой работой
+        * `course_project_supervision` - Руководство курсовым проектом
+        * `course_work_defense` - Защита курсовой работы
+        * `course_project_defense` - Защита курсового проекта
+        * `course_work_project_defense` - Защита курсовой работы/проекта
+        * `scientific_practice_supervision` - Руководство научной практикой
+        * `qualification_practice_supervision` - Руководство квалификационной практикой
+        * `master_dissertation_supervision` - Руководство магистерской диссертацией
+        * `master_dissertation_defense` - Защита магистерской диссертации
+        * `graduation_work_supervision` - Руководство выпускной квалификационной работой
+        * `graduation_work_defense` - Защита выпускной квалификационной работы
+        * `rating` - Рейтинг
         * `independent_work` - Самостоятельная работа
         * `other` - Другой вид работы
     WorkloadTypeRequest:

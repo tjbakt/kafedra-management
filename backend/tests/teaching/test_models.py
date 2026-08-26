@@ -73,18 +73,26 @@ class GroupCurriculumAssignmentModelTests(
             context.exception.message_dict,
         )
 
-    def test_end_year_cannot_be_earlier(self):
-        curriculum = CurriculumFactory()
+    def test_end_year_cannot_be_earlier(
+            self,
+    ):
+        curriculum = (
+            CurriculumFactory()
+        )
 
-        assignment = (
+        with self.assertRaises(
+                ValidationError
+        ) as context:
             GroupCurriculumAssignmentFactory(
                 curriculum=curriculum,
+
                 start_academic_year=(
                     AcademicYearFactory(
                         start_year=2030,
                         end_year=2031,
                     )
                 ),
+
                 end_academic_year=(
                     AcademicYearFactory(
                         start_year=2029,
@@ -92,16 +100,12 @@ class GroupCurriculumAssignmentModelTests(
                     )
                 ),
             )
-        )
-
-        with self.assertRaises(
-            ValidationError
-        ) as context:
-            assignment.full_clean()
 
         self.assertIn(
             "end_academic_year",
-            context.exception.message_dict,
+            context
+            .exception
+            .message_dict,
         )
 
 

@@ -48,17 +48,16 @@ class DepartmentWorkloadReportServiceTests(
         )
 
         stream = TeachingStreamFactory(
-            curriculum_discipline=(
+            curriculum=(
                 curriculum_workload
                 .curriculum_discipline
+                .curriculum
             ),
-            curriculum_workload=(
-                curriculum_workload
-            ),
-            teaching_department=(
+
+            semester_number=(
                 curriculum_workload
                 .curriculum_discipline
-                .teaching_department
+                .semester_number
             ),
         )
 
@@ -74,7 +73,9 @@ class DepartmentWorkloadReportServiceTests(
                 stream.academic_semester
             ),
             teaching_department=(
-                stream.teaching_department
+                curriculum_workload
+                .curriculum_discipline
+                .teaching_department
             ),
             calculation_mode=mode,
             base_hours=Decimal(

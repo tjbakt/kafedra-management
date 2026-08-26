@@ -191,19 +191,19 @@ class CurriculumDisciplineSerializerTests(
     def test_rejects_excess_semester(self):
         curriculum = CurriculumFactory()
 
+        discipline = DisciplineFactory(
+            default_department=(
+                curriculum
+                .study_program
+                .profiling_department
+            )
+        )
         serializer = (
             CurriculumDisciplineSerializer(
                 data={
                     "curriculum": curriculum.pk,
-                    "discipline": (
-                        DisciplineFactory().pk
-                    ),
+                    "discipline": discipline.pk,
                     "semester_number": 9,
-                    "teaching_department": (
-                        curriculum
-                        .study_program
-                        .profiling_department_id
-                    ),
                     "component_type": (
                         CurriculumDiscipline
                         .ComponentType
@@ -234,30 +234,44 @@ class CurriculumDisciplineSerializerTests(
             serializer.errors,
         )
 
-    def test_rejects_other_university_department(
-        self,
+    def test_rejects_discipline_from_other_university(
+            self,
     ):
-        curriculum = CurriculumFactory()
+        curriculum = (
+            CurriculumFactory()
+        )
+
+        discipline = (
+            DisciplineFactory(
+                default_department=(
+                    DepartmentFactory()
+                )
+            )
+        )
 
         serializer = (
             CurriculumDisciplineSerializer(
                 data={
-                    "curriculum": curriculum.pk,
-                    "discipline": (
-                        DisciplineFactory().pk
-                    ),
-                    "semester_number": 1,
-                    "teaching_department": (
-                        DepartmentFactory().pk
-                    ),
-                    "credits": "6.00",
-                    "total_academic_hours": (
-                        "180.00"
-                    ),
-                    "independent_hours": (
-                        "90.00"
-                    ),
-                    "weeks_count": 15,
+                    "curriculum":
+                        curriculum.pk,
+
+                    "discipline":
+                        discipline.pk,
+
+                    "semester_number":
+                        1,
+
+                    "credits":
+                        "6.00",
+
+                    "total_academic_hours":
+                        "180.00",
+
+                    "independent_hours":
+                        "90.00",
+
+                    "weeks_count":
+                        15,
                 }
             )
         )
@@ -265,37 +279,52 @@ class CurriculumDisciplineSerializerTests(
         self.assertFalse(
             serializer.is_valid()
         )
+
         self.assertIn(
-            "teaching_department",
+            "discipline",
             serializer.errors,
         )
 
     def test_rejects_excess_independent_hours(
-        self,
+            self,
     ):
-        curriculum = CurriculumFactory()
+        curriculum = (
+            CurriculumFactory()
+        )
+
+        discipline = (
+            DisciplineFactory(
+                default_department=(
+                    curriculum
+                    .study_program
+                    .profiling_department
+                )
+            )
+        )
 
         serializer = (
             CurriculumDisciplineSerializer(
                 data={
-                    "curriculum": curriculum.pk,
-                    "discipline": (
-                        DisciplineFactory().pk
-                    ),
-                    "semester_number": 1,
-                    "teaching_department": (
-                        curriculum
-                        .study_program
-                        .profiling_department_id
-                    ),
-                    "credits": "6.00",
-                    "total_academic_hours": (
-                        "100.00"
-                    ),
-                    "independent_hours": (
-                        "101.00"
-                    ),
-                    "weeks_count": 15,
+                    "curriculum":
+                        curriculum.pk,
+
+                    "discipline":
+                        discipline.pk,
+
+                    "semester_number":
+                        1,
+
+                    "credits":
+                        "6.00",
+
+                    "total_academic_hours":
+                        "100.00",
+
+                    "independent_hours":
+                        "101.00",
+
+                    "weeks_count":
+                        15,
                 }
             )
         )
@@ -303,6 +332,7 @@ class CurriculumDisciplineSerializerTests(
         self.assertFalse(
             serializer.is_valid()
         )
+
         self.assertIn(
             "independent_hours",
             serializer.errors,

@@ -99,11 +99,15 @@ class IndividualPlanService:
                 "planned_workload",
                 "planned_workload__academic_semester",
                 "planned_workload__teaching_stream",
-                "planned_workload__teaching_stream__"
-                "curriculum_discipline",
-                "planned_workload__teaching_stream__"
-                "curriculum_discipline__discipline",
+
                 "planned_workload__curriculum_workload",
+
+                "planned_workload__curriculum_workload__"
+                "curriculum_discipline",
+
+                "planned_workload__curriculum_workload__"
+                "curriculum_discipline__discipline",
+
                 "planned_workload__curriculum_workload__"
                 "workload_type",
             )
@@ -120,8 +124,10 @@ class IndividualPlanService:
         for distribution in distributions:
             planned = distribution.planned_workload
             discipline = (
-                planned.teaching_stream
-                .curriculum_discipline.discipline
+                planned
+                .curriculum_workload
+                .curriculum_discipline
+                .discipline
             )
             workload_type = (
                 planned.curriculum_workload.workload_type

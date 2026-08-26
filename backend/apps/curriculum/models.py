@@ -281,6 +281,11 @@ class WorkloadType(BaseModel):
         }
     )
 
+    def __str__(
+            self,
+    ) -> str:
+        return self.name_ru
+
 class AcademicYearWorkloadNorm(BaseModel):
     """
     Коэффициент/базовые часы вида работы
