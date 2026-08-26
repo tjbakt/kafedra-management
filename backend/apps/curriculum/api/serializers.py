@@ -717,6 +717,30 @@ class CurriculumDisciplineSerializer(LocalizedNameMixin, AuditFieldsSerializer,)
                     }
                 )
 
+        total_academic_hours = attrs.get(
+            "total_academic_hours",
+            getattr(instance, "total_academic_hours", None),
+        )
+        independent_hours = attrs.get(
+            "independent_hours",
+            getattr(instance, "independent_hours", None),
+        )
+
+        if (
+                total_academic_hours is not None
+                and independent_hours is not None
+                and Decimal(str(independent_hours))
+                > Decimal(str(total_academic_hours))
+        ):
+            raise serializers.ValidationError(
+                {
+                    "independent_hours": (
+                        "Самостоятельные часы не могут превышать "
+                        "общий объём дисциплины."
+                    )
+                }
+            )
+
         return attrs
 
     def create(self, validated_data):

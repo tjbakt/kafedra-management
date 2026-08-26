@@ -26,10 +26,10 @@ class DepartmentWorkloadReportService:
 
     @classmethod
     def get_planned_workloads(
-        cls,
-        *,
-        department_id: int,
-        academic_year_id: int,
+            cls,
+            *,
+            department_id: int,
+            academic_year_id: int,
     ) -> QuerySet[PlannedWorkload]:
         stream_groups = (
             TeachingStreamGroup.objects
@@ -44,33 +44,22 @@ class DepartmentWorkloadReportService:
                 group_semester__group_curriculum__student_group__is_active=True,
             )
             .select_related(
-                "academic_year",
-                "academic_semester",
-                "teaching_department",
-
                 "teaching_stream",
                 "teaching_stream__curriculum",
-
-                "curriculum_workload",
-                "curriculum_workload__workload_type",
-
-                "curriculum_workload__curriculum_discipline",
-                "curriculum_workload__curriculum_discipline__discipline",
-                "curriculum_workload__curriculum_discipline__curriculum",
-                "curriculum_workload__curriculum_discipline__curriculum__study_program",
-                "curriculum_workload__curriculum_discipline__curriculum__study_program__education_level",
-                "curriculum_workload__curriculum_discipline__curriculum__study_form",
-
+                "teaching_stream__curriculum__study_program",
+                "teaching_stream__curriculum__study_program__education_level",
+                "teaching_stream__curriculum__study_form",
                 "group_semester",
+                "group_semester__academic_year",
+                "group_semester__academic_semester",
                 "group_semester__group_curriculum",
                 "group_semester__group_curriculum__student_group",
             )
             .order_by(
-                "curriculum_workload__curriculum_discipline__curriculum__study_program__code",
-                "curriculum_workload__curriculum_discipline__semester_number",
-                "curriculum_workload__curriculum_discipline__discipline__name_ru",
+                "teaching_stream__curriculum__study_program__code",
+                "teaching_stream__semester_number",
                 "teaching_stream__code",
-                "curriculum_workload__workload_type__sort_order",
+                "group_semester__group_curriculum__student_group__code",
                 "pk",
             )
         )
@@ -110,7 +99,9 @@ class DepartmentWorkloadReportService:
                 "teaching_department",
                 "teaching_stream",
                 "teaching_stream__curriculum",
-
+                "teaching_stream__curriculum__study_program",
+                "teaching_stream__curriculum__study_program__education_level",
+                "teaching_stream__curriculum__study_form",
                 "curriculum_workload",
                 "curriculum_workload__workload_type",
                 "curriculum_workload__curriculum_discipline",
@@ -119,12 +110,9 @@ class DepartmentWorkloadReportService:
                 "curriculum_workload__curriculum_discipline__curriculum__study_program",
                 "curriculum_workload__curriculum_discipline__curriculum__study_program__education_level",
                 "curriculum_workload__curriculum_discipline__curriculum__study_form",
-
                 "group_semester",
                 "group_semester__group_curriculum",
                 "group_semester__group_curriculum__student_group",
-                "curriculum_workload",
-                "curriculum_workload__workload_type",
             )
             .prefetch_related(
                 Prefetch(
@@ -139,11 +127,12 @@ class DepartmentWorkloadReportService:
                 ),
             )
             .order_by(
-                "teaching_stream__curriculum_discipline__curriculum__study_program__code",
-                "teaching_stream__curriculum_discipline__semester_number",
-                "teaching_stream__curriculum_discipline__discipline__name_ru",
+                "teaching_stream__curriculum__study_program__code",
+                "teaching_stream__semester_number",
+                "curriculum_workload__curriculum_discipline__discipline__name_ru",
                 "teaching_stream__code",
                 "curriculum_workload__workload_type__sort_order",
+                "pk",
             )
         )
 
