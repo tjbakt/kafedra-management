@@ -24,6 +24,9 @@ import WorkloadDistributionFormDialog
 import WorkloadDistributionReasonDialog
   from '@/modules/workload-distribution/components/WorkloadDistributionReasonDialog.vue'
 
+import PlannedWorkloadDistributionTable
+  from '@/modules/workload-distribution/components/PlannedWorkloadDistributionTable.vue'
+
 import {
   approveDistribution,
   cancelDistribution,
@@ -109,6 +112,11 @@ const lookupLoading =
 
 const selectedRecord =
   ref<WorkloadDistribution | null>(
+    null,
+  )
+
+const initialPlannedWorkloadId =
+  ref<number | null>(
     null,
   )
 
@@ -351,6 +359,44 @@ const statuses =
     },
   ])
 
+const visiblePlannedWorkloads =
+  computed(
+    () =>
+      plannedWorkloads.value
+        .filter(
+          (item) => {
+            if (
+              selectedYear.value !==
+                null &&
+              item.academic_year !==
+                selectedYear.value
+            ) {
+              return false
+            }
+
+            if (
+              selectedDepartment.value !==
+                null &&
+              item.teaching_department !==
+                selectedDepartment.value
+            ) {
+              return false
+            }
+
+            if (
+              selectedSemester.value !==
+                null &&
+              item.semester_number !==
+                selectedSemester.value
+            ) {
+              return false
+            }
+
+            return true
+          },
+        ),
+  )
+
 function statusSeverity(
   status:
     WorkloadDistributionStatus,
@@ -552,18 +598,36 @@ async function loadLookups(): Promise<void> {
 }
 
 function openCreate(): void {
-  selectedRecord.value =
-    null
-
+  selectedRecord.value = null
+  initialPlannedWorkloadId.value = null
   clearErrors()
+  formVisible.value = true
+}
 
-  formVisible.value =
-    true
+function openAssign(workload: PlannedWorkload,): void {
+  if (
+    !canCreate.value
+  ) {
+    return
+  }
+
+  if (
+    Number(
+      workload.remaining_hours,
+    ) <= 0
+  ) {
+    return
+  }
+
+  selectedRecord.value = null
+  initialPlannedWorkloadId.value = workload.id
+  clearErrors()
+  formVisible.value = true
 }
 
 function openEdit(
   record:
-    WorkloadDistribution,
+  WorkloadDistribution,
 ): void {
   if (
     record.status !== 'draft'
@@ -571,13 +635,11 @@ function openEdit(
     return
   }
 
-  selectedRecord.value =
-    record
-
+  selectedRecord.value = record
+  initialPlannedWorkloadId.value = null
   clearErrors()
 
-  formVisible.value =
-    true
+  formVisible.value = true
 }
 
 async function createDistribution(
@@ -592,8 +654,8 @@ async function createDistribution(
     await workloadDistributionsApi
       .create(payload)
 
-    formVisible.value =
-      false
+    formVisible.value = false
+    initialPlannedWorkloadId.value = null
 
     toast.success(
       t('common.success'),
@@ -992,9 +1054,26 @@ onMounted(
       </template>
     </BaseToolbar>
 
-    <BaseCard
-      :padding="false"
-    >
+    <BaseCard :padding="false">
+      <PlannedWorkloadDistributionTable
+        :items="visiblePlannedWorkloads"
+        :loading="lookupLoading"
+        :can-assign="canCreate"
+        @assign="openAssign"
+      />
+    </BaseCard>
+
+    <div class="distribution-list-header">
+      <h3>
+        {{ t('workloadDistribution.distributions.title',) }}
+      </h3>
+
+      <small>
+        {{ t('workloadDistribution.distributions.description',) }}
+      </small>
+    </div>
+
+    <BaseCard :padding="false">
       <BaseDataTable
         :value="items"
         :columns="columns"
@@ -1164,34 +1243,17 @@ onMounted(
 
     <WorkloadDistributionFormDialog
       v-model="formVisible"
-      :record="
-        selectedRecord
-      "
-      :planned-workloads="
-        plannedWorkloads
-      "
-      :employments="
-        employments
-      "
-      :annual-records="
-        annualRecords
-      "
+      :record="selectedRecord"
+      :initial-planned-workload-id="initialPlannedWorkloadId"
+      :planned-workloads="plannedWorkloads"
+      :employments="employments"
+      :annual-records="annualRecords"
       :loading="saving"
-      :field-errors="
-        fieldErrors
-      "
-      :non-field-errors="
-        nonFieldErrors
-      "
-      :general-error="
-        generalError
-      "
-      @create="
-        createDistribution
-      "
-      @update="
-        updateDistribution
-      "
+      :field-errors="fieldErrors"
+      :non-field-errors="nonFieldErrors"
+      :general-error="generalError"
+      @create="createDistribution"
+      @update="updateDistribution"
     />
 
     <WorkloadDistributionReasonDialog
@@ -1260,5 +1322,25 @@ onMounted(
   .distribution-filter {
     width: 100%;
   }
+}
+
+.distribution-list-header {
+  display: grid;
+  gap: 0.2rem;
+
+  margin-top: 0.5rem;
+}
+
+.distribution-list-header h3 {
+  margin: 0;
+
+  font-size: 1rem;
+}
+
+.distribution-list-header small {
+  color:
+    var(--app-text-muted);
+
+  font-size: 0.75rem;
 }
 </style>

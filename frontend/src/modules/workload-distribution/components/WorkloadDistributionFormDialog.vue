@@ -60,33 +60,21 @@ const visible =
 const props = withDefaults(
   defineProps<{
     record?: WorkloadDistribution | null
-
-    plannedWorkloads:
-      PlannedWorkload[]
-
-    employments:
-      StaffEmployment[]
-
-    annualRecords:
-      StaffAcademicYearRecord[]
-
+    initialPlannedWorkloadId?: number | null
+    plannedWorkloads: PlannedWorkload[]
+    employments: StaffEmployment[]
+    annualRecords: StaffAcademicYearRecord[]
     loading?: boolean
-
     fieldErrors?: FieldErrors
-
     nonFieldErrors?: string[]
-
     generalError?: string
   }>(),
   {
     record: null,
-
+    initialPlannedWorkloadId: null,
     loading: false,
-
     fieldErrors: () => ({}),
-
     nonFieldErrors: () => [],
-
     generalError: '',
   },
 )
@@ -302,6 +290,85 @@ const maximumHours =
 
       return Number(
         workload.remaining_hours,
+      )
+    },
+  )
+
+function teacherLoadSeverity():
+  | 'success'
+  | 'info'
+  | 'warn'
+  | 'danger'
+  | 'secondary' {
+  if (
+    !teacherSummary.value
+  ) {
+    return 'secondary'
+  }
+
+  switch (
+    teacherSummary.value
+      .load_status
+  ) {
+    case 'balanced':
+      return 'success'
+
+    case 'underloaded':
+      return 'info'
+
+    case 'overloaded':
+      return 'danger'
+
+    default:
+      return 'warn'
+  }
+}
+
+const projectedTeacherHours =
+  computed(
+    () => {
+      if (
+        !teacherSummary.value
+      ) {
+        return null
+      }
+
+      return (
+        Number(
+          teacherSummary.value
+            .distributed_hours,
+        ) +
+        Number(
+          form.allocated_hours ??
+          0,
+        )
+      )
+    },
+  )
+
+const projectedLoadPercent =
+  computed(
+    () => {
+      const recommended =
+        Number(
+          teacherSummary.value
+            ?.recommended_hours ??
+          0,
+        )
+
+      if (
+        !recommended ||
+        projectedTeacherHours
+          .value === null
+      ) {
+        return null
+      }
+
+      return (
+        projectedTeacherHours
+          .value /
+        recommended *
+        100
       )
     },
   )
@@ -544,8 +611,22 @@ watch(
       )
 
       void loadTeacherSummary()
-    } else {
-      resetForm()
+
+      return
+    }
+
+    resetForm()
+
+    if (
+      props.initialPlannedWorkloadId
+    ) {
+      form.planned_workload =
+        props.initialPlannedWorkloadId
+
+      form.allocated_hours =
+        maximumHours.value > 0
+          ? maximumHours.value
+          : null
     }
   },
 )
@@ -731,33 +812,51 @@ watch(
       </Message>
 
       <Message
-        v-if="
-          teacherSummary &&
-          !summaryLoading
-        "
-        severity="secondary"
+        v-if="teacherSummary && !summaryLoading"
+        :severity="teacherLoadSeverity()"
         :closable="false"
       >
-        {{
-          t(
-            'workloadDistribution.teacherNormHint',
-            {
-              recommended:
-                teacherSummary
-                  .recommended_hours ??
-                '—',
+        <div class="teacher-load-summary">
+          <div>
+            <span>
+              {{ t('workloadDistribution.teacherLoad.norm',) }}
+            </span>
 
-              distributed:
-                teacherSummary
-                  .distributed_hours,
+            <strong>
+              {{ teacherSummary.recommended_hours ?? '—' }}
+            </strong>
+          </div>
 
-              remaining:
-                teacherSummary
-                  .remaining_hours ??
-                '—',
-            },
-          )
-        }}
+          <div>
+            <span>
+              {{ t('workloadDistribution.teacherLoad.distributed',) }}
+            </span>
+
+            <strong>
+              {{ teacherSummary.distributed_hours }}
+            </strong>
+          </div>
+
+          <div>
+            <span>
+              {{ t('workloadDistribution.teacherLoad.afterAssignment',) }}
+            </span>
+
+            <strong>
+              {{ projectedTeacherHours !== null ? projectedTeacherHours.toFixed(2) : '—' }}
+            </strong>
+          </div>
+
+          <div>
+            <span>
+              {{ t('workloadDistribution.teacherLoad.percent',) }}
+            </span>
+
+            <strong>
+              {{ projectedLoadPercent !== null ? `${projectedLoadPercent.toFixed(1)}%` : '—' }}
+            </strong>
+          </div>
+        </div>
       </Message>
 
       <BaseFormField
@@ -876,5 +975,43 @@ watch(
     var(--app-text-muted);
 
   font-size: 0.7rem;
+}
+
+.teacher-load-summary {
+  display: grid;
+
+  grid-template-columns:
+    repeat(
+      4,
+      minmax(0, 1fr)
+    );
+
+  gap: 1rem;
+}
+
+.teacher-load-summary > div {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.teacher-load-summary span {
+  font-size: 0.7rem;
+  opacity: 0.8;
+}
+
+.teacher-load-summary strong {
+  font-size: 0.9rem;
+}
+
+@media (
+  max-width: 700px
+) {
+  .teacher-load-summary {
+    grid-template-columns:
+      repeat(
+        2,
+        minmax(0, 1fr)
+      );
+  }
 }
 </style>

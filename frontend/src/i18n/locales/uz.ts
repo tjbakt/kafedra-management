@@ -2679,20 +2679,44 @@ const uz = {
     },
 
     validation: {
-      workloadRequired:
-        'Rejalashtirilgan yuklama pozitsiyasini tanlang.',
+      workloadRequired: 'Rejalashtirilgan yuklama pozitsiyasini tanlang.',
+      teacherRequired: 'O‘qituvchini tanlang.',
+      hoursPositive: 'Soatlar soni noldan katta bo‘lishi kerak.',
+      hoursExceeded: 'Soatlar mavjud {hours} soat qoldiqdan oshib ketdi.',
+      reasonRequired: 'Sababni kiriting.',
+    },
 
-      teacherRequired:
-        'O‘qituvchini tanlang.',
+    planned: {
+      title: 'Taqsimlash uchun rejalashtirilgan yuklama',
+      description: 'Hali taqsimlanmagan soatlari mavjud bo‘lgan pozitsiyalar.',
+      assign: 'Tayinlash',
+      empty: 'Barcha mavjud rejalashtirilgan yuklama taqsimlangan.',
+      total: 'Reja, soat',
+      distribution: 'Taqsimlangan',
+      remaining: 'Qoldiq, soat',
+      positionsCount: '{count} ta pozitsiya',
+    },
 
-      hoursPositive:
-        'Soatlar soni noldan katta bo‘lishi kerak.',
+    distributions: {
+      title:
+        'O‘qituvchilarga taqsimlash',
 
-      hoursExceeded:
-        'Soatlar mavjud {hours} soat qoldiqdan oshib ketdi.',
+      description:
+        'O‘quv yuklamasining o‘qituvchilar bo‘yicha yaratilgan taqsimotlari.',
+    },
 
-      reasonRequired:
-        'Sababni kiriting.',
+    teacherLoad: {
+      norm:
+        'Yillik me’yor',
+
+      distributed:
+        'Taqsimlangan',
+
+      afterAssignment:
+        'Tayinlangandan so‘ng',
+
+      percent:
+        'Me’yor bajarilishi',
     },
   },
 
