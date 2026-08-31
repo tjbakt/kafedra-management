@@ -2762,25 +2762,30 @@ const ru = {
     },
 
     distributions: {
-      title:
-        'Распределения преподавателям',
-
-      description:
-        'Созданные распределения учебной нагрузки по преподавателям.',
+      title: 'Распределения преподавателям',
+      description: 'Созданные распределения учебной нагрузки по преподавателям.',
     },
 
     teacherLoad: {
-      norm:
-        'Норма на год',
+      norm: 'Норма на год',
+      distributed: 'Уже распределено',
+      afterAssignment: 'После назначения',
+      percent: 'Выполнение нормы',
+    },
 
-      distributed:
-        'Уже распределено',
-
-      afterAssignment:
-        'После назначения',
-
-      percent:
-        'Выполнение нормы',
+    bulk: {
+      selected: 'Выбрано: {count}',
+      approve: 'Утвердить ({count})',
+      cancel: 'Отменить ({count})',
+      restore: 'Восстановить ({count})',
+      returnToDraft: 'В черновик ({count})',
+      clearSelection: 'Снять выбор',
+      cancelTitle: 'Массовая отмена распределений',
+      restoreTitle: 'Массовое восстановление распределений',
+      returnTitle: 'Массовый возврат в черновик',
+      successResult: 'Успешно обработано распределений: {count}.',
+      partialTitle: 'Операция выполнена частично',
+      partialResult: 'Успешно: {success}. Ошибок: {errors}. Недоступно: {unavailable}.',
     },
   },
 

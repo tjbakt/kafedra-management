@@ -29,11 +29,15 @@ import PlannedWorkloadDistributionTable
 
 import {
   approveDistribution,
+  approveSelectedDistributions,
   cancelDistribution,
+  cancelSelectedDistributions,
   getPlannedWorkloads,
   getStaffAcademicYearRecords,
   getStaffEmployments,
+  restoreSelectedDistributions,
   returnDistributionToDraft,
+  returnSelectedDistributionsToDraft,
   workloadDistributionsApi,
 } from '@/modules/workload-distribution/api'
 
@@ -139,6 +143,25 @@ const saving =
 const actionLoading =
   ref(false)
 
+const selectedDistributions =
+  ref<
+    WorkloadDistribution[]
+  >([])
+
+const bulkLoading =
+  ref(false)
+
+const bulkReasonVisible =
+  ref(false)
+
+const bulkReasonAction =
+  ref<
+    | 'cancel'
+    | 'restore'
+    | 'return-to-draft'
+    | null
+  >(null)
+
 const fieldErrors =
   ref<FieldErrors>({})
 
@@ -184,6 +207,78 @@ const canDelete =
       can(
         'workload.delete_workloaddistribution',
       ),
+  )
+
+const selectedCount =
+  computed(
+    () =>
+      selectedDistributions
+        .value
+        .length,
+  )
+
+const selectedDraftIds =
+  computed(
+    () =>
+      selectedDistributions
+        .value
+        .filter(
+          (item) =>
+            item.status ===
+            'draft',
+        )
+        .map(
+          (item) =>
+            item.id,
+        ),
+  )
+
+const selectedApprovedIds =
+  computed(
+    () =>
+      selectedDistributions
+        .value
+        .filter(
+          (item) =>
+            item.status ===
+            'approved',
+        )
+        .map(
+          (item) =>
+            item.id,
+        ),
+  )
+
+const selectedCancelledIds =
+  computed(
+    () =>
+      selectedDistributions
+        .value
+        .filter(
+          (item) =>
+            item.status ===
+            'cancelled',
+        )
+        .map(
+          (item) =>
+            item.id,
+        ),
+  )
+
+const selectedActiveIds =
+  computed(
+    () =>
+      selectedDistributions
+        .value
+        .filter(
+          (item) =>
+            item.status !==
+            'cancelled',
+        )
+        .map(
+          (item) =>
+            item.id,
+        ),
   )
 
 const years =
@@ -395,6 +490,33 @@ const visiblePlannedWorkloads =
             return true
           },
         ),
+  )
+
+const bulkReasonTitle =
+  computed(
+    () => {
+      if (
+        bulkReasonAction.value ===
+        'cancel'
+      ) {
+        return t(
+          'workloadDistribution.bulk.cancelTitle',
+        )
+      }
+
+      if (
+        bulkReasonAction.value ===
+        'restore'
+      ) {
+        return t(
+          'workloadDistribution.bulk.restoreTitle',
+        )
+      }
+
+      return t(
+        'workloadDistribution.bulk.returnTitle',
+      )
+    },
   )
 
 function statusSeverity(
@@ -740,6 +862,203 @@ async function updateDistribution(
   }
 }
 
+function bulkResultCount(
+  result:
+    import(
+      '@/modules/workload-distribution/types'
+    ).BulkDistributionResult,
+): number {
+  return (
+    result.approved_count ??
+    result.cancelled_count ??
+    result.restored_count ??
+    result.returned_count ??
+    0
+  )
+}
+
+async function afterBulkAction(): Promise<void> {
+  selectedDistributions.value =
+    []
+
+  await Promise.all([
+    refresh(),
+    loadLookups(),
+  ])
+}
+
+function showBulkResult(
+  result:
+    import(
+      '@/modules/workload-distribution/types'
+    ).BulkDistributionResult,
+): void {
+  const successCount =
+    bulkResultCount(
+      result,
+    )
+
+  if (
+    result.errors_count >
+      0 ||
+    result.unavailable_count >
+      0
+  ) {
+    toast.info(
+      t(
+        'workloadDistribution.bulk.partialTitle',
+      ),
+
+      t(
+        'workloadDistribution.bulk.partialResult',
+        {
+          success:
+            successCount,
+
+          errors:
+            result.errors_count,
+
+          unavailable:
+            result.unavailable_count,
+        },
+      ),
+    )
+
+    return
+  }
+
+  toast.success(
+    t('common.success'),
+
+    t(
+      'workloadDistribution.bulk.successResult',
+      {
+        count:
+          successCount,
+      },
+    ),
+  )
+}
+
+async function approveSelected(): Promise<void> {
+  const ids =
+    selectedDraftIds.value
+
+  if (!ids.length) {
+    return
+  }
+
+  bulkLoading.value =
+    true
+
+  try {
+    const result =
+      await approveSelectedDistributions(
+        ids,
+      )
+
+    showBulkResult(
+      result,
+    )
+
+    await afterBulkAction()
+  } catch (bulkError) {
+    toast.error(
+      t('common.error'),
+
+      normalizeApiError(
+        bulkError,
+      ).message,
+    )
+  } finally {
+    bulkLoading.value =
+      false
+  }
+}
+
+function openBulkReason(
+  action:
+    | 'cancel'
+    | 'restore'
+    | 'return-to-draft',
+): void {
+  if (
+    selectedCount.value ===
+    0
+  ) {
+    return
+  }
+
+  bulkReasonAction.value =
+    action
+
+  bulkReasonVisible.value =
+    true
+}
+
+async function submitBulkReason(
+  reason: string,
+): Promise<void> {
+  if (
+    !bulkReasonAction.value
+  ) {
+    return
+  }
+
+  bulkLoading.value =
+    true
+
+  try {
+    let result
+
+    if (
+      bulkReasonAction.value ===
+      'cancel'
+    ) {
+      result =
+        await cancelSelectedDistributions(
+          selectedActiveIds.value,
+          reason,
+        )
+    } else if (
+      bulkReasonAction.value ===
+      'restore'
+    ) {
+      result =
+        await restoreSelectedDistributions(
+          selectedCancelledIds.value,
+          reason,
+        )
+    } else {
+      result =
+        await returnSelectedDistributionsToDraft(
+          selectedApprovedIds.value,
+          reason,
+        )
+    }
+
+    bulkReasonVisible.value =
+      false
+
+    showBulkResult(
+      result,
+    )
+
+    await afterBulkAction()
+  } catch (bulkError) {
+    toast.error(
+      t('common.error'),
+
+      normalizeApiError(
+        bulkError,
+      ).message,
+    )
+  } finally {
+    bulkLoading.value =
+      false
+  }
+}
+
 async function approve(
   record:
     WorkloadDistribution,
@@ -950,11 +1269,7 @@ onMounted(
 </script>
 
 <template>
-  <div
-    class="
-      workload-distribution-page
-    "
-  >
+  <div class="workload-distribution-page">
     <BasePageHeader
       :title="
         t(
@@ -983,15 +1298,10 @@ onMounted(
     </BasePageHeader>
 
     <BaseToolbar
-      v-model:search="
-        searchInput
-      "
+      v-model:search="searchInput"
       :show-create="false"
       :show-reset="true"
-      :loading="
-        loading ||
-        lookupLoading
-      "
+      :loading="loading || lookupLoading"
       :search-placeholder="
         t(
           'workloadDistribution.searchPlaceholder',
@@ -1020,21 +1330,13 @@ onMounted(
         />
 
         <Select
-          v-model="
-            selectedDepartment
-          "
-          :options="
-            departments
-          "
+          v-model="selectedDepartment"
+          :options="departments"
           option-label="label"
           option-value="value"
           filter
-          class="
-            distribution-filter
-          "
-          @change="
-            applyFilters
-          "
+          class="distribution-filter"
+          @change="applyFilters"
         />
 
         <Select
@@ -1063,7 +1365,7 @@ onMounted(
       />
     </BaseCard>
 
-    <div class="distribution-list-header">
+    <div class="distribution-list-header ms-5">
       <h3>
         {{ t('workloadDistribution.distributions.title',) }}
       </h3>
@@ -1073,8 +1375,116 @@ onMounted(
       </small>
     </div>
 
+    <div v-if="selectedCount > 0" class="bulk-actions">
+      <div class="bulk-actions__summary">
+        <i class="pi pi-check-square" />
+        <strong>
+          {{
+            t(
+              'workloadDistribution.bulk.selected',
+              {
+                count:
+                selectedCount,
+              },
+            )
+          }}
+        </strong>
+      </div>
+
+      <div class="bulk-actions__buttons" >
+        <Button
+          v-if="selectedDraftIds.length"
+          :label="
+            t(
+              'workloadDistribution.bulk.approve',
+              {
+                count:
+                  selectedDraftIds.length,
+              },
+            )
+          "
+          icon="pi pi-check"
+          severity="success"
+          size="small"
+          :loading="bulkLoading"
+          @click="approveSelected"
+        />
+
+        <Button
+          v-if="selectedActiveIds.length"
+          :label="
+            t(
+              'workloadDistribution.bulk.cancel',
+              {
+                count:
+                  selectedActiveIds.length,
+              },
+            )
+          "
+          icon="pi pi-times"
+          severity="danger"
+          outlined
+          size="small"
+          :disabled="bulkLoading"
+          @click="openBulkReason('cancel',)"
+        />
+
+        <Button
+          v-if="selectedApprovedIds.length"
+          :label="
+              t(
+                'workloadDistribution.bulk.returnToDraft',
+                {
+                  count:
+                    selectedApprovedIds.length,
+                },
+              )
+            "
+          icon="pi pi-replay"
+          severity="warn"
+          outlined
+          size="small"
+          :disabled="bulkLoading"
+          @click="openBulkReason('return-to-draft',)"
+        />
+
+        <Button
+          v-if="selectedCancelledIds.length"
+          :label="
+            t(
+              'workloadDistribution.bulk.restore',
+              {
+                count:
+                  selectedCancelledIds.length,
+              },
+            )
+          "
+          icon="pi pi-refresh"
+          severity="info"
+          outlined
+          size="small"
+          :disabled="bulkLoading"
+          @click="openBulkReason('restore',)"
+        />
+
+        <Button
+          :label="
+            t(
+              'workloadDistribution.bulk.clearSelection',
+            )
+          "
+          icon="pi pi-times-circle"
+          severity="secondary"
+          text
+          size="small"
+          @click="selectedDistributions = []"
+        />
+      </div>
+    </div>
+
     <BaseCard :padding="false">
       <BaseDataTable
+        v-model:selection="selectedDistributions"
         :value="items"
         :columns="columns"
         :loading="loading"
@@ -1082,6 +1492,7 @@ onMounted(
         :first="first"
         :rows="query.pageSize"
         :total-records="totalRecords"
+        selectable
         show-row-actions
         @page="handlePage"
         @sort="handleSort"
@@ -1257,9 +1668,7 @@ onMounted(
     />
 
     <WorkloadDistributionReasonDialog
-      v-model="
-        reasonVisible
-      "
+      v-model="reasonVisible"
       :title="
         reasonAction ===
         'cancel'
@@ -1270,13 +1679,16 @@ onMounted(
               'workloadDistribution.returnTitle',
             )
       "
-      :loading="
-        actionLoading
-      "
-      @submit="
-        submitReason
-      "
+      :loading="actionLoading"
+      @submit="submitReason"
     />
+    <WorkloadDistributionReasonDialog
+      v-model="bulkReasonVisible"
+      :title="bulkReasonTitle"
+      :loading="bulkLoading"
+      @submit="submitBulkReason"
+    />
+
   </div>
 </template>
 
@@ -1342,5 +1754,66 @@ onMounted(
     var(--app-text-muted);
 
   font-size: 0.75rem;
+}
+
+.bulk-actions {
+  display: flex;
+
+  align-items: center;
+  justify-content:
+    space-between;
+
+  gap: 1rem;
+
+  padding: 0.75rem 1rem;
+
+  border:
+    1px solid
+    var(--app-border-color);
+
+  border-radius:
+    var(--app-radius-md);
+
+  background:
+    var(--app-surface);
+}
+
+.bulk-actions__summary {
+  display: flex;
+
+  align-items: center;
+
+  gap: 0.5rem;
+
+  white-space: nowrap;
+}
+
+.bulk-actions__buttons {
+  display: flex;
+
+  align-items: center;
+  justify-content:
+    flex-end;
+
+  flex-wrap: wrap;
+
+  gap: 0.5rem;
+}
+
+@media (
+  max-width: 900px
+) {
+  .bulk-actions {
+    align-items:
+      flex-start;
+
+    flex-direction:
+      column;
+  }
+
+  .bulk-actions__buttons {
+    justify-content:
+      flex-start;
+  }
 }
 </style>

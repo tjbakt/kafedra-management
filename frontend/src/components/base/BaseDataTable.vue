@@ -45,6 +45,8 @@ withDefaults(
     emptyDescription?: string
 
     showRowActions?: boolean
+    selectable?: boolean
+    selection?: T[]
   }>(),
   {
     dataKey: 'id',
@@ -73,6 +75,8 @@ withDefaults(
     emptyDescription: '',
 
     showRowActions: false,
+    selectable: false,
+    selection: () => [],
   },
 )
 
@@ -81,6 +85,8 @@ const emit = defineEmits<{
   sort: [event: CrudSortEvent]
   retry: []
   rowClick: [row: T]
+  'update:selection': [value: T[],
+  ]
 }>()
 
 const { t } = useI18n()
@@ -209,19 +215,12 @@ function onSort(event: {
       :paginator="paginator"
       :first="first"
       :rows="rows"
-      :total-records="
-        totalRecords
-      "
-      :rows-per-page-options="
-        rowsPerPageOptions
-      "
+      :total-records="totalRecords"
+      :rows-per-page-options="rowsPerPageOptions"
       :loading="loading"
-      :striped-rows="
-        stripedRows
-      "
-      :removable-sort="
-        removableSort
-      "
+      :striped-rows="stripedRows"
+      :removable-sort="removableSort"
+      :selection="selection"
       paginator-template="
         FirstPageLink
         PrevPageLink
@@ -231,11 +230,7 @@ function onSort(event: {
         RowsPerPageDropdown
         CurrentPageReport
       "
-      :current-page-report-template="
-        t(
-          'crud.paginationReport',
-        )
-      "
+      :current-page-report-template="t('crud.paginationReport',)"
       responsive-layout="scroll"
       class="base-data-table__table"
       @page="onPage"
@@ -244,6 +239,12 @@ function onSort(event: {
         emit(
           'rowClick',
           $event.data as T,
+        )
+      "
+      @update:selection="
+        emit(
+          'update:selection',
+          $event as T[],
         )
       "
     >
@@ -282,39 +283,25 @@ function onSort(event: {
       </template>
 
       <Column
-        v-for="
-          column in columns
-        "
-        :key="
-          String(column.field)
-        "
-        :field="
-          String(column.field)
-        "
-        :header="
-          column.header
-        "
-        :sortable="
-          column.sortable
-        "
-        :sort-field="
-          column.sortField
-        "
-        :header-class="
-          column.headerClass
-        "
-        :body-class="
-          column.bodyClass
-        "
-        :style="
-          columnStyle(column)
-        "
+        v-if="selectable"
+        selection-mode="multiple"
+        header-style="width: 3rem"
+        body-style="width: 3rem"
+      />
+      <Column
+        v-for="column in columns"
+        :key="String(column.field)"
+        :field="String(column.field)"
+        :header="column.header"
+        :sortable="column.sortable"
+        :sort-field="column.sortField"
+        :header-class="column.headerClass"
+        :body-class="column.bodyClass"
+        :style="columnStyle(column)"
       >
         <template #body="{ data }">
           <slot
-            v-if="
-              column.bodySlot
-            "
+            v-if="column.bodySlot"
             :name="
               column.bodySlot
             "

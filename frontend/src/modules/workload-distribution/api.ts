@@ -33,6 +33,7 @@ import type {
 } from '@/types/api'
 
 import type {
+  BulkDistributionResult,
   DistributionActionResponse,
   TeacherWorkloadSummary,
   WorkloadDistribution,
@@ -137,6 +138,76 @@ export async function getTeacherWorkloadSummary(
           staff_member:
             staffMember,
         },
+      },
+    )
+
+  return response.data
+}
+
+export async function approveSelectedDistributions(
+  ids: number[],
+): Promise<BulkDistributionResult> {
+  const response =
+    await http.post<
+      BulkDistributionResult
+    >(
+      '/workload/distributions/approve-selected/',
+      {
+        ids,
+      },
+    )
+
+  return response.data
+}
+
+export async function cancelSelectedDistributions(
+  ids: number[],
+  reason: string,
+): Promise<BulkDistributionResult> {
+  const response =
+    await http.post<
+      BulkDistributionResult
+    >(
+      '/workload/distributions/cancel-selected/',
+      {
+        ids,
+        reason,
+      },
+    )
+
+  return response.data
+}
+
+export async function restoreSelectedDistributions(
+  ids: number[],
+  reason: string,
+): Promise<BulkDistributionResult> {
+  const response =
+    await http.post<
+      BulkDistributionResult
+    >(
+      '/workload/distributions/restore-selected/',
+      {
+        ids,
+        reason,
+      },
+    )
+
+  return response.data
+}
+
+export async function returnSelectedDistributionsToDraft(
+  ids: number[],
+  reason: string,
+): Promise<BulkDistributionResult> {
+  const response =
+    await http.post<
+      BulkDistributionResult
+    >(
+      '/workload/distributions/return-selected-to-draft/',
+      {
+        ids,
+        reason,
       },
     )
 

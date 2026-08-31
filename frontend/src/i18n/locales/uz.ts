@@ -2698,25 +2698,30 @@ const uz = {
     },
 
     distributions: {
-      title:
-        'O‘qituvchilarga taqsimlash',
-
-      description:
-        'O‘quv yuklamasining o‘qituvchilar bo‘yicha yaratilgan taqsimotlari.',
+      title: 'O‘qituvchilarga taqsimlash',
+      description: 'O‘quv yuklamasining o‘qituvchilar bo‘yicha yaratilgan taqsimotlari.',
     },
 
     teacherLoad: {
-      norm:
-        'Yillik me’yor',
+      norm: 'Yillik me’yor',
+      distributed: 'Taqsimlangan',
+      afterAssignment: 'Tayinlangandan so‘ng',
+      percent: 'Me’yor bajarilishi',
+    },
 
-      distributed:
-        'Taqsimlangan',
-
-      afterAssignment:
-        'Tayinlangandan so‘ng',
-
-      percent:
-        'Me’yor bajarilishi',
+    bulk: {
+      selected: 'Tanlangan: {count}',
+      approve: 'Tasdiqlash ({count})',
+      cancel: 'Bekor qilish ({count})',
+      restore: 'Tiklash ({count})',
+      returnToDraft: 'Qoralamaga o‘tkazish ({count}) ',
+      clearSelection: 'Tanlovni bekor qilish',
+      cancelTitle: 'Yuklama taqsimotlarini ommaviy bekor qilish',
+      restoreTitle: 'Yuklama taqsimotlarini ommaviy tiklash',
+      returnTitle: 'Yuklama taqsimotlarini ommaviy qoralamaga qaytarish',
+      successResult: 'Muvaffaqiyatli qayta ishlangan taqsimotlar: {count}.',
+      partialTitle: 'Amal qisman bajarildi',
+      partialResult: 'Muvaffaqiyatli: {success}. Xatolar: {errors}. Mavjud emas: {unavailable}.',
     },
   },
 

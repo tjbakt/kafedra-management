@@ -159,3 +159,40 @@ export interface SelectOption<T = number> {
 
   description?: string
 }
+
+export interface BulkDistributionError {
+  id: number
+
+  error: unknown
+}
+
+export interface BulkDistributionResult {
+  requested_count: number
+
+  found_count: number
+
+  unavailable_count: number
+
+  unavailable_ids: number[]
+
+  errors_count: number
+
+  errors:
+    BulkDistributionError[]
+
+  approved_count?: number
+
+  approved_ids?: number[]
+
+  cancelled_count?: number
+
+  cancelled_ids?: number[]
+
+  restored_count?: number
+
+  restored_ids?: number[]
+
+  returned_count?: number
+
+  returned_ids?: number[]
+}
