@@ -3,6 +3,8 @@ from django.db import transaction
 from django.db.models import Q
 from django.http import HttpResponse, FileResponse
 
+from decimal import Decimal
+
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
@@ -48,8 +50,11 @@ from apps.workload.api.serializers import (
     DepartmentWorkloadSummaryQuerySerializer,
     TeacherWorkloadSummaryQuerySerializer,
     WorkloadDashboardQuerySerializer,
+    AssignSelectedPlannedWorkloadsSerializer,
+    AssignSelectedPlannedWorkloadsResultSerializer,
 )
 from apps.workload.models import WorkloadDistribution
+from apps.teaching.models import PlannedWorkload
 
 from apps.access_control.models import SystemRole
 from apps.access_control.services.access_service import (
@@ -1420,6 +1425,333 @@ class WorkloadDistributionViewSet(
             ),
         ],
     )
+
+    @extend_schema(
+        tags=[
+            "Распределение нагрузки",
+        ],
+        summary=(
+            "Массово назначить плановую "
+            "нагрузку преподавателю"
+        ),
+        description=(
+            "Создаёт отдельное черновое "
+            "распределение для каждой выбранной "
+            "позиции плановой нагрузки. "
+            "Преподавателю назначается весь "
+            "доступный остаток часов каждой позиции. "
+            "Все позиции должны относиться к одному "
+            "учебному году и одной кафедре."
+        ),
+        request=(
+            AssignSelectedPlannedWorkloadsSerializer
+        ),
+        responses={
+            200: (
+                AssignSelectedPlannedWorkloadsResultSerializer
+            ),
+            400: BAD_REQUEST_RESPONSE,
+            401: UNAUTHORIZED_RESPONSE,
+            403: FORBIDDEN_RESPONSE,
+        },
+    )
+    @action(
+        detail=False,
+        methods=[
+            "post",
+        ],
+        url_path="assign-selected",
+    )
+    def assign_selected(
+        self,
+        request,
+    ):
+        input_serializer = (
+            AssignSelectedPlannedWorkloadsSerializer(
+                data=request.data,
+            )
+        )
+
+        input_serializer.is_valid(
+            raise_exception=True,
+        )
+
+        requested_ids = (
+            input_serializer
+            .validated_data[
+                "planned_workloads"
+            ]
+        )
+
+        staff_employment = (
+            input_serializer
+            .validated_data[
+                "staff_employment"
+            ]
+        )
+
+        notes = (
+            input_serializer
+            .validated_data
+            .get(
+                "notes",
+                "",
+            )
+        )
+
+        access_scope = (
+            self.get_workload_access_scope()
+        )
+
+        workloads = list(
+            PlannedWorkload.objects
+            .filter(
+                pk__in=requested_ids,
+                is_archived=False,
+            )
+            .select_related(
+                "academic_year",
+                "teaching_department",
+                "curriculum_workload",
+                (
+                    "curriculum_workload__"
+                    "workload_type"
+                ),
+                (
+                    "curriculum_workload__"
+                    "curriculum_discipline"
+                ),
+                (
+                    "curriculum_workload__"
+                    "curriculum_discipline__"
+                    "discipline"
+                ),
+                "teaching_stream",
+                "group_semester",
+            )
+            .order_by(
+                "pk",
+            )
+        )
+
+        workload_by_id = {
+            workload.pk: workload
+            for workload in workloads
+        }
+
+        accessible_workloads = []
+
+        unavailable_ids = []
+
+        for workload_id in requested_ids:
+            workload = workload_by_id.get(
+                workload_id
+            )
+
+            if workload is None:
+                unavailable_ids.append(
+                    workload_id
+                )
+
+                continue
+
+            if not (
+                access_scope
+                .can_access_department(
+                    workload
+                    .teaching_department_id
+                )
+            ):
+                unavailable_ids.append(
+                    workload_id
+                )
+
+                continue
+
+            accessible_workloads.append(
+                workload
+            )
+
+        if accessible_workloads:
+            academic_year_ids = {
+                workload.academic_year_id
+                for workload
+                in accessible_workloads
+            }
+
+            department_ids = {
+                workload
+                .teaching_department_id
+                for workload
+                in accessible_workloads
+            }
+
+            if len(
+                academic_year_ids
+            ) != 1:
+                raise ValidationError(
+                    {
+                        "planned_workloads": (
+                            "Для массового назначения "
+                            "выберите позиции одного "
+                            "учебного года."
+                        )
+                    }
+                )
+
+            if len(
+                department_ids
+            ) != 1:
+                raise ValidationError(
+                    {
+                        "planned_workloads": (
+                            "Для массового назначения "
+                            "выберите позиции одной "
+                            "обеспечивающей кафедры."
+                        )
+                    }
+                )
+
+            department_id = next(
+                iter(
+                    department_ids
+                )
+            )
+
+            if (
+                staff_employment
+                .department_id
+                != department_id
+            ):
+                raise ValidationError(
+                    {
+                        "staff_employment": (
+                            "Трудовое назначение "
+                            "преподавателя должно "
+                            "относиться к кафедре "
+                            "выбранной плановой нагрузки."
+                        )
+                    }
+                )
+
+        created_ids = []
+
+        errors = []
+
+        allocated_hours_total = (
+            Decimal("0.00")
+        )
+
+        for workload in accessible_workloads:
+            try:
+                remaining_hours = (
+                    WorkloadDistributionService
+                    .get_remaining_hours(
+                        workload
+                    )
+                )
+
+                if (
+                    remaining_hours
+                    <= Decimal("0.00")
+                ):
+                    raise DjangoValidationError(
+                        {
+                            "allocated_hours": (
+                                "По позиции отсутствует "
+                                "нераспределённый остаток "
+                                "часов."
+                            )
+                        }
+                    )
+
+                distribution = (
+                    WorkloadDistributionService
+                    .create_distribution(
+                        planned_workload=(
+                            workload
+                        ),
+                        staff_employment=(
+                            staff_employment
+                        ),
+                        allocated_hours=(
+                            remaining_hours
+                        ),
+                        notes=notes,
+                        user=request.user,
+                    )
+                )
+
+                created_ids.append(
+                    distribution.pk
+                )
+
+                allocated_hours_total += (
+                    distribution
+                    .allocated_hours
+                )
+
+            except DjangoValidationError as exc:
+                errors.append(
+                    {
+                        "planned_workload": (
+                            workload.pk
+                        ),
+                        "error": getattr(
+                            exc,
+                            "message_dict",
+                            exc.messages,
+                        ),
+                    }
+                )
+
+        result = {
+            "requested_count": len(
+                requested_ids
+            ),
+
+            "found_count": len(
+                accessible_workloads
+            ),
+
+            "created_count": len(
+                created_ids
+            ),
+
+            "created_ids": (
+                created_ids
+            ),
+
+            "unavailable_count": len(
+                unavailable_ids
+            ),
+
+            "unavailable_ids": (
+                unavailable_ids
+            ),
+
+            "errors_count": len(
+                errors
+            ),
+
+            "errors": errors,
+
+            "allocated_hours": (
+                allocated_hours_total
+            ),
+        }
+
+        output_serializer = (
+            AssignSelectedPlannedWorkloadsResultSerializer(
+                result
+            )
+        )
+
+        return Response(
+            output_serializer.data,
+            status=status.HTTP_200_OK,
+        )
+
     @action(
         detail=False,
         methods=["post"],
@@ -2359,6 +2691,7 @@ class WorkloadDistributionViewSet(
                 "return_to_draft",
                 "transfer",
                 "available_actions",
+                "assign_selected",
                 "approve_selected",
                 "cancel_selected",
                 "restore_selected",

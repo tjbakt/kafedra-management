@@ -20,16 +20,15 @@ import type {
 const props =
   withDefaults(
     defineProps<{
-      items:
-        PlannedWorkload[]
-
+      items: PlannedWorkload[]
       loading?: boolean
-
       canAssign?: boolean
+      selection?: PlannedWorkload[]
     }>(),
     {
       loading: false,
       canAssign: false,
+      selection: () => [],
     },
   )
 
@@ -38,6 +37,10 @@ const emit =
     assign: [
       workload:
         PlannedWorkload,
+    ]
+    'update:selection': [
+      value:
+        PlannedWorkload[],
     ]
   }>()
 
@@ -246,20 +249,27 @@ function statusSeverity(
 
     <DataTable
       :value="rows"
+      :selection="selection"
       :loading="loading"
       data-key="id"
       striped-rows
       scrollable
-      class="
-        planned-distribution__table
+      class="planned-distribution__table"
+      @update:selection="
+        emit(
+          'update:selection',
+          $event as PlannedWorkload[],
+        )
       "
     >
       <template #empty>
-        <div
-          class="
-            planned-distribution__empty
-          "
-        >
+        <Column
+          v-if="canAssign"
+          selection-mode="multiple"
+          header-style="width: 3rem"
+          body-style="width: 3rem"
+        />
+        <div class="planned-distribution__empty">
           {{
             t(
               'workloadDistribution.planned.empty',

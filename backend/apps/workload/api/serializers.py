@@ -9,9 +9,8 @@ from apps.workload.models import WorkloadDistribution
 from apps.workload.services.academic_year_validation_service import (
     AcademicYearWorkloadValidationService,
 )
-from drf_spectacular.utils import (
-    extend_schema_field,
-)
+from drf_spectacular.utils import  extend_schema_field
+from apps.staff.models import StaffEmployment
 
 class LocalizedNameMixin:
     def get_localized_name(self, obj) -> str:
@@ -1553,4 +1552,107 @@ class TransferDistributionActionResponseSerializer(
     detail = serializers.CharField()
     data = (
         TransferDistributionHoursResultSerializer()
+    )
+
+class AssignSelectedPlannedWorkloadsSerializer(
+    serializers.Serializer
+):
+    """
+    Массовое назначение нескольких позиций
+    плановой нагрузки одному преподавателю.
+
+    Для каждой позиции назначается весь
+    доступный на момент операции остаток часов.
+    """
+
+    planned_workloads = serializers.ListField(
+        child=serializers.IntegerField(
+            min_value=1,
+        ),
+        allow_empty=False,
+        max_length=500,
+        help_text=(
+            "Список ID позиций плановой нагрузки."
+        ),
+    )
+
+    staff_employment = (
+        serializers.PrimaryKeyRelatedField(
+            queryset=(
+                StaffEmployment.objects
+                .filter(
+                    is_archived=False,
+                )
+                .select_related(
+                    "staff_member",
+                    "department",
+                    "position",
+                )
+            ),
+            help_text=(
+                "Трудовое назначение преподавателя."
+            ),
+        )
+    )
+
+    notes = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        max_length=1000,
+        trim_whitespace=True,
+        help_text=(
+            "Общее примечание ко всем "
+            "создаваемым распределениям."
+        ),
+    )
+
+    def validate_planned_workloads(
+        self,
+        value,
+    ):
+        return list(
+            dict.fromkeys(value)
+        )
+
+
+class AssignSelectedPlannedWorkloadErrorSerializer(
+    serializers.Serializer
+):
+    planned_workload = (
+        serializers.IntegerField()
+    )
+
+    error = serializers.JSONField()
+
+
+class AssignSelectedPlannedWorkloadsResultSerializer(
+    serializers.Serializer
+):
+    requested_count = serializers.IntegerField()
+
+    found_count = serializers.IntegerField()
+
+    created_count = serializers.IntegerField()
+
+    created_ids = serializers.ListField(
+        child=serializers.IntegerField(),
+    )
+
+    unavailable_count = serializers.IntegerField()
+
+    unavailable_ids = serializers.ListField(
+        child=serializers.IntegerField(),
+    )
+
+    errors_count = serializers.IntegerField()
+
+    errors = (
+        AssignSelectedPlannedWorkloadErrorSerializer(
+            many=True,
+        )
+    )
+
+    allocated_hours = serializers.DecimalField(
+        max_digits=14,
+        decimal_places=2,
     )

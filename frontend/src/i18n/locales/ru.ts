@@ -2787,6 +2787,22 @@ const ru = {
       partialTitle: 'Операция выполнена частично',
       partialResult: 'Успешно: {success}. Ошибок: {errors}. Недоступно: {unavailable}.',
     },
+
+    bulkAssign: {
+      title: 'Массовое назначение нагрузки',
+      selected: 'Выбрано позиций: {count}',
+      totalHours: 'Общий остаток: {hours} ч.',
+      positions: 'Позиций',
+      hours: 'Назначается часов',
+      academicYear: 'Учебный год',
+      assigningNow: 'Назначается сейчас',
+      assign: 'Назначить выбранное',
+      submit: 'Назначить ({count})',
+      incompatibleTitle: 'Несовместимые позиции',
+      incompatible: 'Для массового назначения выберите позиции одного учебного года и одной обеспечивающей кафедры.',
+      success: 'Создано распределений: {count}. Назначено часов: {hours}.',
+      partialResult: 'Создано: {created}. Ошибок: {errors}. Недоступно: {unavailable}.',
+    },
   },
 
 };

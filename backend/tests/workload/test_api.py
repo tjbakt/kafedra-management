@@ -566,6 +566,199 @@ class WorkloadBulkActionsApiTests(
             2,
         )
 
+    def test_assign_selected(
+        self,
+    ):
+        academic_year = (
+            AcademicYearFactory()
+        )
+
+        first = PlannedWorkloadFactory(
+            academic_year=academic_year,
+            total_hours=Decimal(
+                "30.00"
+            ),
+        )
+
+        second = PlannedWorkloadFactory(
+            academic_year=academic_year,
+            teaching_department=(
+                first
+                .teaching_department
+            ),
+            total_hours=Decimal(
+                "16.00"
+            ),
+        )
+
+        employment = (
+            StaffEmploymentFactory(
+                department=(
+                    first
+                    .teaching_department
+                ),
+            )
+        )
+
+        StaffEmploymentAcademicYearFactory(
+            staff_employment=(
+                employment
+            ),
+            academic_year=(
+                academic_year
+            ),
+        )
+
+        response = self.client.post(
+            reverse(
+                (
+                    "workload-distribution-"
+                    "assign-selected"
+                )
+            ),
+            {
+                "planned_workloads": [
+                    first.pk,
+                    second.pk,
+                ],
+                "staff_employment": (
+                    employment.pk
+                ),
+                "notes": (
+                    "Массовое назначение"
+                ),
+            },
+            format="json",
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+        )
+
+        self.assertEqual(
+            response.data[
+                "created_count"
+            ],
+            2,
+        )
+
+        self.assertEqual(
+            Decimal(
+                response.data[
+                    "allocated_hours"
+                ]
+            ),
+            Decimal(
+                "46.00"
+            ),
+        )
+
+        distributions = (
+            WorkloadDistribution
+            .objects
+            .filter(
+                pk__in=response.data[
+                    "created_ids"
+                ]
+            )
+        )
+
+        self.assertEqual(
+            distributions.count(),
+            2,
+        )
+
+        self.assertTrue(
+            all(
+                item.staff_employment_id
+                == employment.pk
+                for item
+                in distributions
+            )
+        )
+
+        self.assertTrue(
+            all(
+                item.status
+                == (
+                    WorkloadDistribution
+                    .Status
+                    .DRAFT
+                )
+                for item
+                in distributions
+            )
+        )
+
+
+    def test_assign_selected_rejects_different_departments(
+        self,
+    ):
+        academic_year = (
+            AcademicYearFactory()
+        )
+
+        first = PlannedWorkloadFactory(
+            academic_year=academic_year,
+        )
+
+        second = PlannedWorkloadFactory(
+            academic_year=academic_year,
+        )
+
+        employment = (
+            StaffEmploymentFactory(
+                department=(
+                    first
+                    .teaching_department
+                ),
+            )
+        )
+
+        StaffEmploymentAcademicYearFactory(
+            staff_employment=(
+                employment
+            ),
+            academic_year=(
+                academic_year
+            ),
+        )
+
+        response = self.client.post(
+            reverse(
+                (
+                    "workload-distribution-"
+                    "assign-selected"
+                )
+            ),
+            {
+                "planned_workloads": [
+                    first.pk,
+                    second.pk,
+                ],
+                "staff_employment": (
+                    employment.pk
+                ),
+            },
+            format="json",
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+        )
+
+        self.assert_validation_error(
+            response,
+            field="planned_workloads",
+        )
+
+        # self.assertIn(
+        #     "planned_workloads",
+        #     response.data,
+        # )
+
 
 class WorkloadSummaryApiTests(
     WorkloadApiBase

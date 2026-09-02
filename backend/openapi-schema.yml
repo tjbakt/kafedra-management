@@ -17976,31 +17976,27 @@ paths:
   /api/v1/workload/distributions/approve-selected/:
     post:
       operationId: workload_distributions_approve_selected_create
-      description: Утверждает доступные распределения нагрузки из переданного списка
-        ID. Распределения, недоступные текущему пользователю, возвращаются в поле
-        unavailable_ids. Ошибка одного объекта не отменяет обработку остальных.
-      summary: Массово утвердить распределения
+      description: |-
+        Базовый ViewSet для моделей с мягким удалением.
+
+        Дочерний ViewSet должен определить:
+        - model;
+        - get_queryset();
+        - при необходимости scope_queryset();
+        - permission_classes.
       tags:
-      - Распределение нагрузки
+      - workload
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ApproveSelectedDistributionsRequest'
-            examples:
-              МассовоеУтверждение:
-                value:
-                  ids:
-                  - 12
-                  - 13
-                  - 14
-                summary: Массовое утверждение
+              $ref: '#/components/schemas/WorkloadDistributionRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/ApproveSelectedDistributionsRequest'
+              $ref: '#/components/schemas/WorkloadDistributionRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/ApproveSelectedDistributionsRequest'
+              $ref: '#/components/schemas/WorkloadDistributionRequest'
         required: true
       security:
       - jwtAuth: []
@@ -18009,97 +18005,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApproveSelectedDistributionsResult'
-              examples:
-                РезультатУтверждения:
-                  value:
-                    requested_count: 3
-                    found_count: 2
-                    approved_count: 1
-                    approved_ids:
-                    - 12
-                    unavailable_count: 1
-                    unavailable_ids:
-                    - 14
-                    errors_count: 1
-                    errors:
-                    - id: 13
-                      error:
-                      - Распределение уже утверждено.
-                  summary: Результат утверждения
+                $ref: '#/components/schemas/WorkloadDistribution'
           description: ''
-        '400':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiErrorResponse'
-              examples:
-                ОшибкаВалидации:
-                  value:
-                    success: false
-                    status_code: 400
-                    error:
-                      code: validation_error
-                      message: Ошибка проверки данных.
-                      fields:
-                        name:
-                        - message: Это поле обязательно.
-                          code: required
-                      details: null
-                  summary: Ошибка валидации
-          description: Ошибка проверки данных.
-        '401':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiErrorResponse'
-              examples:
-                ТребуетсяАутентификация:
-                  value:
-                    success: false
-                    status_code: 401
-                    error:
-                      code: authentication_required
-                      message: Учетные данные не были предоставлены.
-                      fields: null
-                      details: null
-                  summary: Требуется аутентификация
-          description: Требуется аутентификация.
-        '403':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiErrorResponse'
-              examples:
-                НедостаточноПрав:
-                  value:
-                    success: false
-                    status_code: 403
-                    error:
-                      code: permission_denied
-                      message: Доступ запрещён.
-                      fields: null
-                      details: null
-                  summary: Недостаточно прав
-          description: Недостаточно прав.
-        '409':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiErrorResponse'
-              examples:
-                КонфликтСостояния:
-                  value:
-                    success: false
-                    status_code: 409
-                    error:
-                      code: resource_state_conflict
-                      message: Операция недоступна в текущем состоянии ресурса.
-                      fields: null
-                      details:
-                        status: approved
-                  summary: Конфликт состояния
-          description: Конфликт текущего состояния ресурса.
   /api/v1/workload/distributions/archived/:
     get:
       operationId: workload_distributions_archived_list
@@ -18284,6 +18191,133 @@ paths:
                       details: null
                   summary: Недостаточно прав
           description: Недостаточно прав.
+  /api/v1/workload/distributions/assign-selected/:
+    post:
+      operationId: workload_distributions_assign_selected_create
+      description: Утверждает доступные распределения нагрузки из переданного списка
+        ID. Распределения, недоступные текущему пользователю, возвращаются в поле
+        unavailable_ids. Ошибка одного объекта не отменяет обработку остальных.
+      summary: Массово утвердить распределения
+      tags:
+      - Распределение нагрузки
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApproveSelectedDistributionsRequest'
+            examples:
+              МассовоеУтверждение:
+                value:
+                  ids:
+                  - 12
+                  - 13
+                  - 14
+                summary: Массовое утверждение
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ApproveSelectedDistributionsRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ApproveSelectedDistributionsRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApproveSelectedDistributionsResult'
+              examples:
+                РезультатУтверждения:
+                  value:
+                    requested_count: 3
+                    found_count: 2
+                    approved_count: 1
+                    approved_ids:
+                    - 12
+                    unavailable_count: 1
+                    unavailable_ids:
+                    - 14
+                    errors_count: 1
+                    errors:
+                    - id: 13
+                      error:
+                      - Распределение уже утверждено.
+                  summary: Результат утверждения
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                ОшибкаВалидации:
+                  value:
+                    success: false
+                    status_code: 400
+                    error:
+                      code: validation_error
+                      message: Ошибка проверки данных.
+                      fields:
+                        name:
+                        - message: Это поле обязательно.
+                          code: required
+                      details: null
+                  summary: Ошибка валидации
+          description: Ошибка проверки данных.
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                ТребуетсяАутентификация:
+                  value:
+                    success: false
+                    status_code: 401
+                    error:
+                      code: authentication_required
+                      message: Учетные данные не были предоставлены.
+                      fields: null
+                      details: null
+                  summary: Требуется аутентификация
+          description: Требуется аутентификация.
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                НедостаточноПрав:
+                  value:
+                    success: false
+                    status_code: 403
+                    error:
+                      code: permission_denied
+                      message: Доступ запрещён.
+                      fields: null
+                      details: null
+                  summary: Недостаточно прав
+          description: Недостаточно прав.
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                КонфликтСостояния:
+                  value:
+                    success: false
+                    status_code: 409
+                    error:
+                      code: resource_state_conflict
+                      message: Операция недоступна в текущем состоянии ресурса.
+                      fields: null
+                      details:
+                        status: approved
+                  summary: Конфликт состояния
+          description: Конфликт текущего состояния ресурса.
   /api/v1/workload/distributions/cancel-selected/:
     post:
       operationId: workload_distributions_cancel_selected_create
@@ -30331,6 +30365,28 @@ components:
           type: string
           title: Примечание
           description: Необязательное примечание к распределению.
+      required:
+      - allocated_hours
+      - planned_workload
+      - staff_employment
+    WorkloadDistributionRequest:
+      type: object
+      description: Базовый сериализатор для моделей с полями аудита.
+      properties:
+        planned_workload:
+          type: integer
+          title: Плановая нагрузка
+        staff_employment:
+          type: integer
+          title: Трудовое назначение преподавателя
+        allocated_hours:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          title: Распределённые часы
+        notes:
+          type: string
+          title: Примечание
       required:
       - allocated_hours
       - planned_workload

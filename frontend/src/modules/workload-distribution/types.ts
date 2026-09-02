@@ -196,3 +196,38 @@ export interface BulkDistributionResult {
 
   returned_ids?: number[]
 }
+
+export interface BulkAssignPlannedWorkloadPayload {
+  planned_workloads: number[]
+
+  staff_employment: number
+
+  notes: string
+}
+
+export interface BulkAssignPlannedWorkloadError {
+  planned_workload: number
+
+  error: unknown
+}
+
+export interface BulkAssignPlannedWorkloadResult {
+  requested_count: number
+
+  found_count: number
+
+  created_count: number
+
+  created_ids: number[]
+
+  unavailable_count: number
+
+  unavailable_ids: number[]
+
+  errors_count: number
+
+  errors:
+    BulkAssignPlannedWorkloadError[]
+
+  allocated_hours: string
+}

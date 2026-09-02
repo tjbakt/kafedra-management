@@ -38,6 +38,7 @@ import {
   restoreSelectedDistributions,
   returnDistributionToDraft,
   returnSelectedDistributionsToDraft,
+  assignSelectedPlannedWorkloads,
   workloadDistributionsApi,
 } from '@/modules/workload-distribution/api'
 
@@ -58,6 +59,7 @@ import type {
   WorkloadDistributionCreatePayload,
   WorkloadDistributionStatus,
   WorkloadDistributionUpdatePayload,
+  BulkAssignPlannedWorkloadPayload,
 } from '@/modules/workload-distribution/types'
 
 import {
@@ -87,6 +89,9 @@ import type {
 import {
   normalizeApiError,
 } from '@/utils/api-errors'
+
+import WorkloadBulkAssignDialog
+  from '@/modules/workload-distribution/components/WorkloadBulkAssignDialog.vue'
 
 const { t } =
   useI18n()
@@ -147,6 +152,73 @@ const selectedDistributions =
   ref<
     WorkloadDistribution[]
   >([])
+
+const selectedPlannedWorkloads =
+  ref<
+    PlannedWorkload[]
+  >([])
+
+const bulkAssignVisible =
+  ref(false)
+
+const bulkAssignLoading =
+  ref(false)
+
+const selectedPlannedHours =
+  computed(
+    () =>
+      selectedPlannedWorkloads
+        .value
+        .reduce(
+          (
+            total,
+            item,
+          ) =>
+            total +
+            Number(
+              item.remaining_hours,
+            ),
+          0,
+        ),
+  )
+
+const selectedPlannedCompatible =
+  computed(
+    () => {
+      if (
+        selectedPlannedWorkloads
+          .value
+          .length === 0
+      ) {
+        return false
+      }
+
+      const years =
+        new Set(
+          selectedPlannedWorkloads
+            .value
+            .map(
+              (item) =>
+                item.academic_year,
+            ),
+        )
+
+      const departments =
+        new Set(
+          selectedPlannedWorkloads
+            .value
+            .map(
+              (item) =>
+                item.teaching_department,
+            ),
+        )
+
+      return (
+        years.size === 1 &&
+        departments.size === 1
+      )
+    },
+  )
 
 const bulkLoading =
   ref(false)
@@ -940,6 +1012,121 @@ function showBulkResult(
   )
 }
 
+function openBulkAssign():
+  void {
+  if (
+    !selectedPlannedWorkloads
+      .value
+      .length
+  ) {
+    return
+  }
+
+  if (
+    !selectedPlannedCompatible
+      .value
+  ) {
+    toast.info(
+      t(
+        'workloadDistribution.bulkAssign.incompatibleTitle',
+      ),
+
+      t(
+        'workloadDistribution.bulkAssign.incompatible',
+      ),
+    )
+
+    return
+  }
+
+  bulkAssignVisible.value =
+    true
+}
+
+async function submitBulkAssign(
+  payload:
+    BulkAssignPlannedWorkloadPayload,
+): Promise<void> {
+  bulkAssignLoading.value =
+    true
+
+  try {
+    const result =
+      await assignSelectedPlannedWorkloads(
+        payload,
+      )
+
+    bulkAssignVisible.value =
+      false
+
+    selectedPlannedWorkloads
+      .value =
+      []
+
+    if (
+      result.errors_count >
+        0 ||
+      result.unavailable_count >
+        0
+    ) {
+      toast.info(
+        t(
+          'workloadDistribution.bulk.partialTitle',
+        ),
+
+        t(
+          'workloadDistribution.bulkAssign.partialResult',
+          {
+            created:
+              result.created_count,
+
+            errors:
+              result.errors_count,
+
+            unavailable:
+              result.unavailable_count,
+          },
+        ),
+      )
+    } else {
+      toast.success(
+        t(
+          'common.success',
+        ),
+
+        t(
+          'workloadDistribution.bulkAssign.success',
+          {
+            count:
+              result.created_count,
+
+            hours:
+              result.allocated_hours,
+          },
+        ),
+      )
+    }
+
+    await Promise.all([
+      refresh(),
+      loadLookups(),
+    ])
+  } catch (bulkError) {
+    toast.error(
+      t(
+        'common.error',
+      ),
+
+      normalizeApiError(
+        bulkError,
+      ).message,
+    )
+  } finally {
+    bulkAssignLoading.value =
+      false
+  }
+}
+
 async function approveSelected(): Promise<void> {
   const ids =
     selectedDraftIds.value
@@ -1358,12 +1545,60 @@ onMounted(
 
     <BaseCard :padding="false">
       <PlannedWorkloadDistributionTable
+        v-model:selection="selectedPlannedWorkloads"
         :items="visiblePlannedWorkloads"
         :loading="lookupLoading"
         :can-assign="canCreate"
         @assign="openAssign"
       />
     </BaseCard>
+
+    <div
+      v-if="selectedPlannedWorkloads.length > 0 "
+      class="bulk-planned-actions"
+    >
+      <div>
+        <strong>
+          {{
+            t(
+              'workloadDistribution.bulkAssign.selected',
+              {
+                count: selectedPlannedWorkloads.length,
+              },
+            )
+          }}
+        </strong>
+
+        <small>
+          {{
+            t(
+              'workloadDistribution.bulkAssign.totalHours',
+              {
+                hours: selectedPlannedHours.toFixed(2),
+              },
+            )
+          }}
+        </small>
+      </div>
+
+      <div class="bulk-planned-actions__buttons">
+        <Button
+          :label="t('workloadDistribution.bulkAssign.assign',)"
+          icon="pi pi-users"
+          severity="success"
+          :disabled="!selectedPlannedCompatible"
+          @click="openBulkAssign"
+        />
+
+        <Button
+          :label="t('workloadDistribution.bulk.clearSelection',)"
+          icon="pi pi-times"
+          severity="secondary"
+          text
+          @click="selectedPlannedWorkloads = []"
+        />
+      </div>
+    </div>
 
     <div class="distribution-list-header ms-5">
       <h3>
@@ -1689,6 +1924,15 @@ onMounted(
       @submit="submitBulkReason"
     />
 
+    <WorkloadBulkAssignDialog
+      v-model="bulkAssignVisible"
+      :workloads="selectedPlannedWorkloads"
+      :employments="employments"
+      :annual-records="annualRecords"
+      :loading="bulkAssignLoading"
+      @submit="submitBulkAssign"
+    />
+
   </div>
 </template>
 
@@ -1814,6 +2058,66 @@ onMounted(
   .bulk-actions__buttons {
     justify-content:
       flex-start;
+  }
+}
+
+.bulk-planned-actions {
+  display: flex;
+
+  align-items: center;
+  justify-content:
+    space-between;
+
+  gap: 1rem;
+
+  margin-top: 0.75rem;
+
+  padding:
+    0.75rem
+    1rem;
+
+  border:
+    1px solid
+    var(--app-border-color);
+
+  border-radius:
+    var(--app-radius-md);
+
+  background:
+    var(--app-surface);
+}
+
+.bulk-planned-actions > div:first-child {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.bulk-planned-actions small {
+  color:
+    var(--app-text-muted);
+}
+
+.bulk-planned-actions__buttons {
+  display: flex;
+
+  align-items: center;
+
+  gap: 0.5rem;
+}
+
+@media (
+  max-width: 800px
+) {
+  .bulk-planned-actions {
+    align-items:
+      flex-start;
+
+    flex-direction:
+      column;
+  }
+
+  .bulk-planned-actions__buttons {
+    flex-wrap: wrap;
   }
 }
 </style>

@@ -39,6 +39,8 @@ import type {
   WorkloadDistribution,
   WorkloadDistributionCreatePayload,
   WorkloadDistributionUpdatePayload,
+  BulkAssignPlannedWorkloadPayload,
+  BulkAssignPlannedWorkloadResult
 } from '@/modules/workload-distribution/types'
 
 export const workloadDistributionsApi =
@@ -209,6 +211,23 @@ export async function returnSelectedDistributionsToDraft(
         ids,
         reason,
       },
+    )
+
+  return response.data
+}
+
+export async function assignSelectedPlannedWorkloads(
+  payload:
+    BulkAssignPlannedWorkloadPayload,
+): Promise<
+  BulkAssignPlannedWorkloadResult
+> {
+  const response =
+    await http.post<
+      BulkAssignPlannedWorkloadResult
+    >(
+      '/workload/distributions/assign-selected/',
+      payload,
     )
 
   return response.data

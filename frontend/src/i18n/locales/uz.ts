@@ -2723,6 +2723,21 @@ const uz = {
       partialTitle: 'Amal qisman bajarildi',
       partialResult: 'Muvaffaqiyatli: {success}. Xatolar: {errors}. Mavjud emas: {unavailable}.',
     },
+    bulkAssign: {
+      title: 'Yuklamani ommaviy tayinlash',
+      selected: 'Tanlangan pozitsiyalar: {count}',
+      totalHours: 'Umumiy qoldiq: {hours} soat',
+      positions: 'Pozitsiyalar',
+      hours: 'Tayinlanadigan soatlar',
+      academicYear: 'O‘quv yili',
+      assigningNow: 'Hozir tayinlanadi',
+      assign: 'Tanlanganlarni tayinlash',
+      submit: 'Tayinlash ({count})',
+      incompatibleTitle: 'Mos kelmaydigan pozitsiyalar',
+      incompatible: 'Ommaviy tayinlash uchun bitta o‘quv yili va bitta ta’minlovchi kafedraga tegishli pozitsiyalarni tanlang.',
+      success: 'Taqsimotlar yaratildi: {count}. Tayinlangan soatlar: {hours}.',
+      partialResult: 'Yaratildi: {created}. Xatolar: {errors}. Mavjud emas: {unavailable}.',
+    },
   },
 
 }
