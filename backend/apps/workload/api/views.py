@@ -52,6 +52,7 @@ from apps.workload.api.serializers import (
     WorkloadDashboardQuerySerializer,
     AssignSelectedPlannedWorkloadsSerializer,
     AssignSelectedPlannedWorkloadsResultSerializer,
+    TeacherLoadSummarySerializer,
 )
 from apps.workload.models import WorkloadDistribution
 from apps.teaching.models import PlannedWorkload
@@ -101,6 +102,9 @@ from apps.workload.services.academic_year_validation_excel_service import (
 )
 from apps.workload.services.academic_year_closing_readiness_service import (
     AcademicYearClosingReadinessService,
+)
+from apps.workload.services.teacher_load_summary import (
+    TeacherLoadSummaryService,
 )
 
 from apps.staff.models import StaffEmployment
@@ -2905,6 +2909,89 @@ class WorkloadDistributionViewSet(
 
         return response
 
+    @extend_schema(
+        tags=[
+            "Распределение нагрузки",
+        ],
+        summary=(
+                "Итоговая нагрузка преподавателей"
+        ),
+        responses={
+            200: TeacherLoadSummarySerializer(
+                many=True,
+            ),
+        },
+    )
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="teacher-summary",
+    )
+    def teacher_summary(
+            self,
+            request,
+    ):
+        academic_year_id = request.query_params.get(
+            "academic_year"
+        )
+
+        department_id = request.query_params.get(
+            "department"
+        )
+
+        if not academic_year_id:
+            raise ValidationError(
+                {
+                    "academic_year": (
+                        "Необходимо указать "
+                        "учебный год."
+                    )
+                }
+            )
+
+        if not department_id:
+            raise ValidationError(
+                {
+                    "department": (
+                        "Необходимо указать "
+                        "кафедру."
+                    )
+                }
+            )
+
+        access_scope = (
+            self.get_workload_access_scope()
+        )
+
+        if not access_scope.can_access_department(
+                int(department_id)
+        ):
+            raise PermissionDenied()
+
+        data = (
+            TeacherLoadSummaryService
+            .build_for_department(
+                department_id=int(
+                    department_id
+                ),
+                academic_year_id=int(
+                    academic_year_id
+                ),
+            )
+        )
+
+        serializer = (
+            TeacherLoadSummarySerializer(
+                data,
+                many=True,
+            )
+        )
+
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK,
+        )
+
 
 def get_active_academic_year_or_error(
     academic_year_id,
@@ -2928,6 +3015,7 @@ def get_active_academic_year_or_error(
                 )
             }
         ) from exc
+
 class AcademicYearWorkloadValidationAPIView(
     APIView
 ):

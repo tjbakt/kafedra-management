@@ -1656,3 +1656,67 @@ class AssignSelectedPlannedWorkloadsResultSerializer(
         max_digits=14,
         decimal_places=2,
     )
+
+class TeacherLoadSummarySerializer(
+    serializers.Serializer,
+):
+    staff_employment = (
+        serializers.IntegerField()
+    )
+
+    staff_member = (
+        serializers.IntegerField()
+    )
+
+    staff_member_name = (
+        serializers.CharField()
+    )
+
+    department = (
+        serializers.IntegerField()
+    )
+
+    annual_norm_hours = serializers.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+    )
+
+    approved_hours = serializers.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+    )
+
+    draft_hours = serializers.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+    )
+
+    remaining_hours = serializers.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+    )
+
+    completion_percent = serializers.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+    )
+
+    approved_count = (
+        serializers.IntegerField()
+    )
+
+    draft_count = (
+        serializers.IntegerField()
+    )
+
+    cancelled_count = (
+        serializers.IntegerField()
+    )
+
+    status = serializers.ChoiceField(
+        choices=[
+            "UNDERLOAD",
+            "FULL",
+            "OVERLOAD",
+        ],
+    )

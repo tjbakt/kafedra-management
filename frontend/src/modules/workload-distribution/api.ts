@@ -123,28 +123,28 @@ export async function returnDistributionToDraft(
   return response.data
 }
 
-export async function getTeacherWorkloadSummary(
-  academicYear: number,
-  staffMember: number,
-): Promise<TeacherWorkloadSummary[]> {
-  const response =
-    await http.get<
-      TeacherWorkloadSummary[]
-    >(
-      '/workload/distributions/teacher-summary/',
-      {
-        params: {
-          academic_year:
-            academicYear,
-
-          staff_member:
-            staffMember,
-        },
-      },
-    )
-
-  return response.data
-}
+// export async function getTeacherWorkloadSummary(
+//   academicYear: number,
+//   staffMember: number,
+// ): Promise<TeacherWorkloadSummary[]> {
+//   const response =
+//     await http.get<
+//       TeacherWorkloadSummary[]
+//     >(
+//       '/workload/distributions/teacher-summary/',
+//       {
+//         params: {
+//           academic_year:
+//             academicYear,
+//
+//           staff_member:
+//             staffMember,
+//         },
+//       },
+//     )
+//
+//   return response.data
+// }
 
 export async function approveSelectedDistributions(
   ids: number[],
@@ -228,6 +228,32 @@ export async function assignSelectedPlannedWorkloads(
     >(
       '/workload/distributions/assign-selected/',
       payload,
+    )
+
+  return response.data
+}
+
+export async function
+getTeacherWorkloadSummary(
+  academicYearId: number,
+  departmentId: number,
+): Promise<
+  TeacherWorkloadSummary[]
+> {
+  const response =
+    await http.get<
+      TeacherWorkloadSummary[]
+    >(
+      '/workload/distributions/teacher-summary/',
+      {
+        params: {
+          academic_year:
+            academicYearId,
+
+          department:
+            departmentId,
+        },
+      },
     )
 
   return response.data

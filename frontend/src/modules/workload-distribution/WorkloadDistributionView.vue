@@ -39,6 +39,7 @@ import {
   returnDistributionToDraft,
   returnSelectedDistributionsToDraft,
   assignSelectedPlannedWorkloads,
+  getTeacherWorkloadSummary,
   workloadDistributionsApi,
 } from '@/modules/workload-distribution/api'
 
@@ -92,6 +93,9 @@ import {
 
 import WorkloadBulkAssignDialog
   from '@/modules/workload-distribution/components/WorkloadBulkAssignDialog.vue'
+import TeacherWorkloadSummaryTable
+  from '@/modules/workload-distribution/components/TeacherWorkloadSummaryTable.vue'
+
 
 const { t } =
   useI18n()
@@ -106,6 +110,12 @@ const {
 const {
   can,
 } = usePermissions()
+
+const teacherSummaries =
+  ref<TeacherWorkloadSummary[]>([])
+
+const teacherSummaryLoading =
+  ref(false)
 
 const plannedWorkloads =
   ref<PlannedWorkload[]>([])
@@ -748,6 +758,33 @@ function clearErrors(): void {
   generalError.value = ''
 }
 
+async function loadTeacherSummaries():
+  Promise<void> {
+  if (
+    !selectedAcademicYear.value ||
+    !selectedDepartment.value
+  ) {
+    teacherSummaries.value =
+      []
+
+    return
+  }
+
+  teacherSummaryLoading.value =
+    true
+
+  try {
+    teacherSummaries.value =
+      await getTeacherWorkloadSummary(
+        selectedAcademicYear.value,
+        selectedDepartment.value,
+      )
+  } finally {
+    teacherSummaryLoading.value =
+      false
+  }
+}
+
 async function changeYear(): Promise<void> {
   selectedSemester.value = null
 
@@ -859,6 +896,7 @@ async function createDistribution(
     await Promise.all([
       refresh(),
       loadLookups(),
+      loadTeacherSummaries(),
     ])
   } catch (saveError) {
     const normalized =
@@ -913,6 +951,7 @@ async function updateDistribution(
     await Promise.all([
       refresh(),
       loadLookups(),
+      loadTeacherSummaries(),
     ])
   } catch (saveError) {
     const normalized =
@@ -956,6 +995,7 @@ async function afterBulkAction(): Promise<void> {
   await Promise.all([
     refresh(),
     loadLookups(),
+    loadTeacherSummaries(),
   ])
 }
 
@@ -1110,6 +1150,7 @@ async function submitBulkAssign(
     await Promise.all([
       refresh(),
       loadLookups(),
+      loadTeacherSummaries(),
     ])
   } catch (bulkError) {
     toast.error(
@@ -1267,6 +1308,7 @@ async function approve(
     await Promise.all([
       refresh(),
       loadLookups(),
+      loadTeacherSummaries(),
     ])
   } catch (actionError) {
     toast.error(
@@ -1347,6 +1389,7 @@ async function submitReason(
     await Promise.all([
       refresh(),
       loadLookups(),
+      loadTeacherSummaries(),
     ])
   } catch (actionError) {
     toast.error(
@@ -1397,6 +1440,7 @@ function archive(
           await Promise.all([
             refresh(),
             loadLookups(),
+            loadTeacherSummaries(),
           ])
         } catch (archiveError) {
           toast.error(
@@ -1450,6 +1494,7 @@ onMounted(
     await Promise.all([
       load(),
       loadLookups(),
+      loadTeacherSummaries(),
     ])
   },
 )
@@ -1885,6 +1930,13 @@ onMounted(
           />
         </template>
       </BaseDataTable>
+    </BaseCard>
+
+    <BaseCard :title="t('workloadDistribution.teacherLoad.title',)">
+      <TeacherWorkloadSummaryTable
+        :items="teacherSummaries"
+        :loading="teacherSummaryLoading"
+      />
     </BaseCard>
 
     <WorkloadDistributionFormDialog

@@ -2767,10 +2767,24 @@ const ru = {
     },
 
     teacherLoad: {
-      norm: 'Норма на год',
-      distributed: 'Уже распределено',
+      title: 'Контроль нагрузки преподавателей',
+      teacher: 'Преподаватель',
+      norm: 'Годовая норма',
+      approved: 'Утверждено',
+      draft: 'Черновик',
+      distributed: 'Распределено',
+      assigningNow: 'Назначается сейчас',
       afterAssignment: 'После назначения',
-      percent: 'Выполнение нормы',
+      remaining: 'Остаток',
+      percent: 'Выполнение',
+      empty: 'Нет данных о нагрузке преподавателей.',
+
+      status: {
+        title: 'Статус',
+        UNDERLOAD: 'Недогруз',
+        FULL: 'Норма',
+        OVERLOAD: 'Перегруз',
+      },
     },
 
     bulk: {

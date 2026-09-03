@@ -231,3 +231,36 @@ export interface BulkAssignPlannedWorkloadResult {
 
   allocated_hours: string
 }
+
+export type TeacherLoadStatus =
+  | 'UNDERLOAD'
+  | 'FULL'
+  | 'OVERLOAD'
+
+export interface TeacherWorkloadSummary {
+  staff_employment: number
+
+  staff_member: number
+
+  staff_member_name: string
+
+  department: number
+
+  annual_norm_hours: string
+
+  approved_hours: string
+
+  draft_hours: string
+
+  remaining_hours: string
+
+  completion_percent: string
+
+  approved_count: number
+
+  draft_count: number
+
+  cancelled_count: number
+
+  status: TeacherLoadStatus
+}

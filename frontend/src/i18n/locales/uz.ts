@@ -2703,10 +2703,24 @@ const uz = {
     },
 
     teacherLoad: {
+      title: 'O‘qituvchilar yuklamasi nazorati',
+      teacher: 'O‘qituvchi',
       norm: 'Yillik me’yor',
+      approved: 'Tasdiqlangan',
+      draft: 'Qoralama',
       distributed: 'Taqsimlangan',
-      afterAssignment: 'Tayinlangandan so‘ng',
-      percent: 'Me’yor bajarilishi',
+      assigningNow: 'Hozir tayinlanadi',
+      afterAssignment: 'Tayinlangandan keyin',
+      remaining: 'Qoldiq',
+      percent: 'Bajarilish',
+      empty: 'O‘qituvchilar yuklamasi haqida ma’lumot yo‘q.',
+
+      status: {
+        title: 'Holat',
+        UNDERLOAD: 'Kam yuklama',
+        FULL: 'Me’yor',
+        OVERLOAD: 'Ortiqcha yuklama',
+      },
     },
 
     bulk: {
