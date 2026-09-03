@@ -109,12 +109,16 @@ export interface DistributionActionResponse {
   data: WorkloadDistribution
 }
 
+export type TeacherLoadStatus =
+  | 'UNDERLOAD'
+  | 'FULL'
+  | 'OVERLOAD'
 export interface TeacherWorkloadSummary {
   staff_employment_academic_year: number
 
   staff_employment: number
-
   staff_member: number
+  staff_member_name: string
 
   teacher_name: string
   personnel_number: string
@@ -137,11 +141,22 @@ export interface TeacherWorkloadSummary {
 
   distributed_hours: string
 
+  annual_norm_hours: string
+  approved_hours: string
+  draft_hours: string
   remaining_hours: string | null
 
   difference_hours: string | null
 
   load_percent: string | null
+
+  completion_percent: string
+
+  approved_count: number
+  draft_count: number
+  cancelled_count: number
+
+  status: TeacherLoadStatus
 
   load_status:
     | 'underloaded'
@@ -230,37 +245,4 @@ export interface BulkAssignPlannedWorkloadResult {
     BulkAssignPlannedWorkloadError[]
 
   allocated_hours: string
-}
-
-export type TeacherLoadStatus =
-  | 'UNDERLOAD'
-  | 'FULL'
-  | 'OVERLOAD'
-
-export interface TeacherWorkloadSummary {
-  staff_employment: number
-
-  staff_member: number
-
-  staff_member_name: string
-
-  department: number
-
-  annual_norm_hours: string
-
-  approved_hours: string
-
-  draft_hours: string
-
-  remaining_hours: string
-
-  completion_percent: string
-
-  approved_count: number
-
-  draft_count: number
-
-  cancelled_count: number
-
-  status: TeacherLoadStatus
 }

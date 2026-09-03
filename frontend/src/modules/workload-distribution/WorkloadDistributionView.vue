@@ -61,6 +61,7 @@ import type {
   WorkloadDistributionStatus,
   WorkloadDistributionUpdatePayload,
   BulkAssignPlannedWorkloadPayload,
+  TeacherWorkloadSummary,
 } from '@/modules/workload-distribution/types'
 
 import {
@@ -761,7 +762,7 @@ function clearErrors(): void {
 async function loadTeacherSummaries():
   Promise<void> {
   if (
-    !selectedAcademicYear.value ||
+    !selectedYear.value ||
     !selectedDepartment.value
   ) {
     teacherSummaries.value =
@@ -776,7 +777,7 @@ async function loadTeacherSummaries():
   try {
     teacherSummaries.value =
       await getTeacherWorkloadSummary(
-        selectedAcademicYear.value,
+        selectedYear.value,
         selectedDepartment.value,
       )
   } finally {

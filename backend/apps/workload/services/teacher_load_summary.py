@@ -195,9 +195,7 @@ class TeacherLoadSummaryService:
             staff_employment
             .academic_year_records
             .filter(
-                academic_year_id=(
-                    academic_year_id
-                ),
+                academic_year_id=academic_year_id,
                 is_active=True,
                 is_archived=False,
             )

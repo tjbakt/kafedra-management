@@ -13,6 +13,7 @@ from tests.factories import (
     StaffEmploymentFactory,
     WorkloadDistributionFactory,
 )
+from apps.workload.models import (WorkloadDistribution)
 
 
 class TeacherLoadSummaryServiceTests(
