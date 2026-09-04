@@ -34,12 +34,15 @@ const menuDefinitions: TranslatedSidebarItem[] = [
     children: [
       {
         label: '',
-        labelKey: 'navigation.departments',
-        icon: 'pi pi-building',
-        route: '/departments',
+        labelKey: 'navigation.organization',
+        icon: 'pi pi-sitemap',
+        route: '/organization',
         permissions: [
+          'organizations.view_university',
+          'organizations.view_faculty',
           'organizations.view_department',
         ],
+        permissionMode: 'any',
       },
       {
         label: '',

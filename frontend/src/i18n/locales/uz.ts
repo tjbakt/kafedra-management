@@ -60,6 +60,7 @@ const uz = {
   navigation: {
     dashboard: 'Bosh sahifa',
     organizationalStructure: 'Tashkiliy tuzilma',
+    organization: 'Tashkilot',
     departments: 'Kafedralar',
     teachers: 'O‘qituvchilar',
     studentGroups: 'Talabalar guruhlari',
@@ -184,6 +185,7 @@ const uz = {
     schedulesDescription: 'Dars jadvalini rejalashtirish va ko‘rish.',
     reportsDescription: 'Tahliliy hisobotlar, PDF va Excel hujjatlarini shakllantirish.',
     settingsDescription: 'Foydalanuvchilar, rollar, huquqlar va tizim parametrlarini boshqarish.',
+    organizationDescription: 'OTMlar, fakultetlar va kafedralarni boshqarish',
   },
   errors: {
     notFoundTitle: 'Sahifa topilmadi',

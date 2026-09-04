@@ -9,31 +9,36 @@ import { useAuthStore } from '@/stores/auth'
 
 const moduleRoutes: RouteRecordRaw[] = [
   {
-    path: 'departments',
-    name: 'departments',
+    path: 'organization',
+    name: 'organization',
+
     component: () =>
       import(
-        '@/modules/departments/DepartmentView.vue'
+        '@/modules/organization/OrganizationView.vue'
         ),
 
     meta: {
       requiresAuth: true,
 
       requiredPermissions: [
+        'organizations.view_university',
+        'organizations.view_faculty',
         'organizations.view_department',
       ],
 
+      permissionMode: 'any',
+
       titleKey:
-        'navigation.departments',
+        'navigation.organization',
 
       descriptionKey:
-        'modules.departmentsDescription',
+        'modules.organizationDescription',
 
       icon:
-        'pi pi-building',
+        'pi pi-sitemap',
 
       breadcrumbKeys: [
-        'navigation.departments',
+        'navigation.organization',
       ],
     },
   },
