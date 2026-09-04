@@ -12,6 +12,7 @@ from tests.factories import (
     StaffEmploymentAcademicYearFactory,
     StaffEmploymentFactory,
     WorkloadDistributionFactory,
+    WorkloadNormFactory,
 )
 from apps.workload.models import (WorkloadDistribution)
 
@@ -33,9 +34,22 @@ class TeacherLoadSummaryServiceTests(
         StaffEmploymentAcademicYearFactory(
             staff_employment=employment,
             academic_year=academic_year,
-            annual_norm_hours=Decimal(
-                "800.00"
+        )
+
+        WorkloadNormFactory(
+            academic_year=academic_year,
+            rate=employment.rate,
+            has_academic_degree=(
+                    employment.staff_member
+                    .academic_degree_id
+                    is not None
             ),
+            has_academic_title=(
+                    employment.staff_member
+                    .academic_title_id
+                    is not None
+            ),
+            annual_hours=Decimal("800.00"),
         )
 
         workload = (
@@ -104,9 +118,22 @@ class TeacherLoadSummaryServiceTests(
         StaffEmploymentAcademicYearFactory(
             staff_employment=employment,
             academic_year=academic_year,
-            annual_norm_hours=Decimal(
-                "800.00"
+        )
+
+        WorkloadNormFactory(
+            academic_year=academic_year,
+            rate=employment.rate,
+            has_academic_degree=(
+                    employment.staff_member
+                    .academic_degree_id
+                    is not None
             ),
+            has_academic_title=(
+                    employment.staff_member
+                    .academic_title_id
+                    is not None
+            ),
+            annual_hours=Decimal("800.00"),
         )
 
         workload = (
@@ -163,9 +190,22 @@ class TeacherLoadSummaryServiceTests(
         StaffEmploymentAcademicYearFactory(
             staff_employment=employment,
             academic_year=academic_year,
-            annual_norm_hours=Decimal(
-                "800.00"
+        )
+
+        WorkloadNormFactory(
+            academic_year=academic_year,
+            rate=employment.rate,
+            has_academic_degree=(
+                    employment.staff_member
+                    .academic_degree_id
+                    is not None
             ),
+            has_academic_title=(
+                    employment.staff_member
+                    .academic_title_id
+                    is not None
+            ),
+            annual_hours=Decimal("800.00"),
         )
 
         workload = (

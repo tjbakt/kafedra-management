@@ -19215,9 +19215,15 @@ paths:
   /api/v1/workload/distributions/teacher-summary/:
     get:
       operationId: workload_distributions_teacher_summary_list
-      description: Возвращает расчёт рекомендованной, распределённой и оставшейся
-        нагрузки преподавателей за учебный год.
-      summary: Получить сводку нагрузки преподавателей
+      description: |-
+        Базовый ViewSet для моделей с мягким удалением.
+
+        Дочерний ViewSet должен определить:
+        - model;
+        - get_queryset();
+        - при необходимости scope_queryset();
+        - permission_classes.
+      summary: Итоговая нагрузка преподавателей
       parameters:
       - in: query
         name: academic_semester
@@ -19227,21 +19233,13 @@ paths:
       - in: query
         name: academic_year
         schema:
-          type: integer
-          minimum: 1
-        description: ID учебного года.
-        required: true
+          type: number
+        description: Фильтр по ID учебного года.
       - in: query
         name: curriculum
         schema:
           type: number
         description: Учебный план
-      - in: query
-        name: department
-        schema:
-          type: integer
-          minimum: 1
-        description: ID кафедры для фильтрации преподавателей.
       - in: query
         name: discipline
         schema:
@@ -19299,10 +19297,8 @@ paths:
       - in: query
         name: staff_member
         schema:
-          type: integer
-          minimum: 1
-        description: ID преподавателя. Если не указан, возвращаются все доступные
-          преподаватели.
+          type: number
+        description: Фильтр по ID преподавателя.
       - in: query
         name: status
         schema:
@@ -19339,7 +19335,7 @@ paths:
           type: number
         description: Фильтр по ID вида нагрузки.
       tags:
-      - Сводки нагрузки
+      - Распределение нагрузки
       security:
       - jwtAuth: []
       responses:
@@ -19347,79 +19343,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedTeacherWorkloadSummaryList'
+                $ref: '#/components/schemas/PaginatedTeacherLoadSummaryList'
           description: ''
-        '400':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiErrorResponse'
-              examples:
-                ОшибкаВалидации:
-                  value:
-                    success: false
-                    status_code: 400
-                    error:
-                      code: validation_error
-                      message: Ошибка проверки данных.
-                      fields:
-                        name:
-                        - message: Это поле обязательно.
-                          code: required
-                      details: null
-                  summary: Ошибка валидации
-          description: Ошибка проверки данных.
-        '401':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiErrorResponse'
-              examples:
-                ТребуетсяАутентификация:
-                  value:
-                    success: false
-                    status_code: 401
-                    error:
-                      code: authentication_required
-                      message: Учетные данные не были предоставлены.
-                      fields: null
-                      details: null
-                  summary: Требуется аутентификация
-          description: Требуется аутентификация.
-        '403':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiErrorResponse'
-              examples:
-                НедостаточноПрав:
-                  value:
-                    success: false
-                    status_code: 403
-                    error:
-                      code: permission_denied
-                      message: Доступ запрещён.
-                      fields: null
-                      details: null
-                  summary: Недостаточно прав
-          description: Недостаточно прав.
-        '404':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiErrorResponse'
-              examples:
-                ОбъектНеНайден:
-                  value:
-                    success: false
-                    status_code: 404
-                    error:
-                      code: not_found
-                      message: Запрашиваемый ресурс не найден.
-                      fields: null
-                      details: null
-                  summary: Объект не найден
-          description: Ресурс не найден.
   /api/v1/workload/distributions/teacher-summary/export/:
     get:
       operationId: workload_distributions_teacher_summary_export_retrieve
@@ -23801,18 +23726,6 @@ components:
         * `year_staff_record_missing` - year_staff_record_missing
         * `workload_norm_missing` - workload_norm_missing
         * `teacher_overloaded` - teacher_overloaded
-    LoadStatusEnum:
-      enum:
-      - underloaded
-      - balanced
-      - overloaded
-      - norm_missing
-      type: string
-      description: |-
-        * `underloaded` - underloaded
-        * `balanced` - balanced
-        * `overloaded` - overloaded
-        * `norm_missing` - norm_missing
     LogoutRequest:
       type: object
       properties:
@@ -25337,7 +25250,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SystemRole'
-    PaginatedTeacherWorkloadSummaryList:
+    PaginatedTeacherLoadSummaryList:
       type: object
       required:
       - count
@@ -25379,7 +25292,7 @@ components:
         results:
           type: array
           items:
-            $ref: '#/components/schemas/TeacherWorkloadSummary'
+            $ref: '#/components/schemas/TeacherLoadSummary'
     PaginatedTeachingStreamGroupList:
       type: object
       required:
@@ -28920,89 +28833,69 @@ components:
         * `update_plan` - Доработать индивидуальный план
         * `deadline_reminder` - Напоминание о сроке
         * `other` - Другая задача
-    TeacherWorkloadSummary:
+    TeacherLoadSummary:
       type: object
       properties:
-        staff_employment_academic_year:
-          type: integer
         staff_employment:
           type: integer
         staff_member:
           type: integer
-        teacher_name:
-          type: string
-        personnel_number:
+        staff_member_name:
           type: string
         department:
           type: integer
-        department_name:
-          type: string
-        position:
-          type: integer
-        position_name:
-          type: string
-        academic_year:
-          type: integer
-        academic_year_name:
-          type: string
-        employment_rate:
+        annual_norm_hours:
           type: string
           format: decimal
-          pattern: ^-?\d{0,2}(?:\.\d{0,2})?$
-        has_academic_degree:
-          type: boolean
-        has_academic_title:
-          type: boolean
-        recommended_hours:
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+        approved_hours:
           type: string
           format: decimal
-          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
-          nullable: true
-        distributed_hours:
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+        draft_hours:
           type: string
           format: decimal
-          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
         remaining_hours:
           type: string
           format: decimal
-          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
-          nullable: true
-        difference_hours:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
-          nullable: true
-        load_percent:
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+        completion_percent:
           type: string
           format: decimal
           pattern: ^-?\d{0,6}(?:\.\d{0,2})?$
-          nullable: true
-        load_status:
-          $ref: '#/components/schemas/LoadStatusEnum'
-        norm_found:
-          type: boolean
+        approved_count:
+          type: integer
+        draft_count:
+          type: integer
+        cancelled_count:
+          type: integer
+        status:
+          $ref: '#/components/schemas/TeacherLoadSummaryStatusEnum'
       required:
-      - academic_year
-      - academic_year_name
+      - annual_norm_hours
+      - approved_count
+      - approved_hours
+      - cancelled_count
+      - completion_percent
       - department
-      - department_name
-      - difference_hours
-      - distributed_hours
-      - employment_rate
-      - has_academic_degree
-      - has_academic_title
-      - load_percent
-      - load_status
-      - norm_found
-      - personnel_number
-      - position
-      - position_name
-      - recommended_hours
+      - draft_count
+      - draft_hours
       - remaining_hours
       - staff_employment
-      - staff_employment_academic_year
       - staff_member
-      - teacher_name
+      - staff_member_name
+      - status
+    TeacherLoadSummaryStatusEnum:
+      enum:
+      - UNDERLOAD
+      - FULL
+      - OVERLOAD
+      type: string
+      description: |-
+        * `UNDERLOAD` - UNDERLOAD
+        * `FULL` - FULL
+        * `OVERLOAD` - OVERLOAD
     TeachingStream:
       type: object
       description: Базовый сериализатор для моделей с полями аудита.

@@ -205,10 +205,14 @@ class TeacherLoadSummaryService:
         if record is None:
             return ZERO
 
-        return (
-            record.annual_norm_hours
-            or ZERO
+        recommended_hours = (
+            record.get_recommended_annual_hours()
         )
+
+        if recommended_hours is None:
+            return ZERO
+
+        return recommended_hours
 
     @classmethod
     def build_for_department(

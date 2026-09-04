@@ -778,9 +778,7 @@ class WorkloadSummaryApiTests(
         )
 
     def test_teacher_summary(self):
-        distribution = (
-            WorkloadDistributionFactory()
-        )
+        distribution =  WorkloadDistributionFactory()
 
         response = self.client.get(
             reverse(
@@ -791,7 +789,12 @@ class WorkloadSummaryApiTests(
                     distribution
                     .planned_workload
                     .academic_year_id
-                )
+                ),
+                "department": (
+                    distribution
+                    .planned_workload
+                    .teaching_department_id
+                ),
             },
         )
 
