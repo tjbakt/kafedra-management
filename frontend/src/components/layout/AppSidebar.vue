@@ -64,6 +64,19 @@ const menuDefinitions: TranslatedSidebarItem[] = [
       },
       {
         label: '',
+        labelKey:
+          'navigation.staffReferences',
+        icon: 'pi pi-id-card',
+        route: '/staff-references',
+        permissions: [
+          'staff.view_staffposition',
+          'staff.view_academicdegree',
+          'staff.view_academic_title',
+        ],
+        permissionMode: 'any',
+      },
+      {
+        label: '',
         labelKey: 'navigation.staffAcademicYears',
         icon: 'pi pi-calendar-clock',
         route: '/staff-academic-years',

@@ -7,6 +7,9 @@ import {
 import i18n from '@/i18n'
 import { useAuthStore } from '@/stores/auth'
 
+import StaffReferencesView
+  from '@/modules/staff-references/StaffReferencesView.vue'
+
 const moduleRoutes: RouteRecordRaw[] = [
   {
     path: 'organization',
@@ -73,6 +76,16 @@ const moduleRoutes: RouteRecordRaw[] = [
       ],
     },
   },
+
+  {
+    path: '/staff-references',
+    name: 'staff-references',
+    component: StaffReferencesView,
+    meta: {
+      requiresAuth: true,
+    },
+  },
+
   {
     path: 'student-groups',
     name: 'student-groups',

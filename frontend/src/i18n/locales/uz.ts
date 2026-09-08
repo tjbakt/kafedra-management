@@ -82,6 +82,7 @@ const uz = {
     curriculumDisciplines: 'O‘quv rejasi tarkibi',
     teachingSetup: 'O‘quv guruhlarini tayyorlash',
     teachingStreams: 'O‘quv oqimlari',
+    staffReferences: 'Kadrlar ma’lumotnomalari',
   },
   profile: {
     profile: 'Profil',
@@ -751,6 +752,122 @@ const uz = {
 
       endBeforeStart:
         'Tugash sanasi boshlanish sanasidan oldin bo‘lishi mumkin emas',
+    },
+  },
+
+  staffReferences: {
+    title:
+      'Kadrlar ma’lumotnomalari',
+
+    description:
+      'Lavozimlar, ilmiy darajalar va ilmiy unvonlar.',
+
+    tabs: {
+      positions:
+        'Lavozimlar',
+      degrees:
+        'Ilmiy darajalar',
+      titles:
+        'Ilmiy unvonlar',
+    },
+
+    common: {
+      code:
+        'Kod',
+      name:
+        'Nomi',
+      nameRu:
+        'Rus tilidagi nomi',
+      nameUz:
+        'O‘zbek tilidagi nomi',
+      shortNameRu:
+        'Rus tilidagi qisqartma',
+      shortNameUz:
+        'O‘zbek tilidagi qisqartma',
+      sortOrder:
+        'Saralash tartibi',
+      active:
+        'Faol',
+      inactive:
+        'Faol emas',
+      status:
+        'Holati',
+      archived:
+        'Yozuv arxivlandi',
+    },
+
+    positions: {
+      create:
+        'Lavozim qo‘shish',
+
+      createTitle:
+        'Lavozim yaratish',
+
+      editTitle:
+        'Lavozimni tahrirlash',
+
+      category:
+        'Toifa',
+
+      teachingPosition:
+        'O‘quv yuklamasida ishtirok etadi',
+
+      teachingPositionShort:
+        'O‘quv yuklamasi',
+
+      categories: {
+        teaching:
+          'Professor-o‘qituvchilar tarkibi',
+
+        administrative:
+          'Ma’muriy xodimlar',
+
+        support:
+          'O‘quv-yordamchi xodimlar',
+
+        other:
+          'Boshqa xodimlar',
+      },
+
+      archiveTitle:
+        'Lavozimni arxivlash',
+
+      archiveConfirm:
+        '«{name}» lavozimini arxivlash kerakmi?',
+    },
+
+    degrees: {
+      create:
+        'Ilmiy daraja qo‘shish',
+
+      createTitle:
+        'Ilmiy daraja yaratish',
+
+      editTitle:
+        'Ilmiy darajani tahrirlash',
+
+      archiveTitle:
+        'Ilmiy darajani arxivlash',
+
+      archiveConfirm:
+        '«{name}» ilmiy darajasini arxivlash kerakmi?',
+    },
+
+    titles: {
+      create:
+        'Ilmiy unvon qo‘shish',
+
+      createTitle:
+        'Ilmiy unvon yaratish',
+
+      editTitle:
+        'Ilmiy unvonni tahrirlash',
+
+      archiveTitle:
+        'Ilmiy unvonni arxivlash',
+
+      archiveConfirm:
+        '«{name}» ilmiy unvonini arxivlash kerakmi?',
     },
   },
 
