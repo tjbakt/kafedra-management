@@ -72,9 +72,7 @@ class TeachingStreamWorkloadCalculator:
 
         return norm.coefficient
 
-    def get_curriculum_workloads(
-        self,
-    ):
+    def get_curriculum_workloads(self,):
         return (
             CurriculumWorkload.objects
             .filter(

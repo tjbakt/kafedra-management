@@ -798,31 +798,45 @@ onMounted(
           </Column>
 
           <Column
-            field="
-              discipline_name
-            "
             :header="
               t(
                 'teachingWorkload.planned.fields.discipline',
               )
             "
-          />
+          >
+            <template #body="{ data }">
+              <div class="workload-reference">
+                <strong>
+                  {{ data.discipline_name || '—' }}
+                </strong>
+
+                <small
+                  v-if="data.discipline_code"
+                >
+                  {{ data.discipline_code }}
+                </small>
+              </div>
+            </template>
+          </Column>
 
           <Column
-            field="
-              workload_type_name
-            "
             :header="
               t(
                 'teachingWorkload.planned.fields.workloadType',
               )
             "
-          />
+          >
+            <template #body="{ data }">
+              <div class="workload-reference">
+                <strong>
+                  {{ data.workload_type_name || '—' }}
+                </strong>
+              </div>
+            </template>
+          </Column>
 
           <Column
-            field="
-              base_hours
-            "
+            field="base_hours"
             :header="
               t(
                 'teachingWorkload.planned.fields.baseHours',
@@ -1145,31 +1159,43 @@ onMounted(
           </Column>
 
           <Column
-            field="
-              discipline_name
-            "
             :header="
               t(
                 'teachingWorkload.planned.fields.discipline',
               )
             "
-          />
+          >
+            <template #body="{ data }">
+              <div class="workload-reference">
+                <strong>
+                  {{ data.discipline_name || '—' }}
+                </strong>
+
+                <small v-if="data.discipline_code">
+                  {{ data.discipline_code }}
+                </small>
+              </div>
+            </template>
+          </Column>
 
           <Column
-            field="
-              workload_type_name
-            "
             :header="
               t(
                 'teachingWorkload.planned.fields.workloadType',
               )
             "
-          />
+          >
+            <template #body="{ data }">
+              <div class="workload-reference">
+                <strong>
+                  {{ data.workload_type_name || '—' }}
+                </strong>
+              </div>
+            </template>
+          </Column>
 
           <Column
-            field="
-              base_hours
-            "
+            field="base_hours"
             :header="
               t(
                 'teachingWorkload.planned.fields.baseHours',
@@ -1657,5 +1683,21 @@ onMounted(
     grid-template-columns:
       1fr;
   }
+}
+
+.workload-reference {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 12rem;
+}
+
+.workload-reference strong {
+  font-weight: 600;
+}
+
+.workload-reference small {
+  opacity: 0.7;
+  font-size: 0.8rem;
 }
 </style>

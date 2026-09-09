@@ -554,6 +554,9 @@ class PlannedWorkloadViewSet(
     def get_queryset(self):
         return (
             PlannedWorkload.objects
+            .filter(
+                curriculum_workload__workload_type__is_teaching_load=True,
+            )
             .select_related(
                 "teaching_stream",
                 "teaching_stream__curriculum",
