@@ -363,16 +363,6 @@ export function normalizeApiError(
     })
   }
 
-  const detail =
-    typeof data.detail === 'string'
-      ? data.detail
-      : typeof data.message === 'string'
-        ? data.message
-        : ''
-
-  const firstFieldError =
-    Object.values(fieldErrors)[0]?.[0]
-
   const message =
     nonFieldErrors[0] ||
     Object.values(fieldErrors)[0]?.[0] ||
