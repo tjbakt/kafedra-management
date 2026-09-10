@@ -324,42 +324,33 @@ function statusSeverity(
       </Column>
 
       <Column
-        field="
-          curriculum_code
-        "
         :header="
           t(
             'workloadDistribution.fields.curriculum',
           )
         "
-        style="
-          min-width: 9rem
-        "
-      />
+        style="min-width: 11rem"
+      >
+        <template #body="{ data }">
+          <div class="curriculum-cell">
+            <strong>
+              {{ data.curriculum_code || '—' }}
+            </strong>
+          </div>
+        </template>
+      </Column>
 
       <Column
-        field="
-          discipline_name
-        "
+        field="discipline_name"
         :header="
           t(
             'workloadDistribution.fields.discipline',
           )
         "
-        style="
-          min-width: 16rem
-        "
+        style="min-width: 16rem"
       >
-        <template
-          #body="
-            { data }
-          "
-        >
-          <div
-            class="
-              discipline-cell
-            "
-          >
+        <template #body="{ data }">
+          <div class=" discipline-cell">
             <strong>
               {{
                 data.discipline_name
@@ -376,18 +367,21 @@ function statusSeverity(
       </Column>
 
       <Column
-        field="
-          workload_type_name
-        "
         :header="
           t(
             'workloadDistribution.fields.workloadType',
           )
         "
-        style="
-          min-width: 13rem
-        "
-      />
+        style="min-width: 13rem"
+      >
+        <template #body="{ data }">
+          <div class="workload-type-cell">
+            <strong>
+              {{ data.workload_type_name || '—' }}
+            </strong>
+          </div>
+        </template>
+      </Column>
 
       <Column
         :header="
@@ -395,48 +389,25 @@ function statusSeverity(
             'workloadDistribution.fields.scope',
           )
         "
-        style="
-          min-width: 9rem
-        "
-      >
-        <template
-          #body="
-            { data }
-          "
-        >
+        style="min-width: 9rem">
+        <template #body="{ data }">
           <Tag
-            :value="
-              scopeLabel(
-                data,
-              )
-            "
-            :severity="
-              scopeSeverity(
-                data,
-              )
-            "
+            :value="scopeLabel(data,)"
+            :severity="scopeSeverity(data,)"
           />
         </template>
       </Column>
 
       <Column
-        field="
-          total_hours
-        "
+        field="total_hours"
         :header="
           t(
             'workloadDistribution.planned.total',
           )
         "
-        style="
-          min-width: 8rem
-        "
+        style="min-width: 8rem"
       >
-        <template
-          #body="
-            { data }
-          "
-        >
+        <template #body="{ data }">
           {{
             asNumber(
               data.total_hours,
@@ -451,25 +422,11 @@ function statusSeverity(
             'workloadDistribution.planned.distribution',
           )
         "
-        style="
-          min-width: 14rem
-        "
+        style="min-width: 14rem"
       >
-        <template
-          #body="
-            { data }
-          "
-        >
-          <div
-            class="
-              distribution-progress
-            "
-          >
-            <div
-              class="
-                distribution-progress__values
-              "
-            >
+        <template #body="{ data }">
+          <div class="distribution-progress">
+            <div class="distribution-progress__values">
               <span>
                 {{
                   asNumber(
@@ -679,5 +636,17 @@ function statusSeverity(
     flex-direction:
       column;
   }
+}
+
+.curriculum-cell,
+.workload-type-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.curriculum-cell strong,
+.workload-type-cell strong {
+  font-weight: 600;
 }
 </style>
