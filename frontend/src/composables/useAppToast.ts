@@ -1,5 +1,10 @@
 import { useToast } from 'primevue/usetoast'
 
+import {
+  API_ERROR_TOAST_EVENT,
+  type ApiErrorToastPayload,
+} from '@/utils/api-error-toast'
+
 const DEFAULT_LIFE = 4000
 
 export function useAppToast() {
@@ -41,10 +46,64 @@ export function useAppToast() {
     })
   }
 
+  function showApiError(
+    payload: ApiErrorToastPayload,
+  ): void {
+    const apiError = payload.error
+
+    const details: string[] = []
+
+    Object.entries(
+      apiError.fieldErrors,
+    ).forEach(([field, messages]) => {
+      messages.forEach((message) => {
+        details.push(
+          `${field}: ${message}`,
+        )
+      })
+    })
+
+    details.push(
+      ...apiError.nonFieldErrors,
+    )
+
+    const detail =
+      details.length > 0
+        ? [...new Set(details)].join('\n')
+        : apiError.message
+
+    const summary =
+      apiError.status === 400
+        ? 'Ошибка проверки данных'
+        : apiError.status === 401
+          ? 'Ошибка авторизации'
+          : apiError.status === 403
+            ? 'Доступ запрещён'
+            : apiError.status === 404
+              ? 'Данные не найдены'
+              : apiError.status === 409
+                ? 'Конфликт данных'
+                : apiError.status !== null &&
+                    apiError.status >= 500
+                  ? 'Ошибка сервера'
+                  : 'Ошибка'
+
+    error(
+      summary,
+      detail,
+      7000,
+    )
+  }
+
   return {
     success,
     info,
     warning,
     error,
+    showApiError,
   }
+}
+
+export {
+  API_ERROR_TOAST_EVENT,
 }

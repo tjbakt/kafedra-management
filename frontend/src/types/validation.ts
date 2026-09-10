@@ -1,4 +1,5 @@
-export type FieldErrors = Record<string, string[]>
+export type FieldErrors =
+  Record<string, string[]>
 
 export interface NormalizedApiError {
   message: string
@@ -10,9 +11,9 @@ export interface NormalizedApiError {
 export interface DrfValidationResponse {
   detail?: string
   message?: string
-
+  code?: string
+  status?: number
   non_field_errors?: string[]
   errors?: Record<string, unknown>
-
   [key: string]: unknown
 }

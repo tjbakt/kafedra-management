@@ -6,6 +6,14 @@ import axios, {
   type InternalAxiosRequestConfig,
 } from 'axios'
 
+import {
+  emitApiErrorToast,
+} from '@/utils/api-error-toast'
+
+import {
+  normalizeApiError,
+} from '@/utils/api-errors'
+
 import { tokenStorageService } from '@/services/token-storage.service'
 import type { RefreshTokenResponse } from '@/types/auth'
 
@@ -129,6 +137,10 @@ http.interceptors.response.use(
       error.response?.status !== 401 ||
       !originalRequest
     ) {
+      emitApiErrorToast(
+        normalizeApiError(error),
+      )
+
       return Promise.reject(error)
     }
 
@@ -171,6 +183,9 @@ http.interceptors.response.use(
       return http(originalRequest)
     } catch (refreshError) {
       tokenStorageService.clearTokens()
+      emitApiErrorToast(
+        normalizeApiError(refreshError),
+      )
       redirectToLogin()
 
       return Promise.reject(refreshError)
@@ -196,22 +211,77 @@ export function getApiErrorMessage(
 
   const data = error.response.data
 
+  if (
+    data &&
+    typeof data === 'object'
+  ) {
+    const fieldErrors: string[] = []
+
+    Object.entries(data).forEach(
+      ([field, value]) => {
+        if (
+          field === 'detail' ||
+          field === 'message' ||
+          field === 'code' ||
+          field === 'status'
+        ) {
+          return
+        }
+
+        if (
+          field === 'errors' &&
+          value &&
+          typeof value === 'object' &&
+          !Array.isArray(value)
+        ) {
+          Object.values(value).forEach(
+            (fieldValue) => {
+              if (Array.isArray(fieldValue)) {
+                fieldValue.forEach(
+                  (message) => {
+                    if (
+                      typeof message === 'string'
+                    ) {
+                      fieldErrors.push(
+                        message,
+                      )
+                    }
+                  },
+                )
+              }
+            },
+          )
+
+          return
+        }
+
+        if (Array.isArray(value)) {
+          value.forEach(
+            (message) => {
+              if (
+                typeof message === 'string'
+              ) {
+                fieldErrors.push(
+                  message,
+                )
+              }
+            },
+          )
+        }
+      },
+    )
+
+    if (fieldErrors.length > 0) {
+      return fieldErrors.join(' ')
+    }
+  }
+
   if (typeof data?.detail === 'string') {
     return data.detail
   }
 
   if (typeof data?.message === 'string') {
     return data.message
-  }
-
-  const firstFieldError = Object.values(data ?? {}).find(
-    (value) =>
-      Array.isArray(value) &&
-      typeof value[0] === 'string',
-  )
-
-  if (Array.isArray(firstFieldError)) {
-    return String(firstFieldError[0])
   }
 
   return error.message || fallback
