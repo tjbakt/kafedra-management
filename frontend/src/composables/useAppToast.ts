@@ -49,27 +49,31 @@ export function useAppToast() {
   function showApiError(
     payload: ApiErrorToastPayload,
   ): void {
-    const apiError = payload.error
+    const apiError =
+      payload.error
 
-    const details: string[] = []
-
-    Object.entries(
-      apiError.fieldErrors,
-    ).forEach(([field, messages]) => {
-      messages.forEach((message) => {
-        details.push(
-          `${field}: ${message}`,
-        )
-      })
-    })
-
-    details.push(
+    const details = [
+      ...Object.values(
+        apiError.fieldErrors,
+      ).flatMap(
+        (messages) => messages,
+      ),
       ...apiError.nonFieldErrors,
-    )
+    ]
+
+    const uniqueDetails = [
+      ...new Set(
+        details
+          .map((message) =>
+            message.trim(),
+          )
+          .filter(Boolean),
+      ),
+    ]
 
     const detail =
-      details.length > 0
-        ? [...new Set(details)].join('\n')
+      uniqueDetails.length > 0
+        ? uniqueDetails.join('\n')
         : apiError.message
 
     const summary =
@@ -84,7 +88,7 @@ export function useAppToast() {
               : apiError.status === 409
                 ? 'Конфликт данных'
                 : apiError.status !== null &&
-                    apiError.status >= 500
+                apiError.status >= 500
                   ? 'Ошибка сервера'
                   : 'Ошибка'
 

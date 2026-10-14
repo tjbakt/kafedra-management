@@ -7,6 +7,10 @@ import type {
   FieldErrors,
 } from '@/types/validation'
 
+import {
+  getFieldErrorLabel,
+} from '@/utils/api-errors'
+
 const props = withDefaults(
   defineProps<{
     fieldErrors?: FieldErrors
@@ -22,29 +26,87 @@ const props = withDefaults(
 
 const { t } = useI18n()
 
-const messages = computed(() => {
-  const result: string[] = []
+interface ValidationMessage {
+  key: string
+  text: string
+}
 
-  if (props.generalError) {
-    result.push(
-      props.generalError,
+const messages = computed<ValidationMessage[]>(
+  () => {
+    const result: ValidationMessage[] = []
+
+    /*
+     * Общая ошибка показывается только если
+     * она действительно не является техническим
+     * сообщением Axios.
+     */
+    if (
+      props.generalError &&
+      !/^Request failed with status code \d+$/i.test(
+        props.generalError.trim(),
+      )
+    ) {
+      result.push({
+        key: 'general',
+        text: props.generalError.trim(),
+      })
+    }
+
+    props.nonFieldErrors.forEach(
+      (message, index) => {
+        const text = message.trim()
+
+        if (!text) {
+          return
+        }
+
+        result.push({
+          key: `non-field-${index}-${text}`,
+          text,
+        })
+      },
     )
-  }
 
-  result.push(
-    ...props.nonFieldErrors,
-  )
+    Object.entries(
+      props.fieldErrors,
+    ).forEach(
+      ([field, errors]) => {
+        const label =
+          getFieldErrorLabel(field)
 
-  Object.values(
-    props.fieldErrors,
-  ).forEach((errors) => {
-    result.push(...errors)
-  })
+        errors.forEach(
+          (message, index) => {
+            const text =
+              message.trim()
 
-  return [
-    ...new Set(result),
-  ]
-})
+            if (!text) {
+              return
+            }
+
+            result.push({
+              key: `${field}-${index}-${text}`,
+              text: `${label}: ${text}`,
+            })
+          },
+        )
+      },
+    )
+
+    const seen = new Set<string>()
+
+    return result.filter(
+      (item) => {
+        if (seen.has(item.text)) {
+          return false
+        }
+
+        seen.add(item.text)
+
+        return true
+      },
+    )
+  },
+)
 </script>
 
 <template>
@@ -65,12 +127,10 @@ const messages = computed(() => {
 
       <ul>
         <li
-          v-for="
-            message in messages
-          "
-          :key="message"
+          v-for="message in messages"
+          :key="message.key"
         >
-          {{ message }}
+          {{ message.text }}
         </li>
       </ul>
     </div>
